@@ -382,8 +382,8 @@ describe('determinism and Monte Carlo', () => {
 describe('real data', () => {
   const ROOT = join(__dirname, '..', '..');
   const d = loadGameDataFromDir(join(ROOT, 'data')).data;
-  const profile = loadProfile({ path: 'p', text: readFileSync(join(ROOT, 'profile', 'profile.yaml'), 'utf8') }, d).profile!;
-  const layout = LayoutSchema.parse(parse(readFileSync(join(ROOT, 'layouts', 'example.yaml'), 'utf8')));
+  const profile = loadProfile({ path: 'p', text: readFileSync(join(ROOT, 'tests', 'fixtures', 'saves', 'v1', 'profile.yaml'), 'utf8') }, d).profile!;
+  const layout = LayoutSchema.parse(parse(readFileSync(join(ROOT, 'tests', 'fixtures', 'saves', 'v1', 'builds', 'example.yaml'), 'utf8')));
   const loadout = buildLoadout(d, profile, layout);
 
   it('battles the example layout against the example enemy, deterministically', () => {

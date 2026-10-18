@@ -177,6 +177,8 @@ describe('real game data', () => {
     const built = buildWikiYaml((name) => readFileSync(join(ROOT, 'docs', 'wiki-data', name), 'utf8'));
     const onDisk = new Map(readDataDir(join(ROOT, 'data')).filter((f) => f.path.includes('/wiki/')).map((f) => [f.path, f.text]));
     expect([...onDisk.keys()].sort()).toEqual(built.files.map((f) => f.path).sort());
-    for (const f of built.files) expect(onDisk.get(f.path), f.path).toBe(f.content);
+    // Line endings aside (a Windows checkout may turn them into CRLF).
+    const lf = (s: string | undefined) => s?.replace(/\r\n/g, '\n');
+    for (const f of built.files) expect(lf(onDisk.get(f.path)), f.path).toBe(lf(f.content));
   });
 });
