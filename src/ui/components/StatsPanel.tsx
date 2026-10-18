@@ -185,7 +185,7 @@ export function IssueLine({ issue, onClick }: { issue: LoadoutIssue; onClick?: (
 export function IssuesPanel({ issues, onSelect, extra }: { issues: LoadoutIssue[]; onSelect: (id: string) => void; /** Shown under the checks (a note about the data). */ extra?: ReactNode }) {
   const errors = issues.filter((i) => i.level === 'error').length;
   return (
-    <div className="panel">
+    <div className="panel" data-tour="battle.checks">
       <h2>
         Checks{' '}
         <span className="small muted">

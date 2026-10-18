@@ -34,7 +34,7 @@ export function ProfileEditor({ data, profile, issues, loadoutIssues, editingEne
   return (
     <div className="page">
       <div className="stack">
-        <div className="panel">
+        <div className="panel" data-tour="profile.heroes">
           <h2>
             Heroes <span className="small muted">{owned.size} of {data.heroes.size} owned</span>
           </h2>
@@ -63,7 +63,7 @@ export function ProfileEditor({ data, profile, issues, loadoutIssues, editingEne
       </div>
 
       <div className="stack">
-        <div className="panel">
+        <div className="panel" data-tour="profile.auras">
           <h2>Auras</h2>
           <div className="small muted">Owned auras add their ownership bonus to every build. The equipped aura's own skill (coins in the shop) isn't simulated.</div>
           {[...data.auras.values()].map((a) => {

@@ -36,7 +36,7 @@ export function Panel({ id, title, aside, tools, className = '', children }: Pro
     });
   const label = typeof title === 'string' ? title : (id ?? 'box');
   return (
-    <section className={`panel${folded ? ' folded' : ''} ${className}`} aria-label={typeof title === 'string' ? title : undefined}>
+    <section className={`panel${folded ? ' folded' : ''} ${className}`} aria-label={typeof title === 'string' ? title : undefined} data-tour={id}>
       <div className="panel-head">
         <h2>
           {title}

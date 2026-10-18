@@ -1,0 +1,149 @@
+/**
+ * A guided tour: dims the page, highlights one area at a time ([data-tour="…"]), says what it's for, and
+ * switches tabs as it goes. Next / Back / Skip tour; arrow keys move, Escape skips.
+ */
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+
+export interface TourStep {
+  /** The tab to show for this step. */
+  tab?: string;
+  /** [data-tour] of the area to highlight; none = a card in the middle. */
+  target?: string;
+  title: string;
+  text: string;
+}
+
+interface Props {
+  steps: TourStep[];
+  onTab: (tab: string) => void;
+  onClose: () => void;
+}
+
+interface Box {
+  top: number;
+  left: number;
+  width: number;
+  height: number;
+}
+
+const PAD = 6;
+const CARD_W = 340;
+
+function placeCard(box: Box | null, cardH: number): { top: number; left: number } {
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const clampLeft = (x: number) => Math.max(12, Math.min(vw - CARD_W - 12, x));
+  if (!box) return { top: Math.max(12, vh / 2 - cardH / 2), left: clampLeft(vw / 2 - CARD_W / 2) };
+  const below = box.top + box.height + PAD + 10;
+  if (below + cardH < vh - 12) return { top: below, left: clampLeft(box.left) };
+  const above = box.top - PAD - 10 - cardH;
+  if (above > 12) return { top: above, left: clampLeft(box.left) };
+  // Tall area: beside it if there's room, else over its bottom corner.
+  const right = box.left + box.width + PAD + 10;
+  if (right + CARD_W < vw - 12) return { top: Math.max(12, Math.min(vh - cardH - 12, box.top)), left: right };
+  const left = box.left - PAD - 10 - CARD_W;
+  if (left > 12) return { top: Math.max(12, Math.min(vh - cardH - 12, box.top)), left };
+  return { top: vh - cardH - 12, left: clampLeft(vw - CARD_W - 12) };
+}
+
+export function Tour({ steps, onTab, onClose }: Props) {
+  const [i, setI] = useState(0);
+  const [box, setBox] = useState<Box | null>(null);
+  const [cardH, setCardH] = useState(180);
+  const card = useRef<HTMLDivElement>(null);
+  const step = steps[i]!;
+  const last = i === steps.length - 1;
+
+  // Show the step's tab, then find its area (once the tab has drawn) and keep the highlight on it while the
+  // page scrolls or resizes. A timer, not animation frames: those pause in a background tab.
+  useEffect(() => {
+    if (step.tab) onTab(step.tab);
+    let scrolled = false;
+    const measure = () => {
+      const el = step.target ? document.querySelector<HTMLElement>(`[data-tour="${step.target}"]`) : null;
+      if (el && !scrolled) {
+        scrolled = true;
+        el.scrollIntoView?.({ block: 'nearest' });
+      }
+      const r = el?.getBoundingClientRect();
+      setBox((old) => {
+        const next = r && r.width > 0 ? { top: r.top, left: r.left, width: r.width, height: Math.min(r.height, window.innerHeight - 24) } : null;
+        return JSON.stringify(old) === JSON.stringify(next) ? old : next;
+      });
+    };
+    measure();
+    const timer = window.setInterval(measure, 150);
+    window.addEventListener('scroll', measure, true);
+    window.addEventListener('resize', measure);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener('scroll', measure, true);
+      window.removeEventListener('resize', measure);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [i]);
+
+  useLayoutEffect(() => {
+    if (card.current) setCardH(card.current.offsetHeight);
+  });
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+      else if (e.key === 'ArrowRight') setI((n) => Math.min(steps.length - 1, n + 1));
+      else if (e.key === 'ArrowLeft') setI((n) => Math.max(0, n - 1));
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose, steps.length]);
+
+  const pos = placeCard(box, cardH);
+  return (
+    <div className="tour" role="dialog" aria-modal="true" aria-label="Tutorial">
+      {/* Catches clicks so the page doesn't change under the tour. */}
+      <div className={`tour-dim${box ? '' : ' full'}`} />
+      {box && <div className="tour-spot" style={{ top: box.top - PAD, left: box.left - PAD, width: box.width + 2 * PAD, height: box.height + 2 * PAD }} />}
+      <div ref={card} className="tour-card panel" style={{ top: pos.top, left: pos.left, width: CARD_W }}>
+        <div className="small muted">
+          {i + 1} / {steps.length}
+        </div>
+        <h2>{step.title}</h2>
+        <p className="small">{step.text}</p>
+        <div className="row" style={{ justifyContent: 'space-between' }}>
+          <button className="small" onClick={onClose}>
+            Skip tour
+          </button>
+          <span className="row">
+            {i > 0 && <button onClick={() => setI(i - 1)}>Back</button>}
+            <button className="primary" onClick={() => (last ? onClose() : setI(i + 1))}>
+              {last ? 'Done' : 'Next'}
+            </button>
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** The tour of the whole app, tab by tab. */
+export const APP_TOUR: TourStep[] = [
+  { tab: 'bag', title: 'Welcome!', text: "This tour walks you through every part of the simulator, tab by tab. It takes about two minutes, and you can skip it at any time (or press Escape)." },
+  { target: 'topbar.tabs', title: 'The tabs', text: 'Battle is where you build and fight. Optimize improves a build for you. Profile is your account. Item editor and Data are for fixing game data.' },
+  { tab: 'profile', target: 'profile.heroes', title: 'Your heroes', text: 'Start here: tick every hero you own and set their stars. Open a hero to see its skills and choose skill links. This is your account: it counts for every build and saves itself.' },
+  { tab: 'profile', target: 'profile.auras', title: 'Auras', text: 'Set the stars of the auras you own: their bonuses add to every build.' },
+  { tab: 'bag', target: 'battle.build', title: 'Your builds', text: 'Open a saved build from this list. In the list, the green arrow saves what you are editing over that build and the red bin deletes it. Save keeps your changes; New build starts an empty bag; Import / Export share one build as a file.' },
+  { tab: 'bag', target: 'battle.hero', title: 'Hero and blessings', text: "Pick the hero for this build. Open Blessings to enter that hero's Dragon's Blessings as the game shows them." },
+  { tab: 'bag', target: 'battle.gear', title: 'Gear', text: 'Choose your weapon, shield, rings and gloves with their rarity and tier, then press Place to put each one in the bag.' },
+  { tab: 'bag', target: 'battle.pets', title: 'Pets', text: 'Up to 3 pets with their stars. Tick "active" for the ones whose skill you use; the bar shows the 5 points every run has.' },
+  { tab: 'bag', target: 'battle.skins', title: 'Skins', text: 'The skin skills this hero can use: bring up to 2, set their stars, and tick "quest" once the quest is done in the run.' },
+  { tab: 'bag', target: 'battle.items', title: 'Items', text: 'Find shop items by name, class, rarity or tag. Drag one onto the bag, or click it and move it with the arrow keys (space rotates, enter places). The Starting equipment tab has what your hero can bring.' },
+  { tab: 'bag', target: 'battle.bag', title: 'The bag', text: "Drag items to move them. Click an item to see its numbers, what it gives and gets from its neighbours' dots, and what it's worth. Edit cells for a smaller bag." },
+  { tab: 'bag', target: 'battle.checks', title: 'Checks', text: "Problems with the build show up here (overlaps, too much starting equipment, missing values), plus a note when the game data it uses isn't confirmed in game yet." },
+  { tab: 'bag', target: 'battle.battle', title: 'Battle', text: 'Pick an enemy: one from the list, one you type in, or a full build (copy yours or load a saved one to fight a player). Choose the mode and press Run battle; set Runs above 1 for a win rate.' },
+  { tab: 'bag', target: 'battle.stats', title: 'Stats', text: "Type HP, ATK and Block as the game's Stat Details screen shows them. Everything else is calculated from your gear, blessings and auras; the table lists each attacking item's final numbers." },
+  { tab: 'optimize', target: 'optimize.settings', title: 'Optimize', text: 'Tick saved builds to test against, then Run: it tries moves, rotations and item swaps within your coin budget and keeps the build that scores best.' },
+  { tab: 'editor', target: 'editor.head', title: 'Item editor', text: 'Fix or add game data: item shapes and dots, stats and effects. Monster items are for giving a typed-in enemy a bag.' },
+  { tab: 'data', target: 'data.about', title: 'Data', text: "What the simulator loaded: problems, entries not confirmed in game yet, and every correction to the wiki's numbers." },
+  { tab: 'bag', target: 'topbar.account', title: 'Back up your account', text: 'Your saves live in this browser. Export account downloads everything as one file; Import account brings it back on any browser or computer.' },
+  { tab: 'bag', target: 'topbar.tutorial', title: "That's it!", text: 'You can take this tour again any time with the Tutorial button.' },
+];

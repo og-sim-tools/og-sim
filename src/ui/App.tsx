@@ -34,6 +34,7 @@ import { IssuesPanel, ItemStats } from './components/StatsPanel';
 import { itemWorth } from './state/worth';
 import { buildDataRefs, buildFlags } from './state/dataFlags';
 import { Guide, guideDone } from './components/Guide';
+import { APP_TOUR, Tour } from './components/Tour';
 import {
   type KeyAction,
   type UiLayout,
@@ -112,6 +113,9 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
   /** The Data tab opened from the Battle tab's note: only what this build uses. */
   const [dataFocus, setDataFocus] = useState(false);
   const [showGuide, setShowGuide] = useState(() => !guideDone.get());
+  /** The tutorial: asking whether to start it, then running. */
+  const [askTour, setAskTour] = useState(false);
+  const [touring, setTouring] = useState(false);
 
   const say = (text: string, error = false, action?: { label: string; run: () => void }) => setMessage({ text, error, ...(action ? { action } : {}) });
   /** Show what loading a file had to change; info-only notes are shown too (they explain an upgrade). */
@@ -681,7 +685,7 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
     <div className="app">
       <div className="topbar">
         <h1>OG Backpack Simulator</h1>
-        <div className="tabs" role="tablist">
+        <div className="tabs" role="tablist" data-tour="topbar.tabs">
           {(
             [
               ['bag', 'Battle'],
@@ -726,9 +730,12 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
           </span>
         )}
         <span className="status row">
-          <button aria-label="How to use the simulator" title="How to use the simulator" aria-pressed={showGuide} onClick={() => setShowGuide((g) => !g)}>
-            ?
-          </button>
+          {!showGuide && (
+            <button data-tour="topbar.tutorial" onClick={() => setAskTour(true)} title="A guided tour of every part of the simulator">
+              Tutorial
+            </button>
+          )}
+          <span className="row" data-tour="topbar.account">
           <button onClick={() => void doExportAccount()} title={`Download your account and every saved build as one .zip (a backup you can import later). Saved now in ${store.where()}.`}>
             Export account
           </button>
@@ -748,6 +755,7 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
               Import account…
             </span>
           </label>
+          </span>
         </span>
       </div>
       {showGuide && tab === 'bag' && (
@@ -755,7 +763,43 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
           empty={(account?.heroes.length ?? 0) === 0}
           savedIn={store.kind === 'browser' ? 'this browser' : 'the project folder (profile/ and layouts/)'}
           onProfile={() => setTab('profile')}
+          onTour={() => setAskTour(true)}
           onClose={() => {
+            guideDone.set(true);
+            setShowGuide(false);
+          }}
+        />
+      )}
+      {askTour && (
+        <Dialog
+          title="Take the tour?"
+          onCancel={() => setAskTour(false)}
+          actions={[
+            {
+              label: 'Start the tour',
+              kind: 'primary',
+              onClick: () => {
+                setAskTour(false);
+                setSide('me');
+                // The welcome card makes way: the tour ends on the Tutorial button that replaces it.
+                guideDone.set(true);
+                setShowGuide(false);
+                setTouring(true);
+              },
+            },
+          ]}
+        >
+          <p className="small">About two minutes. It moves between the tabs and highlights each part with a short explanation. You can skip it at any step.</p>
+        </Dialog>
+      )}
+      {touring && (
+        <Tour
+          steps={APP_TOUR}
+          onTab={(t) => setTab(t as Tab)}
+          onClose={() => {
+            setTouring(false);
+            setTab('bag');
+            // Done with the tour = done with the welcome card; the Tutorial button stays in the top bar.
             guideDone.set(true);
             setShowGuide(false);
           }}
@@ -1064,7 +1108,7 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
 
       {tab === 'editor' && (
         <>
-          <div className="row editor-head">
+          <div className="row editor-head" data-tour="editor.head">
             <div className="tabs" role="tablist" aria-label="Item editor mode">
               <button role="tab" aria-selected={editorMode === 'game'} className={editorMode === 'game' ? 'active' : ''} onClick={() => setEditorMode('game')}>
                 Game items, gear and pets

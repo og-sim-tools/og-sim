@@ -96,8 +96,37 @@ describe('the app', () => {
     render(<App store={store} />);
     await screen.findByLabelText('Hero for this build', {}, { timeout: 10000 });
     expect(screen.queryByRole('region', { name: 'How to use the simulator' })).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: 'How to use the simulator' }));
-    expect(screen.getByRole('region', { name: 'How to use the simulator' })).toBeTruthy();
+    // Closed for good: the top bar has a Tutorial button instead, which asks before starting the tour.
+    fireEvent.click(screen.getByRole('button', { name: 'Tutorial' }));
+    fireEvent.click(within(screen.getByRole('dialog', { name: 'Take the tour?' })).getByRole('button', { name: 'Cancel' }));
+    expect(screen.queryByRole('dialog', { name: 'Tutorial' })).toBeNull();
+  }, 30000);
+
+  it('the tour walks through every tab, and can be skipped at any step', async () => {
+    const store = browserStore(localStorage);
+    render(<App store={store} />);
+    await screen.findByRole('region', { name: 'How to use the simulator' }, { timeout: 10000 });
+    expect(screen.queryByRole('button', { name: 'Tutorial' })).toBeNull(); // the card is still open
+    fireEvent.click(screen.getByRole('button', { name: 'Take the tour' }));
+    fireEvent.click(within(screen.getByRole('dialog', { name: 'Take the tour?' })).getByRole('button', { name: 'Start the tour' }));
+    const tour = () => within(screen.getByRole('dialog', { name: 'Tutorial' }));
+    expect(tour().getByText('Welcome!')).toBeTruthy();
+    const { APP_TOUR } = await import('../../src/ui/components/Tour');
+    const tabsSeen = new Set<string>();
+    // Every step's area exists on its tab.
+    for (let i = 0; i < APP_TOUR.length; i++) {
+      const step = APP_TOUR[i]!;
+      expect(tour().getByText(step.title)).toBeTruthy();
+      if (step.target) expect(document.querySelector(`[data-tour="${step.target}"]`), step.target).not.toBeNull();
+      tabsSeen.add(document.querySelector('.topbar [role=tab][aria-selected=true]')!.textContent!);
+      if (i < APP_TOUR.length - 1) fireEvent.click(tour().getByRole('button', { name: 'Next' }));
+    }
+    expect([...tabsSeen]).toEqual(expect.arrayContaining(['Battle', 'Optimize', 'Profile', 'Item editor']));
+    fireEvent.click(tour().getByRole('button', { name: 'Back' }));
+    fireEvent.click(tour().getByRole('button', { name: 'Skip tour' }));
+    expect(screen.queryByRole('dialog', { name: 'Tutorial' })).toBeNull();
+    expect(screen.getByRole('tab', { name: 'Battle' }).getAttribute('aria-selected')).toBe('true');
+    expect(screen.getByRole('button', { name: 'Tutorial' })).toBeTruthy();
   }, 30000);
 
   it("the Checks box names the build's unconfirmed data and opens the Data tab on it", async () => {

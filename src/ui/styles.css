@@ -235,3 +235,11 @@ button.danger { background: var(--error); color: white; border-color: var(--erro
 .guide li, ol.how-to li { margin-bottom: 3px; }
 .editor-head { margin: 8px 12px 0; gap: 12px; }
 .data-note { margin-top: 6px; opacity: 0.9; }
+
+/* Guided tour: the page dims, the area being explained stays lit, a card explains it. */
+.tour { position: fixed; inset: 0; z-index: 200; }
+.tour-dim { position: fixed; inset: 0; }
+.tour-dim.full { background: rgba(0, 0, 0, 0.55); }
+.tour-spot { position: fixed; border-radius: 10px; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.55); outline: 2px solid var(--accent); pointer-events: none; transition: all 0.25s ease; }
+.tour-card { position: fixed; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45); border-color: var(--accent); transition: top 0.25s ease, left 0.25s ease; }
+.tour-card h2 { margin: 4px 0 6px; }
