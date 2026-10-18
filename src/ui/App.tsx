@@ -233,6 +233,17 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
     return () => clearTimeout(t);
   }, [account, layout, layoutDirty, layoutName]);
 
+  // Closing or reloading the tab with unsaved build changes asks first (the browser's own "Leave site?" box).
+  useEffect(() => {
+    if (!layoutDirty) return;
+    const ask = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', ask);
+    return () => window.removeEventListener('beforeunload', ask);
+  }, [layoutDirty]);
+
   /** My profile as the engine uses it: the account with this build's setup put in. */
   const profile = useMemo(() => (account ? applySetup(account, layout.setup) : null), [account, layout.setup]);
 

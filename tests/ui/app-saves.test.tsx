@@ -58,6 +58,19 @@ describe('the app and my saved files', () => {
     expect(screen.getByRole('tab', { name: 'Profile' }).textContent).toBe('Profile');
   }, 30000);
 
+  it('asks before the tab closes, only while the build has unsaved changes', async () => {
+    render(<App store={store} />);
+    const picker = await heroPicker();
+    const leave = () => {
+      const e = new Event('beforeunload', { cancelable: true });
+      window.dispatchEvent(e);
+      return e.defaultPrevented;
+    };
+    expect(leave()).toBe(false);
+    fireEvent.change(picker, { target: { value: 'raven' } });
+    await waitFor(() => expect(leave()).toBe(true));
+  }, 30000);
+
   it('saves a build as version 2, and brings back unsaved changes after closing the tab', async () => {
     const first = render(<App store={store} />);
     const picker = await heroPicker();
