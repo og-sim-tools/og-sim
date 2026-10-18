@@ -257,7 +257,7 @@ export function GearEditor({ data, profile, update, loadout, onPlace }: { data: 
                 </>
               )}
             </div>
-            {ref && <BonusInput ref_={ref} text={gear?.bonus?.text} known={weaponBonusValue(cfg, { ...ref, bonus_value: undefined })?.amount} onChange={(v) => set({ ...ref, bonus_value: v })} />}
+            {ref && <BonusInput ref_={ref} text={gear?.bonus?.text} known={weaponBonusValue(cfg, { ...ref, bonus_value: undefined }, !!gear?.s_rank)?.amount} onChange={(v) => set({ ...ref, bonus_value: v })} />}
           </div>
         );
       })}

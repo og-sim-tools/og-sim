@@ -44,8 +44,10 @@ export interface BonusMissing {
 }
 
 /** The weapon bonus stat to use: the typed-in value, else a confirmed one for this rarity + tier, else null. */
-export function weaponBonusValue(cfg: NonNullable<GameData['config']>, ref: { rarity: Rarity; tier?: number; bonus_value?: number }): { amount: number; from: 'typed' | 'known' } | null {
+export function weaponBonusValue(cfg: NonNullable<GameData['config']>, ref: { rarity: Rarity; tier?: number; bonus_value?: number }, sRank: boolean): { amount: number; from: 'typed' | 'known' } | null {
   if (ref.bonus_value !== undefined) return { amount: ref.bonus_value, from: 'typed' };
+  // The known values are S-rank weapons' (config gear.bonus_stat_known); other weapons are typed in.
+  if (!sRank) return null;
   const known = cfg.gear.bonus_stat_known[`${ref.rarity}+${ref.tier ?? 0}`];
   return known !== undefined ? { amount: known, from: 'known' } : null;
 }
@@ -77,7 +79,7 @@ export function computeAccountStats(data: GameData, profile: Profile, heroId: st
     for (const l of gear.stat_lines) if (rank(l.rarity) <= rank(ref.rarity)) add(l.stat, l.amount, `${name}: ${l.text ?? `${l.stat} +${l.amount}`}`);
     if (gear.bonus) {
       const text = gear.bonus.text ?? gear.bonus.stat;
-      const v = weaponBonusValue(cfg, ref);
+      const v = weaponBonusValue(cfg, ref, !!gear.s_rank);
       if (!v) {
         const statName = text.replace(/\s*\+.*$/, '');
         bonusMissing.push({

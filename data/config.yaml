@@ -15,12 +15,12 @@ gear:
   slots: { weapon: 1, shield: 1, ring: 2, glove: 2 }
   # Highest tier per rarity: Epic +0..+2, Legendary +0..+3, Mythic +0..+4.
   max_tier: { epic: 2, legendary: 3, mythic: 4 }
-  # Weapon bonus stat (Primal Flame "Crit Rate +12.5%" on the wiki) by rarity + tier. It grows with both; only
-  # confirmed values go here. User, 2026-10-16: every mythic S weapon gives 50% of its stat at mythic +0.
-  # Any other rarity + tier: type the in-game value on the weapon in the Profile tab (gear bonus_value);
-  # until then the bonus is NOT applied and a red warning says so.
-  # Epic +0 = 12.5% (the wiki value, user confirmed 2026-10-16).
-  bonus_stat_known: { "epic+0": 12.5, "mythic+0": 50 }
+  # S-rank weapon bonus stat (Primal Flame "Crit Rate +12.5%" on the wiki) by rarity + tier, the same for every
+  # S weapon. In-game values from the user (2026-10-16: epic+0 12.5, mythic+0 50; 2026-10-18: the rest).
+  # Not listed (mythic +2 to +4, and every non-S weapon): type the in-game value on the weapon in the
+  # Battle tab's Gear box (gear bonus_value); until then the bonus is NOT applied and a red warning says so.
+  bonus_stat_known:
+    { "epic+0": 12.5, "epic+1": 15, "epic+2": 17.5, "legendary+0": 25, "legendary+1": 30, "legendary+2": 35, "legendary+3": 40, "mythic+0": 50, "mythic+1": 55 }
 
 heroes:
   max_stars: 9

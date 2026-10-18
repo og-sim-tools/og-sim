@@ -81,21 +81,25 @@ describe('gear → calculated stats', () => {
     expect(s.bonusMissing).toEqual([]);
   });
 
-  it('weapon bonus stat: known only at mythic +0; anything else needs the in-game value (red warning until then)', () => {
+  it('S weapon bonus stat: known for epic +0..+2, legendary +0..+3, mythic +0..+1 (user, 2026-10-18); anything else needs the in-game value', () => {
     const at = (weapon: string) =>
       computeAccountStats(data, loadProfile({ path: 'p.yaml', text: `basic_stats: { hp: 1M, atk: 100K, initial_block: 0 }
 gear:
   weapon: ${weapon}
 ` }, data).profile!, null);
-    const plus1 = at('{ id: primal_flame, rarity: mythic, tier: 1 }');
-    expect(plus1.detailed.crit_rate ?? 0).toBe(0);
-    expect(plus1.bonusMissing).toMatchObject([{ gearId: 'primal_flame', rarity: 'mythic', tier: 1 }]);
-    expect(at('{ id: primal_flame, rarity: epic, tier: 0 }').detailed.crit_rate).toBe(12.5);
-    expect(at('{ id: primal_flame, rarity: epic, tier: 1 }').bonusMissing).toHaveLength(1);
+    const table: [string, number, number][] = [['epic', 0, 12.5], ['epic', 1, 15], ['epic', 2, 17.5], ['legendary', 0, 25], ['legendary', 1, 30], ['legendary', 2, 35], ['legendary', 3, 40], ['mythic', 0, 50], ['mythic', 1, 55]];
+    for (const [r, t, v] of table) {
+      const s = at(`{ id: primal_flame, rarity: ${r}, tier: ${t} }`);
+      expect(s.detailed.crit_rate, `${r}+${t}`).toBe(v);
+      expect(s.bonusMissing).toEqual([]);
+    }
+    // Not known yet: mythic +2, and any non-S weapon (they start at +3%).
+    expect(at('{ id: primal_flame, rarity: mythic, tier: 2 }').bonusMissing).toMatchObject([{ gearId: 'primal_flame', rarity: 'mythic', tier: 2 }]);
+    expect(at('{ id: frost_staff, rarity: mythic, tier: 0 }').bonusMissing).toHaveLength(1);
     // The value typed in always wins, also over a known one.
-    expect(at('{ id: primal_flame, rarity: mythic, tier: 1, bonus_value: 56.25 }').detailed.crit_rate).toBe(56.25);
+    expect(at('{ id: primal_flame, rarity: mythic, tier: 2, bonus_value: 60 }').detailed.crit_rate).toBe(60);
     expect(at('{ id: primal_flame, rarity: mythic, tier: 0, bonus_value: 49 }').detailed.crit_rate).toBe(49);
-    const prof = loadProfile({ path: 'p.yaml', text: ['basic_stats: { hp: 1M, atk: 100K, initial_block: 0 }', 'gear:', '  weapon: { id: primal_flame, rarity: legendary, tier: 2 }'].join('\n') }, data).profile!;
+    const prof = loadProfile({ path: 'p.yaml', text: ['basic_stats: { hp: 1M, atk: 100K, initial_block: 0 }', 'gear:', '  weapon: { id: primal_flame, rarity: mythic, tier: 3 }'].join('\n') }, data).profile!;
     const lo = buildLoadout(data, prof, LayoutSchema.parse({ placements: [] }));
     expect(aggregateStats(lo).issues.some((i) => i.code === 'gear_bonus_missing' && i.level === 'error')).toBe(true);
   });
