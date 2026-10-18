@@ -1,0 +1,26 @@
+# Pets that put items into the bag (SPEC §4.5), from the wiki's pet text. Unverified.
+
+- id: venomous_spider
+  spawns:
+    - { item: venomous_spider_egg_sack, count: 12, stars: 0 }
+    - { item: hefty_egg_sack, count: 1, stars: 1 }
+    - { item: venomous_spider_egg_sack, count: 4, stars: 4 }
+  spawn_inflict_multiplier:
+    - { stars: 5, status: poison, factor: 2 }
+  source: manual
+  verified: false
+  notes: >-
+    From the wiki: 12 Egg Sacks; 1★ +1 Hefty Egg Sack (permanent); 4★ +4 Egg Sacks; 5★ "Summoned Spiders
+    inflict x2 Poison" (applied to everything this pet spawns, including what they hatch into).
+    "2★: Base Cooldown decreases by 2s" isn't simulated (which cooldown?).
+
+- id: butterfly
+  spawns:
+    - { item: poison_bug_egg, count: 10, stars: 0 }
+    - { item: poison_bug_egg, count: 2, stars: 1 }
+    - { item: poison_bug_egg, count: 3, stars: 2 }
+  spawn_inflict_multiplier:
+    - { stars: 4, status: poison, factor: 2 }
+  source: manual
+  verified: false
+  notes: 'In game (batch 2): 10 eggs base (screen shows 15 at 2★); 1★ +2; 2★ +3; 4★ "Increases Poison of the Poison Bug by 2x".'

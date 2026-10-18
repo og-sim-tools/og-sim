@@ -1,0 +1,50 @@
+# Which Stat Details stat each blessing raises (SPEC §4.3, §4.6). My mapping — unverified.
+# Blessings with a `stat` are already counted in Stat Details, so the simulator never adds them.
+# Tag blessings ([Sword] Weapon DMG, …) map to a tag stat ([Sword] DMG Increase) that adds to items with that tag,
+# like [Creature] DMG Increase. Skill buffs are [later]; conditional bonuses use combat_bonus.
+
+- { id: all_dmg, stat: all_dmg_increase, source: manual, verified: false }
+- { id: hp, stat: hp, source: manual, verified: false }
+- { id: item_haste, stat: item_haste, source: manual, verified: false }
+- { id: healing_power_enhance, stat: healing_power_enhance, source: manual, verified: false }
+- { id: block_gain, stat: block_gain, source: manual, verified: false }
+- { id: attack_dmg, stat: attack_dmg_increase, source: manual, verified: false }
+- { id: crit_dmg, stat: crit_dmg, source: manual, verified: false }
+- { id: vamp_recovery_amount, stat: vamp_recovery_amount, source: manual, verified: false }
+- { id: dmg_against_stunned_enemies, stat: dmg_vs_stunned, source: manual, verified: false }
+- { id: poison_dmg, stat: poison_dmg_increase, source: manual, verified: false }
+- { id: burn_dmg, stat: burn_dmg_increase, source: manual, verified: false }
+- { id: spike_dmg, stat: spike_dmg_increase, source: manual, verified: false }
+- { id: creature_weapon_dmg, stat: creature_dmg_increase, source: manual, verified: false, notes: 'Stat Details has "[Creature] DMG Increase", so this one is a stat.' }
+
+# Tag blessings → tag stats (item_tags in data/stats.yaml)
+- { id: sword_weapon_dmg, stat: sword_dmg_increase, source: manual, verified: false }
+- { id: blunted_weapon_dmg, stat: blunted_dmg_increase, source: manual, verified: false }
+- { id: spear_weapon_dmg, stat: spear_dmg_increase, source: manual, verified: false }
+- { id: crossbow_weapon_dmg, stat: crossbow_dmg_increase, source: manual, verified: false }
+- { id: bow_weapon_dmg, stat: bow_dmg_increase, source: manual, verified: false }
+- { id: rock_trap_weapon_dmg, stat: rock_trap_dmg_increase, source: manual, verified: false }
+- { id: fire_magic_dmg, stat: fire_dmg_increase, source: manual, verified: false }
+- { id: ice_magic_dmg, stat: ice_dmg_increase, source: manual, verified: false }
+- { id: lightning_magic_dmg, stat: lightning_dmg_increase, source: manual, verified: false }
+
+# Unique (hero bonus) blessings that are plain stats
+- { id: rose_spike_dmg, stat: spike_dmg_increase, source: manual, verified: false }
+- { id: barbarian_spike_dmg, stat: spike_dmg_increase, source: manual, verified: false }
+- { id: rebecca_block_gain, stat: block_gain, source: manual, verified: false }
+- { id: raven_evasion, stat: evasion, source: manual, verified: false }
+- { id: acrobat_evasion, stat: evasion, source: manual, verified: false }
+- { id: talin_crit_dmg, stat: crit_dmg, source: manual, verified: false }
+- { id: lua_healing_power_enhance, stat: healing_power_enhance, source: manual, verified: false }
+- { id: feline_mage_item_haste, stat: item_haste, source: manual, verified: false }
+- { id: kai_sword_weapon_dmg, stat: sword_dmg_increase, source: manual, verified: false }
+- { id: spearman_spear_weapon_dmg, stat: spear_dmg_increase, source: manual, verified: false }
+- { id: erwen_bow_dmg, stat: bow_dmg_increase, source: manual, verified: false }
+- { id: sniper_crossbow_weapon_dmg, stat: crossbow_dmg_increase, source: manual, verified: false }
+- { id: spark_lightning_magic_dmg, stat: lightning_dmg_increase, source: manual, verified: false }
+- { id: fire_mage_fire_magic_dmg, stat: fire_dmg_increase, source: manual, verified: false }
+- { id: ice_mage_ice_magic_dmg, stat: ice_dmg_increase, source: manual, verified: false }
+
+# Conditional unique blessings: a battle-only bonus while the condition holds. "DMG" read as All DMG.
+- { id: darkan_when_hp_is_below_50_dmg, combat_bonus: { stat: all_dmg_increase, when: { hp_below_pct: 50 } }, source: manual, verified: false }
+- { id: cecilia_dmg_when_hp_is_above_80, combat_bonus: { stat: all_dmg_increase, when: { hp_above_pct: 80 } }, source: manual, verified: false }

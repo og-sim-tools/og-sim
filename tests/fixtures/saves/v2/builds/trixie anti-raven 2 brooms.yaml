@@ -1,0 +1,439 @@
+version: 2
+name: trixie anti-raven 2 brooms
+hero: trixie
+blessings:
+  level: 9
+  equipped:
+    - id: trixie_ill_be_having_that
+      rarity: legendary
+      value: 10
+    - id: trixie_consider_this_yours
+      rarity: mythic
+      value: 20
+gear:
+  weapon:
+    id: primal_flame
+    rarity: mythic
+    tier: 0
+    level: 40
+  shield:
+    id: celestial_shield
+    rarity: legendary
+    tier: 0
+    level: 40
+  rings:
+    - id: archwizards_ring
+      rarity: legendary
+      tier: 0
+      level: 1
+    - id: archwizards_ring
+      rarity: legendary
+      tier: 0
+      level: 1
+  gloves:
+    - id: forest_keepers_gloves
+      rarity: mythic
+      tier: 0
+      level: 1
+    - id: forest_keepers_gloves
+      rarity: legendary
+      tier: 0
+      level: 1
+pets:
+  - id: flora
+    stars: 2
+    active: true
+  - id: seiren
+    stars: 1
+    active: true
+skins:
+  - id: trixie_dream_eater
+    stars: 0
+    quest_done: true
+basic_stats:
+  hp: 5.29M
+  atk: 1.61M
+  initial_block: 1.85M
+placements:
+  - id: celestial_shield#1
+    item: celestial_shield
+    x: 0
+    y: 4
+  - id: forest_keepers_gloves#1
+    item: forest_keepers_gloves
+    x: 4
+    y: 4
+  - id: forest_keepers_gloves#2
+    item: forest_keepers_gloves
+    x: 4
+    y: 5
+    rotation: 180
+  - id: witchs_mirror#1
+    item: witchs_mirror
+    x: 0
+    y: 2
+    rotation: 180
+  - id: intermediate_magic_spark#1
+    item: intermediate_magic_spark
+    x: 2
+    y: 2
+    supply: true
+  - id: broom#1
+    item: broom
+    x: 1
+    y: 0
+    rotation: 90
+    supply: true
+  - id: midwinter_brush#1
+    item: midwinter_brush
+    x: 0
+    y: 0
+    rotation: 180
+  - id: primal_flame#1
+    item: primal_flame
+    x: 6
+    y: 3
+  - id: archwizards_ring#1
+    item: archwizards_ring
+    x: 7
+    y: 4
+  - id: archwizards_ring#2
+    item: archwizards_ring
+    x: 7
+    y: 3
+  - id: transformation_magic_instant_freeze#1
+    item: transformation_magic_instant_freeze
+    x: 3
+    y: 2
+    rotation: 90
+  - id: scorching_firefly#1
+    item: scorching_firefly
+    x: 5
+    y: 2
+  - id: wyrdwood_staff#1
+    item: wyrdwood_staff
+    x: 3
+    y: 3
+  - id: wizards_hat#1
+    item: wizards_hat
+    x: 2
+    y: 1
+    supply: true
+  - id: fairy_dragon#1
+    item: fairy_dragon
+    x: 1
+    y: 4
+  - id: fairy_dragon#2
+    item: fairy_dragon
+    x: 4
+    y: 0
+  - id: large_hp_potion#1
+    item: large_hp_potion
+    x: 6
+    y: 0
+    rotation: 90
+  - id: large_hp_potion#2
+    item: large_hp_potion
+    x: 7
+    y: 1
+battle:
+  mode: stage
+  seed: 12
+  runs: 5
+  enemy:
+    id: custom_enemy
+    name: raven
+    hp: 25B
+    atk: 0
+    block: 0
+    damage_reduction: 0
+    attacks: []
+    boss: false
+    starting_statuses: []
+    resistances: {}
+    vulnerabilities: {}
+    immunities: []
+    traits: []
+    kind: player
+    build:
+      profile:
+        basic_stats:
+          hp: 5.29M
+          atk: 1.61M
+          initial_block: 1.85M
+        detailed_stats: {}
+        heroes:
+          - id: erwen
+            stars: 5
+            links: []
+            skin: null
+            blessings:
+              level: 9
+              equipped:
+                - id: erwen_spirit_gain
+                  rarity: mythic
+                  value: 50
+          - id: trixie
+            stars: 1
+            links: []
+            skin: null
+            blessings:
+              level: 9
+              equipped:
+                - id: trixie_ill_be_having_that
+                  rarity: legendary
+                  value: 10
+                - id: trixie_consider_this_yours
+                  rarity: mythic
+                  value: 20
+          - id: spark
+            stars: 3
+            links: []
+            skin: null
+            blessings:
+              level: 9
+              equipped: []
+          - id: bjorn
+            stars: 0
+            links: []
+            skin: null
+            blessings:
+              level: 9
+              equipped: []
+          - id: raven
+            stars: 3
+            links: []
+            skin: null
+            blessings:
+              level: 9
+              equipped: []
+          - id: rebecca
+            stars: 1
+            links: []
+            skin: null
+            blessings:
+              level: 9
+              equipped: []
+          - id: kai
+            stars: 1
+            links: []
+            skin: null
+            blessings:
+              level: 9
+              equipped: []
+          - id: spearman
+            stars: 4
+            links: []
+            skin: null
+            blessings:
+              level: 9
+              equipped: []
+          - id: barbarian
+            stars: 3
+            links: []
+            skin: null
+            blessings:
+              level: 9
+              equipped: []
+          - id: fighter
+            stars: 4
+            links: []
+            skin: null
+            blessings:
+              level: 9
+              equipped: []
+          - id: venom
+            stars: 2
+            links: []
+            skin: null
+            blessings:
+              level: 9
+              equipped: []
+          - id: acrobat
+            stars: 3
+            links: []
+            skin: null
+            blessings:
+              level: 9
+              equipped: []
+          - id: sniper
+            stars: 4
+            links: []
+            skin: null
+            blessings:
+              level: 9
+              equipped: []
+          - id: archer
+            stars: 3
+            links: []
+            skin: null
+            blessings:
+              level: 9
+              equipped: []
+          - id: cecilia
+            stars: 0
+            links: []
+            skin: null
+            blessings:
+              level: 9
+              equipped: []
+          - id: feline_mage
+            stars: 2
+            links: []
+            skin: null
+            blessings:
+              level: 9
+              equipped: []
+          - id: fire_mage
+            stars: 2
+            links: []
+            skin: null
+            blessings:
+              level: 9
+              equipped: []
+          - id: ice_mage
+            stars: 4
+            links: []
+            skin: null
+            blessings:
+              level: 9
+              equipped: []
+          - id: mage
+            stars: 3
+            links: []
+            skin: null
+            blessings:
+              level: 9
+              equipped: []
+        active_hero: raven
+        gear:
+          weapon:
+            id: primal_flame
+            rarity: mythic
+            tier: 0
+            level: 40
+          shield:
+            id: celestial_shield
+            rarity: legendary
+            tier: 0
+            level: 40
+          rings:
+            - id: archwizards_ring
+              rarity: legendary
+              tier: 0
+              level: 1
+            - id: archwizards_ring
+              rarity: legendary
+              tier: 0
+              level: 1
+          gloves:
+            - id: gloves_of_plague
+              rarity: legendary
+              tier: 0
+              level: 1
+            - id: gloves_of_plague
+              rarity: legendary
+              tier: 0
+              level: 1
+        pets:
+          - id: white_wolf_captain
+            stars: 2
+            active: true
+          - id: ice_reaper
+            stars: 2
+            active: true
+        aura: judicators_blade
+        auras:
+          - id: aura_of_vitality
+            stars: 0
+          - id: aura_of_courage
+            stars: 0
+          - id: judicators_blade
+            stars: 0
+        skins:
+          - id: trixie_dream_eater
+            stars: 0
+        equipped_skins:
+          - trixie_dream_eater
+        skin_quests_done:
+          - trixie_dream_eater
+      placements:
+        - id: primal_flame#1
+          item: primal_flame
+          x: 4
+          y: 3
+          rotation: 0
+          supply: false
+        - id: celestial_shield#1
+          item: celestial_shield
+          x: 6
+          y: 0
+          rotation: 90
+          supply: false
+        - id: archwizards_ring#1
+          item: archwizards_ring
+          x: 6
+          y: 5
+          rotation: 90
+          supply: false
+        - id: archwizards_ring#2
+          item: archwizards_ring
+          x: 4
+          y: 2
+          rotation: 0
+          supply: false
+        - id: gloves_of_plague#1
+          item: gloves_of_plague
+          x: 3
+          y: 3
+          rotation: 0
+          supply: false
+        - id: gloves_of_plague#2
+          item: gloves_of_plague
+          x: 3
+          y: 4
+          rotation: 0
+          supply: false
+        - id: leather_boots#1
+          item: leather_boots
+          x: 0
+          y: 0
+          rotation: 0
+          supply: false
+        - id: leather_boots#2
+          item: leather_boots
+          x: 1
+          y: 0
+          rotation: 0
+          supply: false
+        - id: air_walker#1
+          item: air_walker
+          x: 2
+          y: 0
+          rotation: 0
+          supply: false
+        - id: black_feather#1
+          item: black_feather
+          x: 4
+          y: 0
+          rotation: 0
+          supply: false
+        - id: dragon_slayer#1
+          item: dragon_slayer
+          x: 5
+          y: 3
+          rotation: 270
+          supply: false
+        - id: shadow_hunter#1
+          item: shadow_hunter
+          x: 0
+          y: 3
+          rotation: 0
+          supply: false
+        - id: black_bow#1
+          item: black_bow
+          x: 2
+          y: 3
+          rotation: 0
+          supply: false
+      source_layout: raven

@@ -1,0 +1,90 @@
+# Stat registry (SPEC §4.3). A new stat only needs an entry here; the GUI builds its inputs from this list.
+# unit: raw (basic stat, accepts K/M/B) | pct | flat
+# group: basic / detailed = Stat Details screen; economy = [LATER]; combat = only on combatants in battle (not entered in the profile).
+
+stats:
+  # ---------------------------------------------------------------- Basic Stats
+  - { id: hp, name: HP, unit: raw, group: basic }
+  - { id: atk, name: ATK, unit: raw, group: basic }
+  - { id: initial_block, name: Initial Block, unit: raw, group: basic }
+
+  # ---------------------------------------------------------------- Detailed Stats
+  - { id: hp_pct, name: HP %, unit: pct, group: detailed, in_stat_details: false, notes: "Calculated from gear and blessings (HP +x%). Info only: typed-in HP already includes it. Gigantization reads it." }
+  - { id: atk_pct, name: ATK %, unit: pct, group: detailed, in_stat_details: false, notes: "Calculated from gear and blessings (ATK +x%). Info only: typed-in ATK already includes it." }
+  - { id: stun_rate, name: Stun Rate, unit: pct, group: detailed, in_stat_details: false, notes: "Meteor Hammer epic line. Not simulated yet (does it raise stun chances by x% or x points?)." }
+  - { id: crit_rate, name: Crit Rate, unit: pct, group: detailed, cap: 100 }
+  - { id: crit_dmg, name: Crit DMG, unit: pct, group: detailed, default: 100, notes: "Default 100% (crits deal 200%)." }
+  - { id: item_haste, name: Item Haste, unit: pct, group: detailed }
+  - { id: accuracy_bonus, name: Accuracy Bonus, unit: pct, group: detailed }
+  - { id: evasion, name: Evasion, unit: pct, group: detailed, notes: "Reduces enemy weapon accuracy; Dodge stacks add to it." }
+  - { id: all_dmg_increase, name: All DMG Increase, unit: pct, group: detailed }
+  - { id: attack_dmg_increase, name: Attack DMG Increase, unit: pct, group: detailed, notes: "Weapon damage." }
+  - { id: burn_dmg_increase, name: Burn DMG Increase, unit: pct, group: detailed }
+  - { id: poison_dmg_increase, name: Poison DMG Increase, unit: pct, group: detailed }
+  - { id: spike_dmg_increase, name: Spike DMG Increase, unit: pct, group: detailed }
+  - { id: creature_dmg_increase, name: "[Creature] DMG Increase", unit: pct, group: detailed, item_tags: [creature], notes: "Damage from items tagged as creatures." }
+  - { id: sword_dmg_increase, name: "[Sword] DMG Increase", unit: pct, group: detailed, item_tags: [sword], notes: "Name guessed from \"[Creature] DMG Increase\"; appears in Stat Details once a blessing unlocks it." }
+  - { id: blunted_dmg_increase, name: "[Blunted] DMG Increase", unit: pct, group: detailed, item_tags: [blunted], notes: "Name guessed from \"[Creature] DMG Increase\"; appears in Stat Details once a blessing unlocks it." }
+  - { id: spear_dmg_increase, name: "[Spear] DMG Increase", unit: pct, group: detailed, item_tags: [spear], notes: "Name guessed from \"[Creature] DMG Increase\"; appears in Stat Details once a blessing unlocks it." }
+  - { id: crossbow_dmg_increase, name: "[Crossbow] DMG Increase", unit: pct, group: detailed, item_tags: [crossbow], notes: "Name guessed from \"[Creature] DMG Increase\"; appears in Stat Details once a blessing unlocks it." }
+  - { id: bow_dmg_increase, name: "[Bow] DMG Increase", unit: pct, group: detailed, item_tags: [bow], notes: "Name guessed from \"[Creature] DMG Increase\"; appears in Stat Details once a blessing unlocks it." }
+  - { id: rock_trap_dmg_increase, name: "[Rock] & [Trap] DMG Increase", unit: pct, group: detailed, item_tags: [rock, trap], notes: "Name guessed from \"[Creature] DMG Increase\"; appears in Stat Details once a blessing unlocks it." }
+  - { id: fire_dmg_increase, name: "[Fire] Magic DMG Increase", unit: pct, group: detailed, item_tags: [fire], notes: "Name guessed from \"[Creature] DMG Increase\"; appears in Stat Details once a blessing unlocks it." }
+  - { id: ice_dmg_increase, name: "[Ice] Magic DMG Increase", unit: pct, group: detailed, item_tags: [ice], notes: "Name guessed from \"[Creature] DMG Increase\"; appears in Stat Details once a blessing unlocks it." }
+  - { id: lightning_dmg_increase, name: "[Lightning] Magic DMG Increase", unit: pct, group: detailed, item_tags: [lightning], notes: "Name guessed from \"[Creature] DMG Increase\"; appears in Stat Details once a blessing unlocks it." }
+  - { id: burn_crit_rate, name: Burn Crit Rate, unit: pct, group: combat, notes: "In battle only. Added to Crit Rate for Burn damage." }
+  - { id: burn_crit_dmg, name: Burn Crit DMG, unit: pct, group: combat, notes: "In battle only. Added to Crit DMG for Burn damage." }
+  - { id: burn_crit_dmg_per_crit_rate, name: Burn Crit DMG per Burn Crit Rate, unit: pct, group: combat, notes: "In battle only. Burn Crit DMG + this % of the total Burn Crit Rate (Archwizard's Ring mythic: 200)." }
+  - { id: burn_crit_repeat, name: Burn crit repeats, unit: flat, group: combat, notes: "In battle only. A critical Burn hit deals its damage this many extra times (Primal Flame mythic: 1)." }
+  - { id: poison_crit_rate, name: Poison Crit Rate, unit: pct, group: combat, notes: "In battle only. Added to Crit Rate for Poison damage." }
+  - { id: poison_crit_dmg, name: Poison Crit DMG, unit: pct, group: combat, notes: "In battle only. Added to Crit DMG for Poison damage." }
+  - { id: poison_crit_dmg_per_crit_rate, name: Poison Crit DMG per Poison Crit Rate, unit: pct, group: combat, notes: "In battle only. Poison Crit DMG + this % of the total Poison Crit Rate (Archwizard's Ring mythic: 200)." }
+  - { id: poison_crit_repeat, name: Poison crit repeats, unit: flat, group: combat, notes: "In battle only. A critical Poison hit deals its damage this many extra times (Primal Flame mythic: 1)." }
+  - { id: spike_crit_rate, name: Spike Crit Rate, unit: pct, group: combat, notes: "In battle only. Added to Crit Rate for Spike damage." }
+  - { id: spike_crit_dmg, name: Spike Crit DMG, unit: pct, group: combat, notes: "In battle only. Added to Crit DMG for Spike damage." }
+  - { id: spike_crit_dmg_per_crit_rate, name: Spike Crit DMG per Spike Crit Rate, unit: pct, group: combat, notes: "In battle only. Spike Crit DMG + this % of the total Spike Crit Rate (Archwizard's Ring mythic: 200)." }
+  - { id: spike_crit_repeat, name: Spike crit repeats, unit: flat, group: combat, notes: "In battle only. A critical Spike hit deals its damage this many extra times (Primal Flame mythic: 1)." }
+  - { id: status_ignores_block, name: Statuses ignore Block, unit: flat, group: combat, notes: "In battle only. Above 0: my Spike, Poison and Burn ignore the enemy's Block (Rose's Impale)." }
+  - { id: weapon_crit_proc_chance, name: Weapon crit bonus chance, unit: pct, group: combat, notes: "In battle only. Chance for a weapon Critical Hit to deal weapon_crit_proc_dmg % more (Talin's Hawk Eye)." }
+  - { id: weapon_crit_proc_dmg, name: Weapon crit bonus DMG, unit: pct, group: combat, notes: "In battle only. See weapon_crit_proc_chance." }
+  - { id: weapon_dmg_from_block_pct, name: Weapon DMG from Block, unit: pct, group: combat, notes: "In battle only. Weapon hits deal extra damage equal to this % of my current Block (Rebecca's Courage to Protect All)." }
+  - { id: steal_on_remove_pct, name: Steal instead of remove, unit: pct, group: combat, notes: "In battle only. Chance that removing enemy buffs steals them instead (Trixie's I'll Be Having That)." }
+  - { id: debuff_reflect_pct, name: Debuff reflect, unit: pct, group: combat, notes: "In battle only. % of debuff stacks the enemy gives me that go back to them (Trixie's Consider This Yours)." }
+  - { id: freeze_keep_on_consume_pct, name: Keep Freeze when consumed, unit: pct, group: combat, notes: "In battle only. Chance an item that consumes Freeze doesn't use it up (Ice Mage's Snowball Fight)." }
+  - { id: burn_duration_bonus_s, name: Burn duration bonus (s), unit: flat, group: combat, notes: "In battle only. Timed Burn I inflict lasts this much longer (Ice Mage's Snowball Fight)." }
+  - { id: freeze_duration_bonus_s, name: Freeze duration bonus (s), unit: flat, group: combat, notes: "In battle only. Timed Freeze I inflict lasts this much longer (Ice Mage's Snowball Fight)." }
+  - { id: burn_inflict_increase, name: Burn Inflict Increase, unit: pct, group: detailed }
+  - { id: freeze_inflict_increase, name: Freeze Inflict Increase, unit: pct, group: detailed }
+  - { id: poison_inflict_increase, name: Poison Inflict Increase, unit: pct, group: detailed }
+  - { id: final_dmg_boss_increase, name: Final DMG dealt to Bosses Increase, unit: pct, group: detailed, notes: "Separate final multiplier, only vs. bosses." }
+  - { id: healing_power_enhance, name: Healing Power Enhance, unit: pct, group: detailed, notes: "Appears once unlocked (blessings). Adds to all healing; counters Heal Amount Reduction." }
+  - { id: block_gain, name: Block Gain, unit: pct, group: detailed, notes: "Appears once unlocked (blessings). Increases block gained." }
+  - { id: vamp_recovery_amount, name: Vamp Recovery Amount, unit: pct, group: detailed, notes: "Appears once unlocked (blessings). Increases Vamp healing." }
+  - { id: dmg_vs_stunned, name: DMG against Stunned enemies, unit: pct, group: detailed, notes: "Appears once unlocked (blessings). Type bonus against a stunned target." }
+  - { id: final_dmg_pvp_increase, name: Final DMG dealt in PvP Increase, unit: pct, group: detailed, notes: "Separate final multiplier, arena only." }
+
+  # ---------------------------------------------------------------- Economy [LATER]
+  - { id: bonus_coins, name: Bonus Coins, unit: flat, group: economy, later: true }
+  - { id: free_reroll_per_round, name: Free Reroll Per Round, unit: flat, group: economy, later: true }
+  - { id: extra_coin_per_round, name: Extra Coin Per Round, unit: flat, group: economy, later: true }
+  - { id: interest_per_5_coins_per_round, name: Interest Per 5 Coins Per Round, unit: flat, group: economy, later: true }
+
+  # ---------------------------------------------------------------- Combat-only (enemies, battle effects) — not on Stat Details
+  - { id: dmg_reduction, name: DMG Reduction, unit: pct, group: combat, in_stat_details: false, notes: "Weapon, Burn, Poison, Spike. Damage taken can't drop below 25%." }
+  - { id: attack_dmg_reduction, name: Attack DMG Reduction, unit: pct, group: combat, in_stat_details: false }
+  - { id: burn_dmg_reduction, name: Burn DMG Reduction, unit: pct, group: combat, in_stat_details: false }
+  - { id: poison_dmg_reduction, name: Poison DMG Reduction, unit: pct, group: combat, in_stat_details: false }
+  - { id: spike_dmg_reduction, name: Spike DMG Reduction, unit: pct, group: combat, in_stat_details: false }
+  - { id: attack_dmg_vulnerability, name: Attack DMG Vulnerability, unit: pct, group: combat, in_stat_details: false }
+  - { id: burn_vulnerability, name: Burn Vulnerability, unit: pct, group: combat, in_stat_details: false }
+  - { id: poison_vulnerability, name: Poison Vulnerability, unit: pct, group: combat, in_stat_details: false }
+  - { id: spike_vulnerability, name: Spike Vulnerability, unit: pct, group: combat, in_stat_details: false }
+  - { id: poison_interval_bonus_s, name: Poison interval change (s), unit: flat, group: combat, in_stat_details: false, notes: "My Poison on the enemy ticks this many seconds faster/slower than the 2 s global timer (Venom's blessing: negative)." }
+  - { id: crit_rate_reduction, name: Crit Rate Reduction, unit: pct, group: combat, in_stat_details: false, notes: "Points off the holder's crit chances (weapon, skill and status crits). Phoenix's Flame of Justice on the enemy." }
+  - { id: dmg_taken_increase, name: DMG Taken Increase, unit: pct, group: combat, in_stat_details: false, notes: "All damage the holder takes is +x% (added to vulnerabilities). Phoenix 4★." }
+  - { id: crit_vulnerability, name: Critical Hit Vulnerability, unit: pct, group: combat, in_stat_details: false }
+  - { id: all_debuff_resist, name: All Debuff Resist, unit: pct, group: combat, in_stat_details: false, notes: "Covers Burn, Poison and Freeze." }
+  - { id: burn_resistance, name: Burn Resistance, unit: pct, group: combat, in_stat_details: false }
+  - { id: poison_resistance, name: Poison Resistance, unit: pct, group: combat, in_stat_details: false }
+  - { id: freeze_resistance, name: Freeze Resistance, unit: pct, group: combat, in_stat_details: false }
+  - { id: stun_resistance, name: Stun Resistance, unit: pct, group: combat, in_stat_details: false, notes: "Reduces the chance to be stunned." }

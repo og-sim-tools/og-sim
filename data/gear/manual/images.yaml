@@ -1,0 +1,306 @@
+# Gear in-bag sprites (Gear-Ingame-*.png) from the wiki (tools/fetch-icons.ts, 2026-10-16). image_size is the sprite's native pixel size.
+
+- id: archwizards_ring
+  image: gear/archwizards_ring.png
+  image_size:
+    w: 13
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/a/a2/Gear-Ingame-Archwizard%27s_Ring.png
+  verified: false
+- id: brawlers_gloves
+  image: gear/brawlers_gloves.png
+  image_size:
+    w: 13
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/c/c2/Gear-Ingame-Brawler%27s_Gloves.png
+  verified: false
+- id: celestial_shield
+  image: gear/celestial_shield.png
+  image_size:
+    w: 13
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/e/ee/Gear-Ingame-Celestial_Shield.png
+  verified: false
+- id: clerics_gloves
+  image: gear/clerics_gloves.png
+  image_size:
+    w: 11
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/8/82/Gear-Ingame-Cleric%27s_Gloves.png
+  verified: false
+- id: deathrattle
+  image: gear/deathrattle.png
+  image_size:
+    w: 28
+    h: 45
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/0/00/Gear-Ingame-Deathrattle.png
+  verified: false
+- id: divine_smite
+  image: gear/divine_smite.png
+  image_size:
+    w: 29
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/e/e2/Gear-Ingame-Divine_Smite.png
+  verified: false
+- id: elderwood_bow
+  image: gear/elderwood_bow.png
+  image_size:
+    w: 29
+    h: 45
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/b/b8/Gear-Ingame-Elderwood_Bow.png
+  verified: false
+- id: ember_staff
+  image: gear/ember_staff.png
+  image_size:
+    w: 13
+    h: 45
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/6/68/Gear-Ingame-Ember_Staff.png
+  verified: false
+- id: everfrozen
+  image: gear/everfrozen.png
+  image_size:
+    w: 13
+    h: 45
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/e/eb/Gear-Ingame-Everfrozen.png
+  verified: false
+- id: exotic_spear
+  image: gear/exotic_spear.png
+  image_size:
+    w: 13
+    h: 61
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/1/12/Gear-Ingame-Exotic_Spear.png
+  verified: false
+- id: flowing_blade
+  image: gear/flowing_blade.png
+  image_size:
+    w: 29
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/f/f7/Gear-Ingame-Flowing_Blade.png
+  verified: false
+- id: forest_keepers_gloves
+  image: gear/forest_keepers_gloves.png
+  image_size:
+    w: 12
+    h: 14
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/7/75/Gear-Ingame-Forest_Keeper%27s_Gloves.png
+  verified: false
+- id: frost_staff
+  image: gear/frost_staff.png
+  image_size:
+    w: 13
+    h: 45
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/e/eb/Gear-Ingame-Frost_Staff.png
+  verified: false
+- id: garnet_ring
+  image: gear/garnet_ring.png
+  image_size:
+    w: 13
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/e/ef/Gear-Ingame-Garnet_Ring.png
+  verified: false
+- id: gloves_of_plague
+  image: gear/gloves_of_plague.png
+  image_size:
+    w: 12
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/3/36/Gear-Ingame-Gloves_of_Plague.png
+  verified: false
+- id: gold_ring
+  image: gear/gold_ring.png
+  image_size:
+    w: 13
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/0/07/Gear-Ingame-Gold_Ring.png
+  verified: false
+- id: guards_gloves
+  image: gear/guards_gloves.png
+  image_size:
+    w: 12
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/1/10/Gear-Ingame-Guard%27s_Gloves.png
+  verified: false
+- id: guardians_bow
+  image: gear/guardians_bow.png
+  image_size:
+    w: 13
+    h: 45
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/f/f4/Gear-Ingame-Guardian%27s_Bow.png
+  verified: false
+- id: infernal_shield
+  image: gear/infernal_shield.png
+  image_size:
+    w: 13
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/0/0a/Gear-Ingame-Infernal_Shield.png
+  verified: false
+- id: iron_shield
+  image: gear/iron_shield.png
+  image_size:
+    w: 13
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/c/c7/Gear-Ingame-Iron_Shield.png
+  verified: false
+- id: lightning_gloves
+  image: gear/lightning_gloves.png
+  image_size:
+    w: 13
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/4/40/Gear-Ingame-Lightning_Gloves.png
+  verified: false
+- id: meteor_hammer
+  image: gear/meteor_hammer.png
+  image_size:
+    w: 29
+    h: 28
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/f/f7/Gear-Ingame-Meteor_Hammer.png
+  verified: false
+- id: mighty_warriors_ring
+  image: gear/mighty_warriors_ring.png
+  image_size:
+    w: 13
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/3/35/Gear-Ingame-Mighty_Warrior%27s_Ring.png
+  verified: false
+- id: morningstar
+  image: gear/morningstar.png
+  image_size:
+    w: 13
+    h: 45
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/8/80/Gear-Ingame-Morningstar.png
+  verified: false
+- id: natures_ring
+  image: gear/natures_ring.png
+  image_size:
+    w: 13
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/f/f8/Gear-Ingame-Nature%27s_Ring.png
+  verified: false
+- id: novices_sword
+  image: gear/novices_sword.png
+  image_size:
+    w: 13
+    h: 45
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/e/ec/Gear-Ingame-Novice%27s_Sword.png
+  verified: false
+- id: omnicleaver
+  image: gear/omnicleaver.png
+  image_size:
+    w: 13
+    h: 61
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/8/81/Gear-Ingame-Omnicleaver.png
+  verified: false
+- id: primal_flame
+  image: gear/primal_flame.png
+  image_size:
+    w: 13
+    h: 45
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/1/13/Gear-Ingame-Primal_Flame.png
+  verified: false
+- id: princes_dagger
+  image: gear/princes_dagger.png
+  image_size:
+    w: 29
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/b/bf/Gear-Ingame-Prince%27s_Dagger.png
+  verified: false
+- id: ring_of_chaotic_spikes
+  image: gear/ring_of_chaotic_spikes.png
+  image_size:
+    w: 13
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/c/ca/Gear-Ingame-Ring_of_Chaotic_Spikes.png
+  verified: false
+- id: silver_ring
+  image: gear/silver_ring.png
+  image_size:
+    w: 13
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/2/20/Gear-Ingame-Silver_Ring.png
+  verified: false
+- id: spiked_shield_gear
+  image: gear/spiked_shield_gear.png
+  image_size:
+    w: 13
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/d/d6/Gear-Ingame-Spiked_Shield.png
+  verified: false
+- id: spiral_spear
+  image: gear/spiral_spear.png
+  image_size:
+    w: 13
+    h: 61
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/2/2f/Gear-Ingame-Spiral_Spear.png
+  verified: false
+- id: staff_of_vitality
+  image: gear/staff_of_vitality.png
+  image_size:
+    w: 13
+    h: 45
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/e/e2/Gear-Ingame-Staff_Vitality.png
+  verified: false
+- id: steel_mace
+  image: gear/steel_mace.png
+  image_size:
+    w: 13
+    h: 45
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/f/f7/Gear-Ingame-Steel_Mace.png
+  verified: false
+- id: thunderbolt_spike
+  image: gear/thunderbolt_spike.png
+  image_size:
+    w: 13
+    h: 46
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/d/d4/Gear-Ingame-Thunderbolt_Spike.png
+  verified: false
+- id: vampire_crossbow
+  image: gear/vampire_crossbow.png
+  image_size:
+    w: 29
+    h: 45
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/8/87/Gear-Ingame-Vampire_Crossbow.png
+  verified: false
+- id: wooden_shield_gear
+  image: gear/wooden_shield_gear.png
+  image_size:
+    w: 13
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/9/9a/Gear-Ingame-Wooden_Shield.png
+  verified: false

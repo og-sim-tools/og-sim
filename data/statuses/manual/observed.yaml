@@ -1,0 +1,109 @@
+# My observations and rules for statuses (SPEC §5.3, docs/wiki-data/statuses.md "Simulator" column).
+# These override the wiki values field by field.
+
+- id: vamp
+  amount_per_stack: { ratio: 0.005, scales_with: hp, of: holder }
+  behaviour: heal_holder
+  trigger: holder_weapon_hit
+  stacking: true
+  source: observed
+  verified: true
+  notes: Wiki's 0.01x HP is wrong. Observed 20.0K healed at 4M HP (→ 1/200 HP per stack).
+
+- id: regen
+  amount_per_stack: { ratio: 0.005, scales_with: hp, of: holder }
+  interval_s: 2
+  global_timer: true
+  behaviour: heal_holder
+  trigger: timer
+  stacking: true
+  source: observed
+  verified: true
+  notes: Wiki's 0.01x HP is wrong. Observed 6 stacks healing 7.24M on a 241.6M HP enemy (→ 1/200 HP per stack).
+
+- id: spike
+  amount_per_stack: { ratio: 0.1, scales_with: atk, of: holder }
+  behaviour: damage_attacker
+  trigger: holder_hit_by_weapon
+  stacking: true
+  source: observed
+  verified: true
+  notes: Wiki's 0.01x ATK is a typo. Observed 61.1K at 610.9K ATK (→ 1/10 ATK per stack).
+
+- id: burn
+  amount_per_stack: { ratio: 0.1, scales_with: atk, of: inflicter }
+  behaviour: damage_holder
+  trigger: holder_hit_by_weapon
+  stacking: true
+  source: observed
+  verified: true
+  notes: Wiki's 0.01x ATK is a typo; 1/10 ATK of the inflicter per stack.
+
+- id: poison
+  amount_per_stack: { ratio: 0.1, scales_with: atk, of: inflicter }
+  interval_s: 2
+  global_timer: true
+  behaviour: damage_holder
+  trigger: timer
+  stacking: true
+  source: observed
+  verified: true
+  notes: Wiki's 0.01x ATK is a typo; 1/10 ATK of the inflicter per stack. Ticks on the global 2 s timer from battle start.
+
+- id: freeze
+  behaviour: slow
+  stacking: true
+  source: manual
+  verified: true
+  notes: Final cooldown multiplier (1 + stacks / 100), no cap. Items only, not gear weapon skills.
+
+- id: stun
+  behaviour: stun
+  stacking: false
+  has_duration: true
+  source: manual
+  verified: true
+  notes: The holder's item cooldowns don't progress for the duration.
+
+- id: seal
+  behaviour: seal
+  has_duration: true
+  source: manual
+  verified: true
+  notes: Targets one item, not the whole combatant.
+
+- id: invincible
+  behaviour: invincible
+  has_duration: true
+  removable: false # can't be removed or stolen (user, 2026-10-17)
+  source: manual
+  verified: true
+  notes: Take no damage; ignore all enemy attacks. Usually has a duration.
+
+- id: heal_amount_reduction
+  behaviour: heal_reduction
+  removable: false
+  source: manual
+  verified: true
+  notes: "Behaves like a stat (shows on the buff tab): can't be cleansed or stolen. Healing-increase bonuses counter it additively: heal × (1 + heal_bonus% − reduction%), floor 0."
+
+- id: focus
+  behaviour: accuracy_bonus
+  stacking: true
+  source: manual
+  verified: true
+  notes: +1% accuracy on all the holder's items per stack.
+
+- id: dodge
+  behaviour: evasion_bonus
+  stacking: true
+  source: manual
+  verified: true
+  notes: +1% evasion per stack; enemy accuracy can't drop below 25% (config combat.hit_chance_floor_pct).
+
+- id: swift
+  behaviour: haste
+  stacking: true
+  source: manual
+  verified: true
+  notes: Items activate 1% faster per stack (+1% haste).

@@ -1,0 +1,140 @@
+# In-game screenshots, batch 1 (2026-10-16), taken with HP 4.35M / ATK 701.8K. Text copied as shown.
+# Overrides the wiki field by field (star_effects is replaced whole).
+# Pets are unaffected by Haste/Freeze; only damage and status modifiers apply to them (user, 2026-10-16).
+
+- id: venomous_spider
+  activation_cost: 2
+  skill:
+    name: Raising Spiderlings
+    text: Immediately summons 12 [Venomous Spider Egg Sack] from your backpack.
+  star_effects:
+    - { stars: 1, text: "[Raising Spiderlings] additionally summons 1 [Hefty Egg Sack] that is permanently maintained." }
+    - { stars: 2, text: "[Raising Spiderlings] Base Cooldown decreases by 2s." }
+    - { stars: 4, text: "[Raising Spiderlings] summons 4 additional Egg Sack(s)." }
+    - { stars: 5, text: "[Raising Spiderlings]: Summoned Spiders inflict x2 Poison." }
+  source: observed
+  verified: true
+  observed_with: { hp: 4.35M, atk: 701.8K }
+  notes: 'Seen at 0★ (unowned). Ownership: [All] Total ATK +4%. "from your backpack" is likely a mistranslation of "into".'
+
+- id: geezer
+  activation_cost: 2
+  skill:
+    name: Geezer's Dream
+    text: Immediately opens a Special Shop. You can purchase 1 of the 3 merged items displayed at a discounted price.
+  star_effects:
+    - { stars: 1, text: "[Geezer's Dream] opens a Special Shop where 1 item is free." }
+    - { stars: 2, text: "[Geezer's Dream] opens a Special Shop that displays 1 more item(s)." }
+    - { stars: 4, text: "[Geezer's Dream] lets you reroll the Special Shop for free up to 3 time(s)." }
+    - { stars: 5, text: "[Geezer's Dream]'s activation cost is decreased by 1.", activation_cost_delta: -1 }
+  source: observed
+  verified: true
+  observed_with: { hp: 4.35M, atk: 701.8K }
+  notes: 'Seen at 0★. Ownership: [All] Total HP +4%.'
+
+- id: mimic
+  activation_cost: 1
+  skill:
+    name: Mimic!!!
+    text: Immediately merge all mergeable items and gain 1 Coin for each successful merge.
+  star_effects:
+    - { stars: 1, text: "[Mimic!!!] grants Coin for each item merged by this skill." }
+    - { stars: 2, text: "[Mimic!!!] activated in a round has a 50% chance to be reusable during that round." }
+    - { stars: 4, text: "[Mimic!!!]'s Reuse Rate increases by 50%." }
+    - { stars: 5, text: "[Mimic!!!] grants 1 Coin each time an item is merged by it." }
+  source: observed
+  verified: true
+  observed_with: { hp: 4.35M, atk: 701.8K }
+  notes: >-
+    Seen at 1★, Lv 42. Ownership: [All] Total ATK +8% (1★). Cost 1 as shown in game (wiki said 2).
+
+- id: seiren
+  activation_cost: 2
+  skill:
+    name: Healing Song
+    text: "Start of Battle: gain [Waterdrop Cushion] equal to 100% of your max HP."
+  star_effects:
+    - { stars: 1, text: "[Healing Song] At Start of Battle, gain extra [Waterdrop Cushion] equal to 100% of your max HP." }
+    - { stars: 2, text: "[Healing Song] On Excess Heal, gain [Waterdrop Cushion] equal to 20% of the healed amount." }
+    - { stars: 3, text: "[Healing Song] When entering Berserk, gain [Waterdrop Cushion] equal to 200% of your max HP." }
+    - { stars: 4, text: "[Healing Song] On Excess Heal, gain extra [Waterdrop Cushion] equal to 20% of the healed amount." }
+    - { stars: 5, text: "[Healing Song] Start of Battle and on entering Berserk, gain extra [Waterdrop Cushion] equal to 100% of your max HP." }
+    - { stars: 6, text: "[Healing Song] On Excess Heal, gain extra [Waterdrop Cushion] equal to 20% of the healed amount." }
+  source: observed
+  verified: true
+  observed_with: { hp: 4.35M, atk: 701.8K }
+  notes: 'Seen at 0★. Base is 100% max HP (wiki said 200%). Six star lines (1–6★); wiki had 4,4,5. Ownership: [All] Total HP +4%.'
+
+- id: red_dragon
+  activation_cost: 3
+  skill:
+    name: Dragon Fire
+    text: "Start of Battle: Deal DMG equal to 30% of the enemy's Max HP."
+  star_effects:
+    - { stars: 1, text: "[Dragon Fire]'s activation cost is decreased by 1.", activation_cost_delta: -1 }
+    - { stars: 2, text: "[Dragon Fire] increases its DMG dealt by an additional 10% of the enemy's Max HP." }
+    - { stars: 4, text: "[Dragon Fire] inflicts an additional 10 Burn." }
+    - { stars: 5, text: "[Dragon Fire] increases its DMG dealt by an additional 10% of the enemy's Max HP." }
+  source: observed
+  verified: true
+  observed_with: { hp: 4.35M, atk: 701.8K }
+  notes: >-
+    Seen at 2★, Lv 42, showing 2 gems (3 − 1★). Screen shows 40% with the 2★ line included (user: shown
+    values include unlocked stars), so base is 30%. Damage is fixed (effect type: no enemy damage reduction),
+    with All DMG and final DMG bonuses. Ownership: [All] Total ATK +9% (2★).
+  effects:
+    - { text: "Start of Battle: Deal DMG equal to 30% of the enemy's Max HP.", trigger: battle_start, target: enemy, action: deal_damage, value: { ratio: 0.3, scales_with: enemy_hp }, max_stars: 1 }
+    - { text: "Start of Battle: Deal DMG equal to 40% of the enemy's Max HP. (2★)", trigger: battle_start, target: enemy, action: deal_damage, value: { ratio: 0.4, scales_with: enemy_hp }, min_stars: 2, max_stars: 4 }
+    - { text: "Start of Battle: Deal DMG equal to 50% of the enemy's Max HP. (5★)", trigger: battle_start, target: enemy, action: deal_damage, value: { ratio: 0.5, scales_with: enemy_hp }, min_stars: 5 }
+    - { text: "[Dragon Fire] inflicts an additional 10 Burn.", trigger: battle_start, target: enemy, action: apply_status, status: burn, stacks: 10, min_stars: 4 }
+
+- id: white_wolf_captain
+  activation_cost: 3
+  skill:
+    name: Captain's Shout
+    text: "Start of Battle: For 10s, all weapons gain 30% Haste. The Wolf Captain deals 0.5x ATK DMG 3 time(s) every 3s."
+  star_effects:
+    - { stars: 1, text: "[Captain's Shout]'s activation cost is decreased by 1.", activation_cost_delta: -1 }
+    - { stars: 2, text: "[Captain's Shout]'s Haste increases by an additional 15%." }
+    - { stars: 4, text: "[Captain's Shout]'s Haste increases by an additional 15%." }
+    - { stars: 5, text: "[Captain's Shout]'s duration increases by 5s." }
+  source: observed
+  verified: true
+  observed_with: { hp: 4.35M, atk: 701.8K }
+  notes: >-
+    Seen at 2★: screen shows 45% Haste (30% base + 15% from 2★) and 350.9K DMG = 0.5 × 701.8K ATK.
+    Shows 2 gems at 2★, so base cost is 3 (wiki said 2). Ownership: [All] Total ATK +9% (2★).
+
+- id: hunting_hawk
+  activation_cost: 2
+  skill:
+    name: Hawkeye Vision
+    text: "Every 4s: Remove 10 more buff(s) from whichever of the enemy's Focus or Dodge buffs has more. Haste +60% while the enemy has a total of 30 or more Focus and Dodge."
+  star_effects:
+    - { stars: 1, text: "[Hawkeye Vision]'s activation cost is decreased by 1.", activation_cost_delta: -1 }
+    - { stars: 2, text: "[Hawkeye Vision] grants 60% Haste while the enemy has a total of 30 Focus and Dodge." }
+    - { stars: 4, text: "[Hawkeye Vision] Remove 5 more buff(s)." }
+    - { stars: 5, text: "[Hawkeye Vision] has a 50% chance to steal 5 more buff(s)." }
+  source: observed
+  verified: true
+  observed_with: { hp: 4.35M, atk: 701.8K }
+  notes: >-
+    Seen at 2★ with 1 gem → base cost 2. User: the skill's Haste +60% and the 2★ line's 60% add up
+    (120% Haste at 2★ while the enemy has 30+ Focus and Dodge). Haste applies to weapons, not the pet. Ownership: [All] Total HP +9% (2★).
+
+- id: jellyfish_princess
+  activation_cost: 3
+  skill:
+    name: I Hate Pain!
+    text: "Start of Battle: Gain 0.4x HP Block. On Attacked: 30% chance to gain 4 Spike. (Activates 5 time(s) per battle)"
+  star_effects:
+    - { stars: 1, text: "[I Hate Pain!]'s activation cost is decreased by 1.", activation_cost_delta: -1 }
+    - { stars: 2, text: "[I Hate Pain!]'s Max Activation Count increases by 5." }
+    - { stars: 4, text: "[I Hate Pain!] Increase Block gained from by 0.2x HP." }
+    - { stars: 5, text: "[I Hate Pain!] activated in battle reduces DMG by 20%." }
+  source: observed
+  verified: true
+  observed_with: { hp: 4.35M, atk: 701.8K }
+  notes: >-
+    Seen at 0★. Block 1.74M = 0.4 × 4.35M HP; 4★ +870.9K ≈ 0.2 × HP. Activates 5 times (wiki said 10).
+    Ownership: [All] Total HP +3%.

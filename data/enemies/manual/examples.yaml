@@ -1,0 +1,14 @@
+# Example enemies to try the simulator with. MADE UP — not from the game.
+# Replace or add real enemies here (or type one into a layout's battle settings).
+
+- id: practice_target
+  name: Practice Target (made up)
+  hp: 50M
+  atk: 500K
+  block: 0
+  damage_reduction: 0
+  attacks:
+    - { name: Slam, damage: 600K, cooldown: 2, accuracy: 85 }
+  source: manual
+  verified: false
+  notes: A made-up enemy for trying the simulator. Not from the game.

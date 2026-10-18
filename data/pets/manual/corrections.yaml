@@ -1,0 +1,7 @@
+# My decisions, from docs/wiki-data/corrections.md §4.
+
+- id: golem
+  ignored: true
+  source: manual
+  verified: true
+  notes: corrections.md §4 — its skill has no trigger on the wiki and it isn't worth implementing.

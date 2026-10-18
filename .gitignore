@@ -1,0 +1,8 @@
+node_modules/
+dist/
+coverage/
+*.log
+
+# My own account and saved builds (the site starts new users empty, with src/ui/starter/example.yaml)
+profile/
+layouts/

@@ -1,0 +1,93 @@
+# How unique blessings change their hero skill (2026-10-17). The blessing value from the profile is added to
+# (or scales) the skill number named by `path`. Values are additive like most things in the game (user).
+
+- id: bjorn_flesh_burst
+  skill_mods: [{ effect: 2, path: value.ratio, op: scale_pct }, { effect: 2, path: bonus_per_removed_block.ratio, op: scale_pct }]
+  source: manual
+  verified: false
+- id: rose_parting_rose
+  skill_mods: [{ effect: 0, path: condition.status_over_foe_hp.factor, op: add }]
+  source: manual
+  verified: false
+- id: darkan_forbidden_power
+  skill_mods: [{ effect: 1, path: amount_from.max, op: add }, { effect: 1, path: amount_from.factor, op: add_pct_of_one }, { effect: 2, path: amount_from.max, op: add }, { effect: 2, path: amount_from.factor, op: add_pct_of_one }]
+  source: manual
+  verified: false
+- id: rebecca_courage_to_protect_all
+  skill_mods: [{ effect: 1, path: amount, op: add }]
+  source: manual
+  verified: false
+- id: kai_sword_master
+  skill_mods: [{ effect: 0, path: amount, op: add }]
+  source: manual
+  verified: false
+- id: spearman_spearmans_pride
+  skill_mods: [{ effect: 0, path: amount, op: add }]
+  source: manual
+  verified: false
+- id: barbarian_battle_cry
+  skill_mods: [{ effect: 0, path: chance_pct, op: add }, { effect: 1, path: chance_pct, op: add }]
+  source: manual
+  verified: false
+- id: raven_outlaw_tactics
+  skill_mods: [{ effect: 0, path: duration_s, op: add }]
+  source: manual
+  verified: false
+- id: talin_pursuit
+  skill_mods: [{ effect: 0, path: pct, op: add }]
+  source: manual
+  verified: false
+- id: lua_fairy_wisdom
+  skill_mods: [{ effect: 1, path: duration_s, op: add }]
+  source: manual
+  verified: false
+- id: acrobat_agile_movement
+  skill_mods: [{ effect: 1, path: amount, op: add }]
+  source: manual
+  verified: false
+- id: sniper_ultra_focus
+  skill_mods: [{ effect: 1, path: hp_pct, op: add }]
+  source: manual
+  verified: false
+- id: trixie_ill_be_having_that
+  skill_mods: [{ effect: 0, path: amount, op: add }]
+  source: manual
+  verified: false
+- id: trixie_consider_this_yours
+  skill_mods: [{ effect: 0, path: amount, op: add }]
+  source: manual
+  verified: false
+- id: cecilia_instant_casting
+  skill_mods: [{ effect: 0, path: interval_s, op: add }]
+  source: manual
+  verified: false
+- id: feline_mage_meow
+  skill_mods: [{ effect: 0, path: amount, op: add }]
+  source: manual
+  verified: false
+- id: fire_mage_short_term_memory
+  skill_mods: [{ effect: 0, path: amount, op: add }]
+  source: manual
+  verified: false
+- id: ice_mage_snowball_fight
+  skill_mods: [{ effect: 2, path: amount, op: add }]
+  source: manual
+  verified: false
+- id: bjorn_gigantization
+  skill_mods: [{ effect: 0, path: amount_from.max, op: add }, { effect: 0, path: amount_from.factor, op: add_pct_of_one }]
+  source: observed
+  verified: true
+  notes: 'The Max HP increase needed for the cap stays (+100%); the All DMG at the cap rises (30% → 40/50/60%), so the rate rises too (0.3 → 0.4/0.5/0.6 per HP %). User, 2026-10-17.'
+- id: spark_electrostatic_force
+  skill_mods: [{ effect: 0, path: amount, op: add }]
+  source: manual
+  verified: false
+- id: venom_poison_coating
+  manual_note: "Enhanced Slot +1 / +2: mark that many more enhanced cells in the bag (Venom's cells are picked by hand)."
+  source: manual
+  verified: false
+- id: venom_poison_trigger_interval
+  stat: poison_interval_bonus_s
+  source: manual
+  verified: false
+  notes: 'My Poison on the enemy ticks this much faster than the 2 s global timer (-0.2 s epic … -0.6 s mythic).'

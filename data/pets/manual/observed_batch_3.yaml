@@ -1,0 +1,181 @@
+# In-game screenshots, batch 3 (2026-10-16), HP 4.35M / ATK 701.8K. Star lines copied as shown.
+# Skill text is stored at 0★ base: shown values include the user's unlocked stars, which are backed out.
+# Where a star line repeats a value the skill text shows (Hunting Hawk pattern), the two add.
+
+- id: goblin_scientist
+  activation_cost: 2
+  skill:
+    name: "Exp. #H-301... Huh?"
+    text: Select 1 item. Destroys the item and converts it to a random Shop Item. 15% chance to be reusable during this round.
+  star_effects:
+    - { stars: 1, text: "[Exp. #H-301... Huh?] activated in a round has a 15% chance to be reusable during that round." }
+    - { stars: 2, text: "[Exp. #H-301... Huh?]'s Reuse Rate increases by 15%." }
+    - { stars: 4, text: "[Exp. #H-301... Huh?]'s Reuse Rate increases by 20%." }
+  source: observed
+  verified: true
+  observed_with: { hp: 4.35M, atk: 701.8K }
+  notes: 'Seen at 1★ (2 gems). Hawk rule applied: skill 15% + 1★ 15% = 30% reuse at 1★. Ownership: [All] Total HP +4% (1★).'
+
+- id: mini_mimic
+  activation_cost: 2
+  skill:
+    name: Mimi Mimic?!
+    text: Immediately merge 1 random mergeable item(s).
+  star_effects:
+    - { stars: 1, text: "[Mimi Mimic?!] Lets you merge 1 more item(s)." }
+    - { stars: 2, text: "[Mimi Mimic?!] Lets you merge 1 more item(s)." }
+    - { stars: 4, text: "[Mimi Mimic?!] activated in a round has a 25% chance to be reusable during that round." }
+  source: observed
+  verified: true
+  observed_with: { hp: 4.35M, atk: 701.8K }
+  notes: 'Seen at 2★ (2 gems): screen 3 = 1 + 1 + 1. Ownership: [All] Total ATK +6% (2★).'
+
+- id: eagle
+  activation_cost: 2
+  skill:
+    name: Snatch
+    text: "Every 5s: Remove 6 more buff(s) from whichever of the enemy's Focus or Dodge buffs has more."
+  star_effects:
+    - { stars: 1, text: "[Snatch]'s base Cooldown decreases by 1s." }
+    - { stars: 2, text: "[Snatch] Will Remove 2 more buff(s)." }
+    - { stars: 4, text: "[Snatch] Will Remove 2 more buff(s)." }
+  source: observed
+  verified: true
+  observed_with: { hp: 4.35M, atk: 701.8K }
+  notes: 'Seen at 3★ (2 gems): screen every 4s / 8 buffs = 5s − 1s (1★), 6 + 2 (2★). No 3★ line. Ownership: [All] Total HP +9% (3★).'
+
+- id: raccoon
+  name: Raccoon
+  activation_cost: 3
+  skill:
+    name: Body Slam
+    text: "Start of Battle: Deals 4x ATK DMG."
+  star_effects:
+    - { stars: 1, text: "[Body Slam]'s DMG dealt increases by 50%." }
+    - { stars: 2, text: "[Body Slam] inflicts additional DMG equal to 10% of the enemy's Max HP." }
+    - { stars: 4, text: "[Body Slam]'s Crit Rate increases by 50%." }
+  source: observed
+  verified: true
+  observed_with: { hp: 4.35M, atk: 701.8K }
+  notes: >-
+    Seen at 2★ (3 gems): screen "4.21M + 10% of enemy Max HP" = 4.0 × ATK × 1.5 (1★) + 10% (2★). In game the name
+    is "Raccoon"; the wiki spells it "Racoon" (renamed to raccoon on the user's OK). Ownership:
+    [All] Total ATK +3% (2★).
+
+- id: sheep
+  activation_cost: 3
+  skill:
+    name: Fluffy Guard
+    text: "Start of Battle: Gain 0.25x HP Block."
+  star_effects:
+    - { stars: 1, text: "[Fluffy Guard] will increase Block gained by 0.05x HP." }
+    - { stars: 2, text: "[Fluffy Guard] will increase Block gained by 0.05x HP." }
+    - { stars: 4, text: "[Fluffy Guard] will increase Block gained by 0.05x HP." }
+  source: observed
+  verified: true
+  observed_with: { hp: 4.35M, atk: 701.8K }
+  notes: 'Seen at 2★ (3 gems): screen 1.52M ≈ (0.25 + 0.05 + 0.05) × 4.35M; 217.7K ≈ 0.05 × HP. Ownership: [All] Total HP +3% (2★).'
+
+- id: pink_slime
+  activation_cost: 3
+  skill:
+    name: Heal
+    text: "Every 4s: Heal 0.05x HP and Cleanse 5 random debuff(s)."
+  star_effects:
+    - { stars: 1, text: "[Heal] Will Heal an additional 0.02x HP." }
+    - { stars: 2, text: "[Heal] Will Cleanse 5 random debuff(s) each time you Heal." }
+    - { stars: 4, text: "[Heal] Will Heal an additional 0.03x HP." }
+  source: observed
+  verified: true
+  observed_with: { hp: 4.35M, atk: 701.8K }
+  notes: >-
+    Seen at 2★ (3 gems): heal 304.8K = 217.7K (0.05 × HP) + 87.1K (0.02 × HP, 1★); 4★ 130.6K ≈ 0.03 × HP.
+    Hawk rule applied to Cleanse: skill 5 + 2★ 5 = 10 at 2★ (user confirmed: always additive). Ownership: [All] Total HP +3% (2★).
+
+- id: golem
+  ignored: false
+  activation_cost: 3
+  skill:
+    name: Stomp
+    text: "Start of Battle: Deal 3x ATK DMG and have a 50% chance to Stun the enemy for 1s."
+  star_effects:
+    - { stars: 1, text: "[Stomp]'s DMG dealt increases by 50%." }
+    - { stars: 2, text: "[Stomp]'s Stun Rate increases by 50%." }
+    - { stars: 4, text: "[Stomp]'s Stun duration increases by 1.5s." }
+  source: observed
+  verified: true
+  observed_with: { hp: 4.35M, atk: 701.8K }
+  notes: >-
+    Seen at 2★ (3 gems): screen 3.15M ≈ 3.0 × ATK × 1.5 (1★); 100% stun = 50% + 50% (2★). The in-game skill has
+    a Start of Battle trigger (wiki had none); user un-ignored it on 2026-10-16 given the in-game data. Ownership:
+    [All] Total ATK +3% (2★).
+
+- id: poison_mushroom
+  activation_cost: 3
+  skill:
+    name: Poison Spray
+    text: "Start of Battle: Inflict 12 Poison"
+  star_effects:
+    - { stars: 1, text: "[Poison Spray] Inflicts an additional 6 Poison." }
+    - { stars: 2, text: "[Poison Spray] Inflicts an additional 6 Poison." }
+    - { stars: 4, text: "[Poison Spray] Inflicts an additional 6 Poison." }
+  source: observed
+  verified: true
+  observed_with: { hp: 4.35M, atk: 701.8K }
+  notes: 'Seen at 2★ (3 gems): screen 24 = 12 + 6 + 6. Ownership: [All] Total HP +3% (2★).'
+
+- id: brown_wolf
+  activation_cost: 3
+  skill:
+    name: Wail
+    text: "Start of Battle: Strongest weapon Haste +20% for 10s."
+  star_effects:
+    - { stars: 1, text: "[Wail]'s Haste increases by an additional 5%." }
+    - { stars: 2, text: "[Wail]'s Haste increases by an additional 5%." }
+    - { stars: 4, text: "[Wail]'s Haste increases by an additional 10%." }
+  source: observed
+  verified: true
+  observed_with: { hp: 4.35M, atk: 701.8K }
+  notes: 'Seen at 2★ (3 gems): screen 30% = 20% + 5% + 5%. Ownership: [All] Total ATK +3% (2★).'
+
+- id: hedgehog
+  activation_cost: 3
+  skill:
+    name: Spike Guard
+    text: "Start of Battle: Gain 0.15x HP Block and 5 Spike."
+  star_effects:
+    - { stars: 1, text: "[Spike Guard] Gain 5 additional Spike through ." }
+    - { stars: 2, text: "[Spike Guard] Increase Block gained from by 0.05x HP." }
+    - { stars: 4, text: "[Spike Guard] Increase Block gained from by 0.05x HP." }
+  source: observed
+  verified: true
+  observed_with: { hp: 4.35M, atk: 701.8K }
+  notes: 'Seen at 2★ (3 gems): screen 870.9K = 0.15 × HP + 217.7K (2★); 10 Spike = 5 + 5 (1★). "through ." is cut off in game. Ownership: [All] Total HP +3% (2★).'
+
+- id: skeleton_reaper
+  activation_cost: 2
+  skill:
+    name: Curse
+    text: "Start of Battle: Inflict 25% Reduction to enemy Healing."
+  star_effects:
+    - { stars: 1, text: "[Curse] reduces HP Recovery by an additional 10%." }
+    - { stars: 2, text: "[Curse] reduces HP Recovery by an additional 10%." }
+    - { stars: 4, text: "[Curse] inflicts an additional 10 Freeze." }
+  source: observed
+  verified: true
+  observed_with: { hp: 4.35M, atk: 701.8K }
+  notes: 'Seen at 2★ (2 gems): screen 45% = 25% + 10% + 10%. Ownership: [All] Total HP +3% (2★).'
+
+- id: polar_bear
+  activation_cost: 3
+  skill:
+    name: Shred
+    text: "Start of Battle: Deal 3x ATK DMG, and inflict 10 Freeze."
+  star_effects:
+    - { stars: 1, text: "[Shred]'s DMG dealt increases by 50%." }
+    - { stars: 2, text: "[Shred] inflicts an additional 5 Freeze." }
+    - { stars: 4, text: "[Shred]'s Crit Rate increases by 50%." }
+  source: observed
+  verified: true
+  observed_with: { hp: 4.35M, atk: 701.8K }
+  notes: 'Seen at 2★ (3 gems): screen 3.15M ≈ 3.0 × ATK × 1.5 (1★); 15 Freeze = 10 + 5 (2★). Ownership: [All] Total ATK +3% (2★).'

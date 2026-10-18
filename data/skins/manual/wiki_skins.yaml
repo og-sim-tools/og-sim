@@ -1,0 +1,183 @@
+# Hero skins from the wiki hero pages (Skins section), read 2026-10-17 by hand (data/skins/wiki/ is only for generated files). The slash-separated "by grade"
+# numbers are what each star (1★ … 5★) adds on top of the 0★ skill, so a 3★ skin has the 0★ value plus
+# the first three numbers (the same reading as the in-game star rows in the user's screenshots).
+# Ownership effects are ignored (already in my Stat Details, SPEC §1).
+
+- id: bjorn_little_valcan
+  name: Little Valcan Bjorn
+  hero: bjorn
+  rarity: epic
+  obtainable: Surviving Overgeared Hero as a Barbarian Collaboration Event
+  skill:
+    name: Behela!!
+    quest: Must simultaneously own 1 Lithinum Greatshield and 2 HP Potion.
+    reward: In the Shop, the appearance rate of Red Dust increases by 15%, and the appearance rate of Anvil decreases by 15%.
+    by_grade: Item appearance rate is additionally increased/decreased by 5%/5%/5%/5%/15%
+  quest_check: { type: bag_items, items: [{ item: lithinum_greatshield, count: 1 }, { item: hp_potion, count: 2 }] }
+  available: { heroes: [bjorn] }
+  status: shop
+  effects: []
+  ownership_text: "[All] Increase Total HP by 3% (7%/12%/18%/25%/33%)"
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Bjorn
+  verified: false
+  notes: "Shop only: no battle effect. \"Lithinum Greatshield\" is spelled as on the wiki."
+
+- id: rebecca_red_sun
+  name: Red Sun Rebecca
+  hero: rebecca
+  rarity: legendary
+  obtainable: Tropical Island Event
+  skill:
+    name: Change of Sides
+    quest: "By round 4, you must fill the designated slots with [Armor] of Rare Grade or higher and start the battle. Once the quest is completed, all items in the designated slots will be sacrificed!"
+    reward: "Start of Battle: All Legendary Grade [Sword] attack 1 times each. Repeats for each Legendary Grade [Sword] in your Backpack."
+    by_grade: At the start of battle, each [Sword] attacks 1/1/1/1/1 more times.
+  quest_check: { type: run, note: "the designated slots are picked in game (and sacrificed afterwards), so the bag can't show it" }
+  available: { classes: [warrior] }
+  status: complete
+  effects:
+    - { text: "Start of Battle: All Legendary Grade [Sword] attack 1 times each. Repeats for each Legendary Grade [Sword] in your Backpack.", trigger: battle_start, target: all_items, filter: { tags_any: [sword], rarity: [legendary] }, action: attack, times: 0, times_per_bag: { tags_any: [sword], rarity: [legendary] }, max_stars: 0 }
+    - { text: "… each [Sword] attacks 1 more time (1★).", trigger: battle_start, target: all_items, filter: { tags_any: [sword], rarity: [legendary] }, action: attack, times: 1, times_per_bag: { tags_any: [sword], rarity: [legendary] }, min_stars: 1, max_stars: 1 }
+    - { text: "… each [Sword] attacks 2 more times (2★).", trigger: battle_start, target: all_items, filter: { tags_any: [sword], rarity: [legendary] }, action: attack, times: 2, times_per_bag: { tags_any: [sword], rarity: [legendary] }, min_stars: 2, max_stars: 2 }
+    - { text: "… each [Sword] attacks 3 more times (3★).", trigger: battle_start, target: all_items, filter: { tags_any: [sword], rarity: [legendary] }, action: attack, times: 3, times_per_bag: { tags_any: [sword], rarity: [legendary] }, min_stars: 3, max_stars: 3 }
+    - { text: "… each [Sword] attacks 4 more times (4★).", trigger: battle_start, target: all_items, filter: { tags_any: [sword], rarity: [legendary] }, action: attack, times: 4, times_per_bag: { tags_any: [sword], rarity: [legendary] }, min_stars: 4, max_stars: 4 }
+    - { text: "… each [Sword] attacks 5 more times (5★).", trigger: battle_start, target: all_items, filter: { tags_any: [sword], rarity: [legendary] }, action: attack, times: 5, times_per_bag: { tags_any: [sword], rarity: [legendary] }, min_stars: 5 }
+  ownership_text: "[All] Increase Total HP by 3% (7%/12%/18%/25%/33%)"
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Rebecca
+  verified: false
+  notes: "The quest sacrifices the armor in the designated slots: lay out the bag as it is after that. Legendary covers gear at legendary rarity too."
+
+- id: erwen_romantic_date
+  name: Romantic Date Erwen
+  hero: erwen
+  rarity: epic
+  obtainable: Surviving Overgeared Hero as a Barbarian Collaboration Event
+  skill:
+    name: Gift for Uncle
+    quest: "Must simultaneously own 1 of each: Air Walker, Wind Spirit, and Leather Gloves."
+    reward: In the Shop, the appearance rate of Hawk's Claw increases by 15%, and the appearance rate of Venomous Insect decreases by 15%.
+    by_grade: Item appearance rate is additionally increased/decreased by 5%/5%/5%/5%/15%
+  quest_check: { type: bag_items, items: [{ item: air_walker, count: 1 }, { item: wind_spirit, count: 1 }, { item: leather_gloves, count: 1 }] }
+  available: { classes: [ranger] }
+  status: shop
+  effects: []
+  ownership_text: "[All] Increase Total HP by 3% (7%/12%/18%/25%/33%)"
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Erwen
+  verified: false
+  notes: "Shop only: no battle effect."
+
+- id: venom_missha_karlstein
+  name: Missha Karlstein
+  hero: venom
+  rarity: legendary
+  obtainable: Surviving Overgeared Hero as a Barbarian Collaboration Event
+  skill:
+    name: Glacial Beast Skadia
+    quest: Before Round 4 ends, you must hit 150 times with [Sword].
+    reward: "On inflicting 30 Poison or on [Sword] hit, inflict 5 Freeze for 3 sec. For each enemy Freeze stack, Poison Crit Rate and Poison Crit DMG increase by 0.5%."
+    by_grade: Inflict 1 additional Freeze at each grade.
+  quest_check: { type: run, note: "150 [Sword] hits before round 4 ends, counted over several battles" }
+  available: { classes: [ranger] }
+  status: complete
+  effects:
+    - { text: "On inflicting 30 Poison: inflict 5 Freeze for 3 sec.", trigger: on_status_applied, watch: any, params: { status: poison }, every: 30, target: enemy, action: apply_status, status: freeze, stacks: 5, duration_s: 3, max_stars: 0 }
+    - { text: "On [Sword] hit: inflict 5 Freeze for 3 sec.", trigger: on_hit, watch: any, watch_filter: { tags_any: [sword] }, target: enemy, action: apply_status, status: freeze, stacks: 5, duration_s: 3, max_stars: 0 }
+    - { text: "… 6 Freeze (1★).", trigger: on_status_applied, watch: any, params: { status: poison }, every: 30, target: enemy, action: apply_status, status: freeze, stacks: 6, duration_s: 3, min_stars: 1, max_stars: 1 }
+    - { text: "… 6 Freeze (1★).", trigger: on_hit, watch: any, watch_filter: { tags_any: [sword] }, target: enemy, action: apply_status, status: freeze, stacks: 6, duration_s: 3, min_stars: 1, max_stars: 1 }
+    - { text: "… 7 Freeze (2★).", trigger: on_status_applied, watch: any, params: { status: poison }, every: 30, target: enemy, action: apply_status, status: freeze, stacks: 7, duration_s: 3, min_stars: 2, max_stars: 2 }
+    - { text: "… 7 Freeze (2★).", trigger: on_hit, watch: any, watch_filter: { tags_any: [sword] }, target: enemy, action: apply_status, status: freeze, stacks: 7, duration_s: 3, min_stars: 2, max_stars: 2 }
+    - { text: "… 8 Freeze (3★).", trigger: on_status_applied, watch: any, params: { status: poison }, every: 30, target: enemy, action: apply_status, status: freeze, stacks: 8, duration_s: 3, min_stars: 3, max_stars: 3 }
+    - { text: "… 8 Freeze (3★).", trigger: on_hit, watch: any, watch_filter: { tags_any: [sword] }, target: enemy, action: apply_status, status: freeze, stacks: 8, duration_s: 3, min_stars: 3, max_stars: 3 }
+    - { text: "… 9 Freeze (4★).", trigger: on_status_applied, watch: any, params: { status: poison }, every: 30, target: enemy, action: apply_status, status: freeze, stacks: 9, duration_s: 3, min_stars: 4, max_stars: 4 }
+    - { text: "… 9 Freeze (4★).", trigger: on_hit, watch: any, watch_filter: { tags_any: [sword] }, target: enemy, action: apply_status, status: freeze, stacks: 9, duration_s: 3, min_stars: 4, max_stars: 4 }
+    - { text: "… 10 Freeze (5★).", trigger: on_status_applied, watch: any, params: { status: poison }, every: 30, target: enemy, action: apply_status, status: freeze, stacks: 10, duration_s: 3, min_stars: 5 }
+    - { text: "… 10 Freeze (5★).", trigger: on_hit, watch: any, watch_filter: { tags_any: [sword] }, target: enemy, action: apply_status, status: freeze, stacks: 10, duration_s: 3, min_stars: 5 }
+    - { text: "For each enemy Freeze stack, Poison Crit Rate … increase by 0.5%.", trigger: passive, target: player, action: add_player_stat, player_stat: poison_crit_rate, amount_from: { status: freeze, status_on: enemy, factor: 0.5 } }
+    - { text: "… and Poison Crit DMG increase by 0.5%.", trigger: passive, target: player, action: add_player_stat, player_stat: poison_crit_dmg, amount_from: { status: freeze, status_on: enemy, factor: 0.5 } }
+  ownership_text: "[All] Increase Total HP by 5% (11%/18%/26%/35%/45%)"
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Venom
+  verified: false
+
+- id: lua_summer_vacation
+  name: Summer Vacation Lua
+  hero: lua
+  rarity: legendary
+  obtainable: Tropical Island Event
+  skill:
+    name: Focus anywhere!
+    quest: Reach 300 stacks of Focus during battle before the end of round 4.
+    reward: "On [Bow] hit, 25% chance to fire a Beach Ball that deals extra DMG equal to 50% of Attack DMG. Enemies hit by Beach Ball take 5% increased Weapon Crit DMG."
+    by_grade: Enemies hit by Beach Ball additionally take 5%/5%/5%/5%/5% increased Weapon Crit DMG.
+  quest_check: { type: run, note: "300 Focus during a battle before round 4 ends" }
+  available: { heroes: [lua] }
+  status: complete
+  effects:
+    - { text: "On [Bow] hit, 25% chance to fire a Beach Ball that deals extra DMG equal to 50% of Attack DMG.", trigger: on_hit, watch: any, watch_filter: { tags_any: [bow] }, chance_pct: 25, roll_group: beach_ball, target: enemy, action: deal_damage, event_pct: 50, damage_type: effect }
+    - { text: "Enemies hit by Beach Ball take 5% increased Weapon Crit DMG.", trigger: on_hit, watch: any, watch_filter: { tags_any: [bow] }, chance_pct: 25, roll_group: beach_ball, target: enemy, action: add_combatant_stat, combat_stat: crit_vulnerability, amount: 5, max_stacks: 1, max_stars: 0 }
+    - { text: "… 10% (1★).", trigger: on_hit, watch: any, watch_filter: { tags_any: [bow] }, chance_pct: 25, roll_group: beach_ball, target: enemy, action: add_combatant_stat, combat_stat: crit_vulnerability, amount: 10, max_stacks: 1, min_stars: 1, max_stars: 1 }
+    - { text: "… 15% (2★).", trigger: on_hit, watch: any, watch_filter: { tags_any: [bow] }, chance_pct: 25, roll_group: beach_ball, target: enemy, action: add_combatant_stat, combat_stat: crit_vulnerability, amount: 15, max_stacks: 1, min_stars: 2, max_stars: 2 }
+    - { text: "… 20% (3★).", trigger: on_hit, watch: any, watch_filter: { tags_any: [bow] }, chance_pct: 25, roll_group: beach_ball, target: enemy, action: add_combatant_stat, combat_stat: crit_vulnerability, amount: 20, max_stacks: 1, min_stars: 3, max_stars: 3 }
+    - { text: "… 25% (4★).", trigger: on_hit, watch: any, watch_filter: { tags_any: [bow] }, chance_pct: 25, roll_group: beach_ball, target: enemy, action: add_combatant_stat, combat_stat: crit_vulnerability, amount: 25, max_stacks: 1, min_stars: 4, max_stars: 4 }
+    - { text: "… 30% (5★).", trigger: on_hit, watch: any, watch_filter: { tags_any: [bow] }, chance_pct: 25, roll_group: beach_ball, target: enemy, action: add_combatant_stat, combat_stat: crit_vulnerability, amount: 30, max_stacks: 1, min_stars: 5 }
+  ownership_text: "[All] Increase Total HP by 3% (7%/12%/18%/25%/33%)"
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Lua
+  verified: false
+  notes: "Lua only (user, 2026-10-17; the wiki says \"Available: Erwen\"). The Beach Ball is 50% of the bow hit's damage after reductions, as a separate hit that reductions don't cut again. \"Take increased Weapon Crit DMG\" is Critical Hit Vulnerability, once per battle (not per ball)."
+
+- id: cecilia_arua_raven
+  name: Arua Raven
+  hero: cecilia
+  rarity: legendary
+  obtainable: Surviving Overgeared Hero as a Barbarian Collaboration Event
+  skill:
+    name: Sunspot Sphere
+    quest: Until Round 4, you must not take HP DMG for 10 seconds during battle.
+    reward: "After 20s at battle start and upon completing the quest, cast [Sunspot Sphere] and then attack to deal damage. Damage increases based on the number of Debuff stacks removed by [Sunspot Sphere]."
+    by_grade: Final DMG is additionally increased by 50%/50%/50%/100%/150%.
+  quest_check: { type: run, note: "no HP damage for 10 seconds in a battle before round 4" }
+  available: { classes: [wizard] }
+  status: partial
+  effects:
+    - { text: "After 20s at battle start … cast [Sunspot Sphere] and then attack to deal damage.", trigger: timer, at_s: 20, target: enemy, action: deal_damage, damage_type: weapon, value: { ratio: 30, scales_with: atk }, max_stars: 0 }
+    - { text: "Final DMG +50% (1★).", trigger: timer, at_s: 20, target: enemy, action: deal_damage, damage_type: weapon, value: { ratio: 45, scales_with: atk }, min_stars: 1, max_stars: 1 }
+    - { text: "Final DMG +100% (2★).", trigger: timer, at_s: 20, target: enemy, action: deal_damage, damage_type: weapon, value: { ratio: 60, scales_with: atk }, min_stars: 2, max_stars: 2 }
+    - { text: "Final DMG +150% (3★).", trigger: timer, at_s: 20, target: enemy, action: deal_damage, damage_type: weapon, value: { ratio: 75, scales_with: atk }, min_stars: 3, max_stars: 3 }
+    - { text: "Final DMG +250% (4★).", trigger: timer, at_s: 20, target: enemy, action: deal_damage, damage_type: weapon, value: { ratio: 105, scales_with: atk }, min_stars: 4, max_stars: 4 }
+    - { text: "Final DMG +400% (5★).", trigger: timer, at_s: 20, target: enemy, action: deal_damage, damage_type: weapon, value: { ratio: 150, scales_with: atk }, min_stars: 5 }
+  ownership_text: "[All] Increase Total HP by 5% (11%/18%/26%/35%/45%)"
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Cecilia
+  verified: false
+  observed_with: { hp: "5.53M", atk: "1.65M" }
+  notes: "the extra damage for each debuff stack Sunspot Sphere removes isn't known, so it's left out (base hit only: 30x ATK, 49.64M at 1.65M ATK; 74.47/99.29/124.1/173.7/248.2M at 1★–5★ from the user). The name Arua Raven is correct (a collab with the manhwa Rafdonia; user, 2026-10-17)."
+
+- id: feline_mage_cool_splash
+  name: Cool Splash Meow Mage
+  hero: feline_mage
+  rarity: legendary
+  obtainable: Tropical Island Event
+  skill:
+    name: YOLO Wizard
+    quest: Spend a total of 60 Coin in a single round.
+    reward: Instantly gain 3 Coin.
+    by_grade: Gain an additional 2/2/3/2/3 Coin.
+  quest_check: { type: run, note: "spend 60 Coin in one round (shop)" }
+  available: { all: true }
+  status: shop
+  effects: []
+  ownership_text: "[All] Increase Total HP by 3% (7%/12%/18%/25%/33%)"
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Feline_Mage
+  verified: false
+  notes: "Coins only: no battle effect."
+
+# "Summer" skins: the wiki says "Not obtainable; appears as an enemy". No skill.
+- { id: rose_summer, name: Summer Rose, hero: rose, enemy_only: true, effects: [], source: wiki, url: "https://overgearedhero.fandom.com/wiki/Rose", verified: false }
+- { id: darkan_summer, name: Summer Darkan, hero: darkan, enemy_only: true, effects: [], source: wiki, url: "https://overgearedhero.fandom.com/wiki/Darkan", verified: false }
+- { id: talin_summer, name: Summer Talin, hero: talin, enemy_only: true, effects: [], source: wiki, url: "https://overgearedhero.fandom.com/wiki/Talin", verified: false }
+- { id: trixie_summer, name: Summer Trixie, hero: trixie, enemy_only: true, effects: [], source: wiki, url: "https://overgearedhero.fandom.com/wiki/Trixie", verified: false }

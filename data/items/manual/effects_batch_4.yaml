@@ -1,0 +1,75 @@
+# Effects batch 4 (2026-10-17): the spike and dodge archetypes (Bjorn spikes, Raven dodge). Structured from the
+# wiki text; unverified until checked in game.
+
+- id: spiked_armor
+  stats: { cooldown: 3.5 }
+  effects:
+    - { text: "Start of Battle: Increase Max HP by 40%.", trigger: battle_start, target: player, action: add_max_hp_pct, amount: 40 }
+    - { text: "Every 3.5s: Gain 5 Spike.", trigger: on_activation, target: player, action: apply_status, status: spike, stacks: 5 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Max HP +40% of the starting max HP (several armors add, not multiply); current HP rises with it.'
+
+- id: spiked_shield
+  effects:
+    - { text: "On Attacked: 50% chance to reduce DMG taken by 20%,", trigger: before_attacked, chance_pct: 50, roll_group: shield, target: player, action: reduce_hit_damage, pct: 20 }
+    - { text: "and gain 1 Spike.", trigger: before_attacked, chance_pct: 50, roll_group: shield, target: player, action: apply_status, status: spike, stacks: 1 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'One 50% roll for both parts (the Spike only comes with the reduction).'
+
+- id: spiked_whip
+  effects:
+    - { text: "Increase Spike Crit Rate by 0.5% for every Spike stack.", trigger: passive, target: player, action: add_player_stat, player_stat: spike_crit_rate, amount_from: { status: spike, status_on: self, factor: 0.5 } }
+    - { text: "Start of Battle: Gain 5 Spike.", trigger: battle_start, target: player, action: apply_status, status: spike, stacks: 5 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Spike Crit Rate is capped at 100% like Burn Crit Rate (config status_crit_rate_cap_pct).'
+
+- id: black_feather
+  effects:
+    - { text: "When HP is below or equal to 50%: Evade all attacks for 1s per Black Feather in your backpack.", trigger: hp_below, hp_pct: 50, limit: { per_battle: 1 }, target: player, action: apply_status, status: evade, stacks: 1, duration_s: 1, duration_per_item: black_feather }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Evade only stops weapon and skill hits: Spike, Burn, Poison and other status damage still land (user, 2026-10-17).'
+
+- id: air_walker
+  effects:
+    - { text: "Start of Battle: Gain 10 Dodge.", trigger: battle_start, target: player, action: apply_status, status: dodge, stacks: 10 }
+    - { text: "If there is no Freeze to Cleanse, gain 2 Swift", trigger: on_dodge, condition: { who: self, no_status: freeze }, target: player, action: apply_status, status: swift, stacks: 2 }
+    - { text: "On Successful Evasion: Cleanse 5 Freeze.", trigger: on_dodge, condition: { who: self, status: freeze }, target: player, action: cleanse, status: freeze, count: 5 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: '"Successful Evasion" = an enemy weapon or skill hit misses me (on_dodge, at most once per tick per effect).'
+
+- id: shadow_hunter
+  stats: { hits: 2 }
+  effects:
+    - { text: "On Successful Evasion: Attack.", trigger: on_dodge, target: self_item, action: attack }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: '"Attacks 2 times" = 2 hits per attack (a tick apart).'
+
+- id: black_bow
+  effects:
+    - { text: "On successful Evasion: The next attack hits two times.", trigger: on_dodge, target: self_item, action: add_next_attack_hits, amount: 1 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Doesn''t stack: several dodges before the next attack still give 2 hits.'
+
+- id: dragon_slayer
+  effects:
+    - { text: "Start of Battle: Gain 45% aaccuracy for 10s,", trigger: battle_start, target: self_item, action: add_stat_pct, stat: accuracy_pct, amount: 45, duration_s: 10 }
+    - { text: "immediately Attack.", trigger: battle_start, target: self_item, action: attack }
+    - { text: "On Hit: Inflict 7.5 Burn.", trigger: on_hit, target: enemy, action: apply_status, status: burn, stacks: 7.5 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'The +45% accuracy lands before the start-of-battle attack. "aaccuracy" is the wiki''s typo (left as is).'

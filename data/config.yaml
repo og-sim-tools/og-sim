@@ -1,0 +1,136 @@
+# Tunable rules (SPEC). Anything marked [UNVERIFIED] in SPEC lives here so it can change without code changes.
+
+rarities:
+  item: [common, uncommon, rare, epic, legendary]
+  gear: [common, uncommon, rare, epic, legendary, mythic]
+  blessing: [common, uncommon, rare, epic, legendary, mythic]
+  pet: [rare, epic, legendary, mythic]
+  hero: [rare, epic, legendary]
+
+bag:
+  width: 8
+  full_height: 6
+
+gear:
+  slots: { weapon: 1, shield: 1, ring: 2, glove: 2 }
+  # Highest tier per rarity: Epic +0..+2, Legendary +0..+3, Mythic +0..+4.
+  max_tier: { epic: 2, legendary: 3, mythic: 4 }
+  # Weapon bonus stat (Primal Flame "Crit Rate +12.5%" on the wiki) by rarity + tier. It grows with both; only
+  # confirmed values go here. User, 2026-10-16: every mythic S weapon gives 50% of its stat at mythic +0.
+  # Any other rarity + tier: type the in-game value on the weapon in the Profile tab (gear bonus_value);
+  # until then the bonus is NOT applied and a red warning says so.
+  # Epic +0 = 12.5% (the wiki value, user confirmed 2026-10-16).
+  bonus_stat_known: { "epic+0": 12.5, "mythic+0": 50 }
+
+heroes:
+  max_stars: 9
+  # Supply Ability = base by hero rarity + 1 per star.
+  supply_ability_base: { rare: 5, epic: 8, legendary: 10 }
+  supply_ability_per_star: 1
+  # Star levels at which a hero's supplies unlock.
+  supply_unlock_stars:
+    rare: [1, 3, 5, 7]
+    epic: [0, 1, 3, 5, 7]
+    legendary: [0, 0, 1, 3, 5, 7]
+  skill_link_stars: [4, 8]
+
+# Supply Ability cost per starting-equipment item.
+supply_cost: { common: 2, uncommon: 3, rare: 4, epic: 6, legendary: 8 }
+
+blessings:
+  max_per_hero: 5
+  default_level: 9                               # my account's Dragon's Blessing level (new heroes start here)
+  # [UNVERIFIED] Tag blessings ([Sword] Weapon DMG, …) aren't on Stat Details, so they're added per item.
+  # Stat blessings (All DMG, Crit DMG, [Creature] DMG, …) are already in Stat Details and never added.
+  tag_bonuses_in_stat_details: false
+  # From the wiki's Dragon's Blessing page (https://overgearedhero.fandom.com/wiki/Dragon's_Blessing), unverified.
+  # The simulator only enforces max_per_hero.
+  slots_by_level: { "1": 2, "2": 2, "3": 3, "4": 4, "5": 5, "6": 5, "7": 5, "8": 5, "9": 5 }
+
+pets:
+  max_equipped: 3
+  activation_points: 5
+  max_stars: 6
+
+stats:
+  # Stat Details already include gear / blessing / hero-star / pet / aura passives (confirmed).
+  passives_included_in_stat_details: true
+
+observations:
+  # The game rounds displayed numbers (1.34M = 1.335M–1.345M). Truncation kept just in case.
+  display_rounding: round
+
+timing:
+  tick_seconds: 0.1                # [UNVERIFIED] real frame timing varies by item
+  min_cooldown_seconds: 0.1
+  # Ticks between the steps of one sequence: hits of a multi-hit attack or gear skill, "Activates Burn N times",
+  # and the repeats of a crit Burn (Primal Flame mythic: 9 activations all critting = 18 ticks). User, 2026-10-16.
+  multi_hit_spacing_ticks: 1
+  status_timer_seconds: 2          # Poison / Regen global timer from battle start
+  trigger_rate_limits:             # max fires per tick; triggers not listed are unlimited
+    on_dodge: 1
+  side_order: player_first         # order of processing only: actions in one tick happen together; deaths are settled at the end of the tick
+
+combat:
+  hit_chance_floor_pct: 25
+  hit_chance_cap_pct: 100
+  crit_rate_cap_pct: 100
+  default_crit_damage_pct: 100
+  status_crit_rate_cap_pct: 100                  # Burn Crit Rate gained (Archwizard's Ring) caps at 100%
+  status_crit_dmg_per_rate_from: bonus           # [UNVERIFIED] Archwizard's Ring mythic "2 times the Burn Crit Rate": bonus = only the (capped) Burn Crit Rate gained, so up to +200%; total = Crit Rate + Burn Crit Rate
+  damage_taken_floor_pct: 25
+  all_dmg_mode: separate                         # [UNVERIFIED] separate: (1+type%)×(1+all%); additive: (1+type%+all%)
+  additional_damage_gets_final_multiplier: true  # [UNVERIFIED]
+  self_hp_loss_floor: 1                          # [UNVERIFIED] "Lose HP" from my own items can't kill me
+  death_timing: immediate                        # user, 2026-10-17: whoever lands the killing blow first wins; the dead fighter doesn't act for the rest of the tick (end_of_tick = both finish the tick)
+  mutual_kill_winner: random                     # [UNVERIFIED] both die in the same tick (not the Spike case): player | enemy | random (seeded coin flip; user, 2026-10-17)
+  max_chain_depth: 400                          # NOT a game rule (user, 2026-10-17: chains never stop in game): only a guard so a simulator bug can't hang the app; hitting it is reported as a bug
+  stun_resistance_mode: multiply                 # confirmed: 80% Stun Resistance = only 20% of stun attempts stun
+  stun_reapply: longest                          # confirmed: stunned while stunned refreshes to the longer duration
+  stun_pauses_gear_skills: false                 # confirmed: Stun doesn't pause gear skill timers
+  refill_rounding: ceil                          # [UNVERIFIED] Waterdrop Cushion: missing 2.3% HP uses 3 stacks (ceil) | 2.3 (exact)
+  removal_unit: stacks                           # confirmed: "Cleanse 5 debuffs" = 5 random stacks over all my removable debuffs
+  skill_hits_are_weapon_hits: true               # confirmed: gear skill hits roll accuracy and trigger Burn / Spike / on-hit
+  skill_damage_gets_attack_dmg: true             # confirmed: Attack DMG Increase applies to gear skills
+
+# Start of battle: lower goes first; ties go in bag order. Torch's Burn (apply_status) lands before
+# anything that hits. gear_basic_attack = gear weapons hit at the start (normal items start on cooldown).
+battle_start_priority:
+  add_stat_pct: 10
+  add_combatant_stat: 10
+  add_inflict_pct: 10                            # "items inflict x% more" before any Start of Battle status
+  apply_status: 20
+  cleanse: 25
+  remove_status: 25
+  steal_status: 25
+  gain_block: 30
+  heal: 30
+  lose_hp: 30
+  seal_item: 35
+  remove_block: 40
+  deal_damage: 50
+  attack: 50
+  activate_item: 50
+  gear_basic_attack: 50
+  default: 45
+
+multi_fight:                                     # Gauntlet / Boss Rush
+  carry_cooldowns: true                          # confirmed: nothing changes between Gauntlet fights
+  berserk_per_fight: false                       # confirmed: Gauntlet Berserk runs on the battle clock (an enemy entering after 10 s gets stack 1 at once, then +1 every whole second)
+
+pvp:                                             # fights where the enemy is a player (Enemy is: Player)
+  hp_block_multiplier: 20                        # user, 2026-10-17: base HP and Block x20 for both players in PvP
+
+berserk:                                         # my observations, not on the wiki
+  start_seconds: 10
+  interval_seconds: 1
+  first_stack: { dmg_pct: 25, haste_pct: 25, accuracy_pct: 0 }
+  per_stack: { dmg_pct: 5, haste_pct: 5, accuracy_pct: 5 }
+  sides: { chapter: enemy, pvp: both }
+
+modes:
+  stage: { fight_seconds: 30, fights: 1 }
+  gauntlet: { total_seconds: 60, fights: 4, boss_fights: [4] }
+  boss_rush: { fight_seconds: 30, fights: 1, boss_fights: [1], fixed_time: true }   # like a stage (shop breaks between bosses), every enemy a boss, always 30 s
+  arena: { fight_seconds: 30, fights: 1, fixed_time: true, pvp: true, timeout_winner: hp_pct }   # user, 2026-10-17: 30 s, Berserk at 10 s like stages, death or the higher remaining HP % at the time limit wins; always PvP
+  raid: { fight_seconds: 15, fights: 1, later: true }

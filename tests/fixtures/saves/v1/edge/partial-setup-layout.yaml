@@ -1,0 +1,15 @@
+name: partial setup
+bag: { mask: [0,1,1,1,1,1,1,0, 1,1,1,1,1,1,1,1, 1,1,1,1,1,1,1,1, 0,1,1,1,1,1,1,0] }
+placements:
+  - { id: "wooden_sword#1", item: wooden_sword, x: 1, y: 0, rotation: 90, supply: true }
+setup:
+  hero: { id: rose, stars: 2, links: [], skin: null, blessings: { level: 3, equipped: [{ id: all_dmg, rarity: rare, value: 4 }] } }
+  gear: { weapon: { id: thunderbolt_spike, rarity: epic, tier: 1, level: 30 }, shield: null, rings: [], gloves: [] }
+battle:
+  mode: stage
+  seed: 3
+  runs: 1
+  enemy:
+    name: Dummy
+    hp: 5M
+    attacks: [{ damage: 50K, cooldown: 2, accuracy: 80 }]

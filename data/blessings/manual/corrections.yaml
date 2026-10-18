@@ -1,0 +1,30 @@
+# My confirmed fixes, from docs/wiki-data/corrections.md §3. `replaces:` renames a wiki entry.
+
+- id: bjorn_gigantization
+  replaces: bjorn_giantization
+  name: Gigantization
+  buffs_skill: gigantization
+  source: observed
+  verified: true
+  notes: corrections.md §3 — the wiki's blessing "Giantization" is the skill Gigantization.
+
+- id: spark_electrostatic_force
+  effect_text: "Stun Rate …"
+  source: observed
+  verified: true
+  notes: corrections.md §3 — the wiki said "Sun Rate".
+
+- id: venom_poison_trigger_interval
+  values:
+    mythic: { value: -0.6 }
+  source: observed
+  verified: true
+  notes: corrections.md §3 — the wiki's Mythic value was missing its minus sign (0.6s).
+
+- id: erwen_spirit_gain
+  replaces: erwen_spirit_s_swift_gain_burn_inflict
+  name: "[Spirit] Burn Inflict & Swift Gain"
+  item_inflict_statuses: [burn, swift]
+  source: observed
+  verified: true
+  notes: corrections.md §3 — real name unknown; id and name given by effect. (erwen_bow_dmg already has the right id from the wiki.)

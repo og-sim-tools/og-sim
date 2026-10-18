@@ -1,0 +1,9 @@
+# Aura ownership effects from in-game screenshots (2026-10-16): 0★ amount, then 1★–7★.
+# The aura's own level bonus (Lv 25 shows HP +30% / ATK +30%) isn't included yet.
+
+- { id: aura_of_vitality, ownership: { stat: hp_pct, base: 5, by_stars: [6, 7, 8, 9, 11, 13, 15] }, source: observed, verified: true }
+- { id: aura_of_courage, ownership: { stat: atk_pct, base: 5, by_stars: [6, 7, 8, 9, 11, 13, 15] }, source: observed, verified: true }
+- { id: stars_blessing, ownership: { stat: final_dmg_boss_increase, base: 6, by_stars: [7, 8, 10, 12, 14, 17, 20] }, source: observed, verified: true }
+- { id: blessing_of_order, ownership: { stat: final_dmg_pvp_increase, base: 6, by_stars: [7, 8, 10, 12, 14, 17, 20] }, source: observed, verified: true }
+- { id: grace_of_the_goddess, ownership: { stat: final_dmg_boss_increase, base: 10, by_stars: [12, 14, 16, 19, 22, 26, 30] }, source: observed, verified: true }
+- { id: judicators_blade, ownership: { stat: final_dmg_pvp_increase, base: 10, by_stars: [12, 14, 16, 19, 22, 26, 30] }, source: observed, verified: true }

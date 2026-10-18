@@ -1,0 +1,347 @@
+# Structured item effects — batch 2 (SPEC §5.2). AWAITING REVIEW: verified: false until confirmed.
+#
+# Scope: what the combat MVP can run — spell activation, statuses on hit / at start, block,
+# heals, block removal, extra attacks, cooldown refunds, multi-hit. Each effect's `text` is the
+# exact part of effect_text it encodes. Items marked "partial" still have text-only parts.
+#
+# Assumptions to check (also in the phase 5 summary):
+#   - "Every Ns" on tools (HP Potion, Venomous Insect, …) is treated as the item's cooldown, like
+#     you confirmed for Steel Spike, so haste and Freeze change it.
+#   - "Attack 2 times" / "Attacks two times" = 2 hits per attack (stats.hits).
+#   - "Start of Battle: Attack" = one extra attack at battle start that doesn't touch the cooldown.
+
+# ---------------------------------------------------------------- spell activation
+
+- id: training_staff
+  effects:
+    - { text: "Every 3.5s: Activate [dot] Spell.", trigger: on_activation, uses_dots: true, target: items_under_dots, filter: { tags_any: [spell] }, action: activate_item }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 2 (awaiting review). The 3.5 s is its cooldown, so it activates the spells each time it attacks.'
+
+- id: wyrdwood_staff
+  effects:
+    - { text: "On Attack: Activate [dot] Spell.", trigger: on_attack, uses_dots: true, target: items_under_dots, filter: { tags_any: [spell] }, action: activate_item }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 2 (awaiting review).'
+
+- id: wyrd_branch
+  effects:
+    - { text: "3s after Start of Battle: Activates [dot] Spell.", trigger: timer, at_s: 3, uses_dots: true, target: items_under_dots, filter: { tags_any: [spell] }, action: activate_item }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 2 (awaiting review).'
+
+- id: intermediate_magic_magic_missile
+  effects:
+    - { text: "On Hit: 45% chance to activate again.", trigger: on_hit, chance_pct: 45, target: self_item, action: activate_item }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 2 (awaiting review).'
+
+- id: meow_missile
+  effects:
+    - { text: "On Hit: 75% chance to activate again.", trigger: on_hit, chance_pct: 75, target: self_item, action: activate_item }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 2 (awaiting review).'
+
+- id: wizards_hat
+  effects:
+    - { text: "Start of Battle: Gain 0.20x Block.", trigger: battle_start, target: player, action: gain_block, value: { ratio: 0.2, scales_with: hp } }
+    - { text: "On [dot] Spell Activation: 20% chance to activate again.", trigger: on_activation, watch: dots, watch_filter: { tags_any: [spell] }, chance_pct: 20, target: event_item, action: activate_item }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 2 (awaiting review).'
+
+# ---------------------------------------------------------------- statuses on hit
+
+- id: dragon
+  effects:
+    - { text: "On Hit: Inflict 2 Burn.", trigger: on_hit, target: enemy, action: apply_status, status: burn, stacks: 2 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 2 (awaiting review).'
+
+- id: golden_dragon
+  effects:
+    - { text: "On Hit: Inflict 4 Burn.", trigger: on_hit, target: enemy, action: apply_status, status: burn, stacks: 4 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 2 (awaiting review).'
+
+- id: poison_bow
+  effects:
+    - { text: "On Hit: Inflict 3 Poison.", trigger: on_hit, target: enemy, action: apply_status, status: poison, stacks: 3 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 2 (awaiting review).'
+
+- id: poison_crossbow
+  effects:
+    - { text: "Start of Battle: Attack.", trigger: battle_start, target: self_item, action: attack }
+    - { text: "On Hit: Immediately Inflict 2 Poison.", trigger: on_hit, target: enemy, action: apply_status, status: poison, stacks: 2 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 2 (awaiting review).'
+
+- id: venomous_crossbow
+  effects:
+    - { text: "Start of Battle: Attack.", trigger: battle_start, target: self_item, action: attack }
+    - { text: "On Hit: Immediately Inflict 2 Poison.", trigger: on_hit, target: enemy, action: apply_status, status: poison, stacks: 2 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 2 (awaiting review).'
+
+- id: violet_assassin
+  stats: { hits: 2 }
+  effects:
+    - { text: "Start of Battle Immediately Attack", trigger: battle_start, target: self_item, action: attack }
+    - { text: "On Hit: Inflict 7 Poison.", trigger: on_hit, target: enemy, action: apply_status, status: poison, stacks: 7 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 2 (awaiting review). "Attack 2 times" → 2 hits per attack.'
+
+- id: baby_hawk
+  effects:
+    - { text: "On Hit: 60% chance to gain 3 Focus.", trigger: on_hit, chance_pct: 60, target: player, action: apply_status, status: focus, stacks: 3 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 2 (awaiting review).'
+
+- id: hawk
+  effects:
+    - { text: "On Hit: Gain 3 Focus.", trigger: on_hit, target: player, action: apply_status, status: focus, stacks: 3 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 2 (awaiting review).'
+
+# ---------------------------------------------------------------- statuses and block at the start of battle
+
+- id: hunters_bow
+  effects:
+    - { text: "Start of Battle: Gain 10 Focus", trigger: battle_start, target: player, action: apply_status, status: focus, stacks: 10 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 2 (awaiting review).'
+
+- id: target
+  effects:
+    - { text: "Start of Battle: Gain 10 Focus.", trigger: battle_start, target: player, action: apply_status, status: focus, stacks: 10 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 2 (awaiting review).'
+
+- id: poison_powder
+  effects:
+    - { text: "Start of Battle: Inflict 5 Poison.", trigger: battle_start, target: enemy, action: apply_status, status: poison, stacks: 5 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 2 (awaiting review).'
+
+- id: snow_powder
+  effects:
+    - { text: "Start of Battle: Inflict 5 Freeze.", trigger: battle_start, target: enemy, action: apply_status, status: freeze, stacks: 5 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 2 (awaiting review).'
+
+- id: leather_boots
+  effects:
+    - { text: "Start of Battle: Gain 10 Dodge.", trigger: battle_start, target: player, action: apply_status, status: dodge, stacks: 10 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 2 (awaiting review).'
+
+- id: spiked_club
+  effects:
+    - { text: "Start of Battle: Gain 3 Spike.", trigger: battle_start, target: player, action: apply_status, status: spike, stacks: 3 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 2 (awaiting review).'
+
+- id: giant_spiked_club
+  effects:
+    - { text: "Start of Battle: Gain 6 Spike.", trigger: battle_start, target: player, action: apply_status, status: spike, stacks: 6 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 2 (awaiting review).'
+
+- id: big_spike
+  effects:
+    - { text: "Start of Battle: Gain 3 Spike.", trigger: battle_start, target: player, action: apply_status, status: spike, stacks: 3 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 2 (awaiting review).'
+
+- id: warriors_helmet
+  effects:
+    - { text: "Start of Battle: Gain 0.20x Block", trigger: battle_start, target: player, action: gain_block, value: { ratio: 0.2, scales_with: hp } }
+    - { text: "and 6 Spike.", trigger: battle_start, target: player, action: apply_status, status: spike, stacks: 6 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 2 (awaiting review).'
+
+- id: leather_helmet
+  effects:
+    - { text: "Start of Battle: Gain 0.20x Block.", trigger: battle_start, target: player, action: gain_block, value: { ratio: 0.2, scales_with: hp } }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 2 (awaiting review).'
+
+- id: leather_armor
+  effects:
+    - { text: "Start of Battle: Gain 0.35x Block.", trigger: battle_start, target: player, action: gain_block, value: { ratio: 0.35, scales_with: hp } }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 2 (awaiting review).'
+
+# ---------------------------------------------------------------- heals and timed tools ("Every Ns" = cooldown, see top)
+
+- id: hp_potion
+  stats: { cooldown: 5.5 }
+  effects:
+    - { text: "Every 5.5s Heal 0.10x Max HP.", trigger: on_activation, target: player, action: heal, value: { ratio: 0.1, scales_with: hp } }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 2 (awaiting review). "Every 5.5s" treated as a cooldown.'
+
+- id: large_hp_potion
+  stats: { cooldown: 5.5 }
+  effects:
+    - { text: "Every 5.5s Heal 0.24x Max HP.", trigger: on_activation, target: player, action: heal, value: { ratio: 0.24, scales_with: hp } }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 2 (awaiting review). "Every 5.5s" treated as a cooldown.'
+
+- id: focus_potion
+  stats: { cooldown: 5.5 }
+  effects:
+    - { text: "Start of Battle: Gain 10 Focus.", trigger: battle_start, target: player, action: apply_status, status: focus, stacks: 10 }
+    - { text: "Every 5.5s: Heal 0.12x Max HP.", trigger: on_activation, target: player, action: heal, value: { ratio: 0.12, scales_with: hp } }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 2 (awaiting review). "Every 5.5s" treated as a cooldown.'
+
+- id: fairy
+  effects:
+    - { text: "On Hit: Heal 0.08x Max HP.", trigger: on_hit, target: player, action: heal, value: { ratio: 0.08, scales_with: hp } }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 2 (awaiting review).'
+
+- id: steel_spike
+  effects:
+    - { text: "Every 4s: Gain 3 Spike", trigger: on_activation, target: player, action: apply_status, status: spike, stacks: 3 }
+    - { text: "and 0.04x HP Block.", trigger: on_activation, target: player, action: gain_block, value: block }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 2 (awaiting review). Cooldown 4 s as you confirmed.'
+
+- id: venomous_insect
+  stats: { cooldown: 3 }
+  effects:
+    - { text: "Every 3s: Inflict 3 Poison.", trigger: on_activation, target: enemy, action: apply_status, status: poison, stacks: 3 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 2 (awaiting review). "Every 3s" treated as a cooldown.'
+
+# ---------------------------------------------------------------- block removal, multi-hit, once per battle
+
+- id: rock
+  stats: { max_attacks: 1 }
+  effects:
+    - { text: "On Hit: Remove 1.2x Block.", trigger: on_hit, target: enemy, action: remove_block, value: { ratio: 1.2, scales_with: atk } }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 2 (awaiting review). "Attacks once per battle" → max_attacks 1.'
+
+- id: bola
+  stats: { hits: 2 }
+  effects:
+    - { text: "On Hit: Removes 1.8x Block.", trigger: on_hit, target: enemy, action: remove_block, value: { ratio: 1.8, scales_with: atk } }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 2 (awaiting review). "Attacks two times" → 2 hits per attack.'
+
+- id: bear_trap
+  stats: { max_attacks: 1 }
+  source: manual
+  verified: false
+  notes: 'Effects batch 2 (awaiting review). "Attacks once per battle" → max_attacks 1. Its effect is in batch 3.'
+
+# ---------------------------------------------------------------- extra attacks and refunds
+
+- id: friendly_dog
+  effects:
+    - { text: "On [dot] Weapon Hit: 50% chance to Attack.", trigger: on_weapon_hit, watch: dots, watch_filter: { tags_any: [weapon] }, chance_pct: 50, target: self_item, action: attack }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 2 (awaiting review).'
+
+- id: well_trained_dog
+  effects:
+    - { text: "On [dot] Weapon Hit: 65% chance to Attack.", trigger: on_weapon_hit, watch: dots, watch_filter: { tags_any: [weapon] }, chance_pct: 65, target: self_item, action: attack }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 2 (awaiting review).'
+
+- id: greatdog
+  effects:
+    - { text: "On [dot] Weapon Hit: 65% chance to attack.", trigger: on_weapon_hit, watch: dots, watch_filter: { tags_any: [weapon] }, chance_pct: 65, target: self_item, action: attack }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 2 (awaiting review).'
+
+- id: dagger
+  effects:
+    - { text: "On [dot] Weapon Hit: Refunds 30% of Cooldown.", trigger: on_weapon_hit, watch: dots, watch_filter: { tags_any: [weapon] }, target: self_item, action: refund_cooldown, pct: 30 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 2 (awaiting review).'
+
+- id: crossbow
+  effects:
+    - { text: "Start of Battle: Immediately Attack.", trigger: battle_start, target: self_item, action: attack }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 2 (awaiting review).'

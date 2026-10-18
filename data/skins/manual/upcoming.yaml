@@ -1,0 +1,77 @@
+# Upcoming skins from the user's in-game screenshots (2026-10-17). Each star row (1★ … 5★) adds to the 0★ reward.
+
+- id: raven_apostle_of_death
+  name: Raven, Apostle of Death
+  hero: raven
+  rarity: legendary
+  skill:
+    name: Raven Storm
+    quest: Must consume a total of 300 Focus.
+    reward: "When gaining Dodge, gain the same amount of Focus, and Attack DMG increases by 1% per Dodge stack."
+    by_grade: "For each stack of Dodge, Attack DMG increases by an additional 0.5%/0.5%/0.5%/1%/1.5%."
+  quest_check: { type: run, note: "consume 300 Focus in total over the run" }
+  available: { classes: [ranger] }
+  status: complete
+  effects:
+    - { text: "When gaining Dodge, gain the same amount of Focus.", trigger: on_status_applied, watch: any, params: { status: dodge }, target: player, action: apply_status, status: focus, event_pct: 100 }
+    - { text: "Attack DMG increases by 1% per Dodge stack.", trigger: passive, target: player, action: add_player_stat, player_stat: attack_dmg_increase, amount_from: { status: dodge, status_on: self, factor: 1 }, max_stars: 0 }
+    - { text: "… 1.5% per Dodge stack (1★).", trigger: passive, target: player, action: add_player_stat, player_stat: attack_dmg_increase, amount_from: { status: dodge, status_on: self, factor: 1.5 }, min_stars: 1, max_stars: 1 }
+    - { text: "… 2% per Dodge stack (2★).", trigger: passive, target: player, action: add_player_stat, player_stat: attack_dmg_increase, amount_from: { status: dodge, status_on: self, factor: 2 }, min_stars: 2, max_stars: 2 }
+    - { text: "… 2.5% per Dodge stack (3★).", trigger: passive, target: player, action: add_player_stat, player_stat: attack_dmg_increase, amount_from: { status: dodge, status_on: self, factor: 2.5 }, min_stars: 3, max_stars: 3 }
+    - { text: "… 3.5% per Dodge stack (4★).", trigger: passive, target: player, action: add_player_stat, player_stat: attack_dmg_increase, amount_from: { status: dodge, status_on: self, factor: 3.5 }, min_stars: 4, max_stars: 4 }
+    - { text: "… 5% per Dodge stack (5★).", trigger: passive, target: player, action: add_player_stat, player_stat: attack_dmg_increase, amount_from: { status: dodge, status_on: self, factor: 5 }, min_stars: 5 }
+  ownership_text: "[All] Increase Total HP by 5%"
+  source: observed
+  verified: true
+  notes: "Dodge I steal from the enemy doesn't count as gaining it here (only Dodge my side applies)."
+
+- id: rose_eternal_red_moon
+  name: Eternal Red Moon Rose
+  hero: rose
+  rarity: legendary
+  obtainable: Obtainable from Events
+  skill:
+    name: My minions!
+    quest: By round 4, fill 90% of all Backpack slots with Items.
+    reward: Immediately summon 3 [Blood Moon Familiar] to your Backpack.
+    by_grade: "Summon 1/1/1/1/2 additional [Blood Moon Familiar]."
+  quest_check: { type: bag_fill, min_pct: 90 }
+  available: { all: true }
+  status: complete
+  effects: []
+  spawns:
+    - { item: blood_moon_familiar, count: 3, stars: 0 }
+    - { item: blood_moon_familiar, count: 1, stars: 1 }
+    - { item: blood_moon_familiar, count: 1, stars: 2 }
+    - { item: blood_moon_familiar, count: 1, stars: 3 }
+    - { item: blood_moon_familiar, count: 1, stars: 4 }
+    - { item: blood_moon_familiar, count: 2, stars: 5 }
+  ownership_text: "[All] Increase Total HP by 5%"
+  source: observed
+  verified: true
+  notes: "Familiars I place by hand count; the rest go into the first empty cells at the start of battle, like pet spawns."
+
+- id: trixie_dream_eater
+  name: Dream Eater Trixie
+  hero: trixie
+  rarity: legendary
+  skill:
+    name: Essence Drain
+    quest: Must own Creature worth a total of 30 Coin in the Backpack.
+    reward: "When an enemy gains a Buff, remove 2 Spike for each [Witch's Mirror] you own. For each enemy Spike stack Remove during battle, your Healing Effect increases by 0.5%."
+    by_grade: "1★ remove 1 more Spike per Witch's Mirror · 2★ Healing Effect +0.5% more per removed Spike · 3★ remove 1 more · 4★ remove 1 more · 5★ Healing Effect +1% more."
+  quest_check: { type: bag_value, tags_any: [creature], min: 30 }
+  available: { heroes: [trixie] }
+  status: complete
+  effects:
+    - { text: "When an enemy gains a Buff, remove 2 Spike for each [Witch's Mirror] you own.", trigger: on_status_applied, listen: enemy, watch: any, params: { polarity: buff }, target: enemy, action: remove_status, status: spike, count: 2, count_unit: stacks, count_per_item: witchs_mirror, max_stars: 0 }
+    - { text: "… 3 Spike per Witch's Mirror (1★–2★).", trigger: on_status_applied, listen: enemy, watch: any, params: { polarity: buff }, target: enemy, action: remove_status, status: spike, count: 3, count_unit: stacks, count_per_item: witchs_mirror, min_stars: 1, max_stars: 2 }
+    - { text: "… 4 Spike per Witch's Mirror (3★).", trigger: on_status_applied, listen: enemy, watch: any, params: { polarity: buff }, target: enemy, action: remove_status, status: spike, count: 4, count_unit: stacks, count_per_item: witchs_mirror, min_stars: 3, max_stars: 3 }
+    - { text: "… 5 Spike per Witch's Mirror (4★–5★).", trigger: on_status_applied, listen: enemy, watch: any, params: { polarity: buff }, target: enemy, action: remove_status, status: spike, count: 5, count_unit: stacks, count_per_item: witchs_mirror, min_stars: 4 }
+    - { text: "For each enemy Spike stack removed during battle, Healing Effect increases by 0.5%.", trigger: passive, target: player, action: add_player_stat, player_stat: healing_power_enhance, amount_from: { removed: spike, factor: 0.5 }, max_stars: 1 }
+    - { text: "… 1% per removed Spike (2★–4★).", trigger: passive, target: player, action: add_player_stat, player_stat: healing_power_enhance, amount_from: { removed: spike, factor: 1 }, min_stars: 2, max_stars: 4 }
+    - { text: "… 2% per removed Spike (5★).", trigger: passive, target: player, action: add_player_stat, player_stat: healing_power_enhance, amount_from: { removed: spike, factor: 2 }, min_stars: 5 }
+  ownership_text: "[All] Increase Total HP by 5%"
+  source: observed
+  verified: true
+  notes: "Spike stolen instead of removed (I'll Be Having That) counts as removed. Healing Effect is Healing Power Enhance."

@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "og-sim",
+      "runtimeExecutable": "npm.cmd",
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
+      "port": 5173
+    },
+    {
+      "name": "og-sim-static",
+      "runtimeExecutable": "npm.cmd",
+      "runtimeArgs": [
+        "run",
+        "site"
+      ],
+      "port": 4173
+    }
+  ]
+}

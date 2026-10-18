@@ -1,0 +1,22 @@
+basic_stats: { hp: "4M", atk: "1.34M", initial_block: "1.43M" }
+detailed_stats:
+  crit_rate: 50
+  item_haste: 14
+heroes:
+  - id: rose
+    stars: 6
+    links: [parting_rose]
+    skin: null
+    blessings:
+      level: 5
+      equipped:
+        - { id: all_dmg, rarity: epic, value: 7.4 }
+active_hero: rose
+gear:
+  weapon:  { id: thunderbolt_spike, rarity: legendary, tier: 3, level: 40 }
+  shield:  { id: wooden_shield, rarity: epic, tier: 0, level: 40 }
+  rings:   []
+  gloves:  []
+pets:
+  - { id: venomous_spider, stars: 3, active: true }
+aura: aura_of_vitality

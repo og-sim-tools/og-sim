@@ -1,0 +1,117 @@
+name: bjorn spike
+placements:
+  - id: celestial_shield#1
+    item: celestial_shield
+    x: 6
+    y: 0
+    rotation: 90
+  - id: spiral_spear#1
+    item: spiral_spear
+    x: 3
+    y: 0
+  - id: ring_of_chaotic_spikes#1
+    item: ring_of_chaotic_spikes
+    x: 5
+    y: 1
+  - id: ring_of_chaotic_spikes#2
+    item: ring_of_chaotic_spikes
+    x: 5
+    y: 3
+  - id: forest_keepers_gloves#1
+    item: forest_keepers_gloves
+    x: 4
+    y: 1
+  - id: forest_keepers_gloves#2
+    item: forest_keepers_gloves
+    x: 4
+    y: 3
+  - id: big_spike#1
+    item: big_spike
+    x: 0
+    y: 0
+  - id: big_spike#2
+    item: big_spike
+    x: 1
+    y: 0
+  - id: spiked_whip#1
+    item: spiked_whip
+    x: 0
+    y: 1
+  - id: steel_spike#1
+    item: steel_spike
+    x: 2
+    y: 1
+  - id: spiked_armor#1
+    item: spiked_armor
+    x: 6
+    y: 4
+  - id: spiked_armor#2
+    item: spiked_armor
+    x: 3
+    y: 4
+  - id: spiked_armor#3
+    item: spiked_armor
+    x: 0
+    y: 4
+  - id: spiked_shield#1
+    item: spiked_shield
+    x: 5
+    y: 4
+  - id: spiked_shield#2
+    item: spiked_shield
+    x: 2
+    y: 4
+  - id: candlestick#1
+    item: candlestick
+    x: 4
+    y: 1
+    rotation: 90
+setup:
+  hero:
+    id: bjorn
+    stars: 7
+    links: []
+    skin: null
+    blessings:
+      level: 9
+      equipped: []
+  gear:
+    weapon:
+      id: spiral_spear
+      rarity: mythic
+      tier: 0
+      level: 40
+    shield:
+      id: celestial_shield
+      rarity: legendary
+      tier: 0
+      level: 40
+    rings:
+      - id: ring_of_chaotic_spikes
+        rarity: legendary
+        tier: 0
+        level: 1
+      - id: ring_of_chaotic_spikes
+        rarity: legendary
+        tier: 0
+        level: 1
+    gloves:
+      - id: forest_keepers_gloves
+        rarity: legendary
+        tier: 0
+        level: 1
+      - id: forest_keepers_gloves
+        rarity: legendary
+        tier: 0
+        level: 1
+  pets:
+    - id: jellyfish_princess
+      stars: 2
+      active: true
+    - id: seiren
+      stars: 1
+      active: true
+  basic_stats:
+    hp: 5.29M
+    atk: 1.61M
+    initial_block: 1.85M

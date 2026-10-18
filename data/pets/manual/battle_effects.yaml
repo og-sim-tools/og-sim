@@ -1,0 +1,172 @@
+# Pet skills in battle, structured from the in-game text in observed_batch_{1,2,3}.yaml (2026-10-16).
+# One effect per star tier: min_stars / max_stars pick the version that applies at the pet's stars.
+# Star lines always add to the skill's value (user rule). Pets ignore Haste / Freeze (timers are fixed).
+# Readings of texts that need one are listed in docs/item-readings.md (confirmed by the user's in-game data, 2026-10-17).
+# Red Dragon's effects are in observed_batch_1.yaml.
+
+- id: seiren
+  effects:
+    - { text: "Start of Battle: gain Waterdrop Cushion equal to 100% of max HP.", trigger: battle_start, target: player, action: apply_status, status: waterdrop_cushion, stacks: 100, max_stars: 0 }
+    - { text: "Start of Battle: Waterdrop Cushion 200% of max HP. (1★)", trigger: battle_start, target: player, action: apply_status, status: waterdrop_cushion, stacks: 200, min_stars: 1, max_stars: 4 }
+    - { text: "Start of Battle: Waterdrop Cushion 300% of max HP. (5★)", trigger: battle_start, target: player, action: apply_status, status: waterdrop_cushion, stacks: 300, min_stars: 5 }
+    - { text: "On Excess Heal: Waterdrop Cushion equal to 20% of the healed amount. (2★)", trigger: on_heal, watch: any, min_event_amount: 0, target: player, action: apply_status, status: waterdrop_cushion, value_as_hp_pct: true, event_pct: 20, min_stars: 2, max_stars: 3 }
+    - { text: "On Excess Heal: 40% of the healed amount. (4★)", trigger: on_heal, watch: any, min_event_amount: 0, target: player, action: apply_status, status: waterdrop_cushion, value_as_hp_pct: true, event_pct: 40, min_stars: 4, max_stars: 5 }
+    - { text: "On Excess Heal: 60% of the healed amount. (6★)", trigger: on_heal, watch: any, min_event_amount: 0, target: player, action: apply_status, status: waterdrop_cushion, value_as_hp_pct: true, event_pct: 60, min_stars: 6 }
+    - { text: "When entering Berserk: Waterdrop Cushion equal to 200% of max HP. (3★)", trigger: on_berserk, target: player, action: apply_status, status: waterdrop_cushion, stacks: 200, min_stars: 3, max_stars: 4 }
+    - { text: "When entering Berserk: 300% of max HP. (5★)", trigger: on_berserk, target: player, action: apply_status, status: waterdrop_cushion, stacks: 300, min_stars: 5 }
+
+- id: white_wolf_captain
+  effects:
+    - { text: "Start of Battle: for 10s, all weapons gain 30% Haste.", trigger: battle_start, target: all_items, filter: { tags_any: [weapon] }, action: add_stat_pct, stat: haste_pct, amount: 30, duration_s: 10, max_stars: 1 }
+    - { text: "… 45% Haste. (2★)", trigger: battle_start, target: all_items, filter: { tags_any: [weapon] }, action: add_stat_pct, stat: haste_pct, amount: 45, duration_s: 10, min_stars: 2, max_stars: 3 }
+    - { text: "… 60% Haste. (4★)", trigger: battle_start, target: all_items, filter: { tags_any: [weapon] }, action: add_stat_pct, stat: haste_pct, amount: 60, duration_s: 10, min_stars: 4, max_stars: 4 }
+    - { text: "… 60% Haste for 15s. (5★)", trigger: battle_start, target: all_items, filter: { tags_any: [weapon] }, action: add_stat_pct, stat: haste_pct, amount: 60, duration_s: 15, min_stars: 5 }
+    - { text: "The Wolf Captain deals 0.5x ATK DMG 3 times every 3s.", trigger: timer, interval_s: 3, target: enemy, action: deal_damage, damage_type: weapon, can_crit: true, hits: 3, value: { ratio: 0.5, scales_with: atk } }
+
+- id: hunting_hawk
+  effects:
+    - { text: "Every 4s: Remove 10 buffs from whichever of the enemy's Focus or Dodge has more.", trigger: timer, interval_s: 4, target: enemy, action: remove_status, pick_from: [focus, dodge], count: 10, count_unit: stacks, max_stars: 3 }
+    - { text: "… Remove 15. (4★)", trigger: timer, interval_s: 4, target: enemy, action: remove_status, pick_from: [focus, dodge], count: 15, count_unit: stacks, min_stars: 4 }
+    - { text: "… 50% chance to steal 5 more. (5★)", trigger: timer, interval_s: 4, chance_pct: 50, target: enemy, action: steal_status, pick_from: [focus, dodge], count: 5, count_unit: stacks, min_stars: 5 }
+    - { text: "Weapons Haste +60% while the enemy has 30+ Focus and Dodge in total.", trigger: passive, target: all_items, filter: { tags_any: [weapon] }, action: add_stat_pct, stat: haste_pct, amount: 60, condition: { who: enemy, statuses_total: { statuses: [focus, dodge], min: 30 } }, max_stars: 1 }
+    - { text: "… +120%. (2★)", trigger: passive, target: all_items, filter: { tags_any: [weapon] }, action: add_stat_pct, stat: haste_pct, amount: 120, condition: { who: enemy, statuses_total: { statuses: [focus, dodge], min: 30 } }, min_stars: 2 }
+
+- id: jellyfish_princess
+  effects:
+    - { text: "Start of Battle: Gain 0.4x HP Block.", trigger: battle_start, target: player, action: gain_block, value: { ratio: 0.4, scales_with: hp }, max_stars: 3 }
+    - { text: "… 0.6x HP Block. (4★)", trigger: battle_start, target: player, action: gain_block, value: { ratio: 0.6, scales_with: hp }, min_stars: 4 }
+    - { text: "On Attacked: 30% chance to gain 4 Spike (5 times per battle).", trigger: on_attacked, chance_pct: 30, limit: { per_battle: 5 }, target: player, action: apply_status, status: spike, stacks: 4, max_stars: 1 }
+    - { text: "… 10 times per battle. (2★)", trigger: on_attacked, chance_pct: 30, limit: { per_battle: 10 }, target: player, action: apply_status, status: spike, stacks: 4, min_stars: 2 }
+    - { text: "Reduces DMG by 20%. (5★)", trigger: battle_start, target: player, action: add_combatant_stat, combat_stat: dmg_reduction, amount: 20, min_stars: 5 }
+
+- id: ice_reaper
+  effects:
+    - { text: "Start of Battle: Inflict 40% Reduction to enemy Healing.", trigger: battle_start, target: enemy, action: apply_status, status: heal_amount_reduction, stacks: 40, max_stars: 1 }
+    - { text: "… 60%. (2★)", trigger: battle_start, target: enemy, action: apply_status, status: heal_amount_reduction, stacks: 60, min_stars: 2 }
+    - { text: "and inflict 15 Freeze.", trigger: battle_start, target: enemy, action: apply_status, status: freeze, stacks: 15 }
+    - { text: "Inflicts 2 Freeze each time the enemy starts Heal. (4★)", trigger: on_heal, listen: enemy, watch: any, target: enemy, action: apply_status, status: freeze, stacks: 2, min_stars: 4 }
+    - { text: "Activates once more when the enemy enters Berserk: Healing Reduction. (5★)", trigger: on_berserk, target: enemy, action: apply_status, status: heal_amount_reduction, stacks: 60, min_stars: 5 }
+    - { text: "… and 15 Freeze. (5★)", trigger: on_berserk, target: enemy, action: apply_status, status: freeze, stacks: 15, min_stars: 5 }
+
+- id: phoenix
+  effects:
+    - { text: "On Fastest Weapon Hit: inflict 1 Burn for 4s.", trigger: on_weapon_hit, watch: any, watch_filter: { tags_any: [weapon], pick: fastest }, target: enemy, action: apply_status, status: burn, stacks: 1, duration_s: 4, max_stars: 1 }
+    - { text: "… 2 Burn. (2★)", trigger: on_weapon_hit, watch: any, watch_filter: { tags_any: [weapon], pick: fastest }, target: enemy, action: apply_status, status: burn, stacks: 2, duration_s: 4, min_stars: 2 }
+    - { text: "Enemy Crit Rate −2% per Burn stack on it (max 40%).", trigger: passive, target: enemy, action: add_player_stat, player_stat: crit_rate_reduction, amount_from: { status: burn, status_on: enemy, factor: 2, max: 40 }, max_stars: 4 }
+    - { text: "… max 60%. (5★)", trigger: passive, target: enemy, action: add_player_stat, player_stat: crit_rate_reduction, amount_from: { status: burn, status_on: enemy, factor: 2, max: 60 }, min_stars: 5 }
+    - { text: "Enemy takes 1% more DMG per Burn stack (max 40%). (4★)", trigger: passive, target: enemy, action: add_player_stat, player_stat: dmg_taken_increase, amount_from: { status: burn, status_on: enemy, factor: 1, max: 40 }, min_stars: 4, max_stars: 4 }
+    - { text: "… max 60%. (5★)", trigger: passive, target: enemy, action: add_player_stat, player_stat: dmg_taken_increase, amount_from: { status: burn, status_on: enemy, factor: 1, max: 60 }, min_stars: 5 }
+
+- id: yeti
+  effects:
+    - { text: "Start of Battle: immune to Stun for 10s.", trigger: battle_start, target: player, action: add_combatant_stat, combat_stat: stun_resistance, amount: 100, duration_s: 10, max_stars: 1 }
+    - { text: "… 15s. (2★)", trigger: battle_start, target: player, action: add_combatant_stat, combat_stat: stun_resistance, amount: 100, duration_s: 15, min_stars: 2, max_stars: 3 }
+    - { text: "… 20s. (4★)", trigger: battle_start, target: player, action: add_combatant_stat, combat_stat: stun_resistance, amount: 100, duration_s: 20, min_stars: 4 }
+    - { text: "On resisting Stun: counterattack for 4.5x ATK DMG (every 3s).", trigger: on_status_resisted, params: { status: stun }, cooldown_s: 3, target: enemy, action: deal_damage, damage_type: weapon, can_crit: true, value: { ratio: 4.5, scales_with: atk } }
+    - { text: "… and Stun the enemy for 1s.", trigger: on_status_resisted, params: { status: stun }, cooldown_s: 3, target: enemy, action: apply_status, status: stun, stacks: 1, duration_s: 1, max_stars: 4 }
+    - { text: "… Stun for 2.5s. (5★)", trigger: on_status_resisted, params: { status: stun }, cooldown_s: 3, target: enemy, action: apply_status, status: stun, stacks: 1, duration_s: 2.5, min_stars: 5 }
+
+- id: flora
+  effects:
+    - { text: "Start of Battle: Debuff Resist +30%.", trigger: battle_start, target: player, action: add_combatant_stat, combat_stat: all_debuff_resist, amount: 30 }
+    - { text: "Every 4s: Heal 0.1x HP.", trigger: timer, interval_s: 4, target: player, action: heal, value: { ratio: 0.1, scales_with: hp }, max_stars: 3 }
+    - { text: "… 0.15x HP. (4★)", trigger: timer, interval_s: 4, target: player, action: heal, value: { ratio: 0.15, scales_with: hp }, min_stars: 4 }
+    - { text: "… and Cleanse 10 random debuffs.", trigger: timer, interval_s: 4, target: player, action: cleanse, count: 10 }
+    - { text: "HP Heal effect +30%. (5★)", trigger: battle_start, target: player, action: add_player_stat, player_stat: healing_power_enhance, amount: 30, min_stars: 5 }
+
+- id: tiger
+  effects:
+    - { text: "Start of Battle: All Weapon DMG +25%.", trigger: battle_start, target: player, action: add_player_stat, player_stat: attack_dmg_increase, amount: 25, max_stars: 3 }
+    - { text: "… +50%. (4★)", trigger: battle_start, target: player, action: add_player_stat, player_stat: attack_dmg_increase, amount: 50, min_stars: 4 }
+    - { text: "… and weapon Crit Rate +15%.", trigger: battle_start, target: all_items, filter: { tags_any: [weapon] }, action: add_stat_pct, stat: crit_chance_pct, amount: 15, max_stars: 1 }
+    - { text: "… +30%. (2★)", trigger: battle_start, target: all_items, filter: { tags_any: [weapon] }, action: add_stat_pct, stat: crit_chance_pct, amount: 30, min_stars: 2 }
+    - { text: "Each weapon Critical Hit: Item Haste +2% (max 15 stacks). (5★)", trigger: on_crit, watch: any, watch_filter: { tags_any: [weapon] }, target: all_items, action: add_stat_pct, stat: haste_pct, amount: 2, max_stacks: 15, min_stars: 5 }
+
+- id: fire_fox
+  effects:
+    - { text: "Start of Battle: fixed DMG equal to 10% of the enemy's Max HP.", trigger: battle_start, target: enemy, action: deal_damage, value: { ratio: 0.1, scales_with: enemy_hp }, max_stars: 0 }
+    - { text: "… 15%. (1★)", trigger: battle_start, target: enemy, action: deal_damage, value: { ratio: 0.15, scales_with: enemy_hp }, min_stars: 1, max_stars: 3 }
+    - { text: "… 20%. (4★)", trigger: battle_start, target: enemy, action: deal_damage, value: { ratio: 0.2, scales_with: enemy_hp }, min_stars: 4 }
+    - { text: "and inflict 5 Burn for 5s.", trigger: battle_start, target: enemy, action: apply_status, status: burn, stacks: 5, duration_s: 5, max_stars: 1 }
+    - { text: "… for 10s. (2★)", trigger: battle_start, target: enemy, action: apply_status, status: burn, stacks: 5, duration_s: 10, min_stars: 2 }
+
+- id: blue_wolf
+  effects:
+    - { text: "Start of Battle: all weapons 20% Haste for 10s.", trigger: battle_start, target: all_items, filter: { tags_any: [weapon] }, action: add_stat_pct, stat: haste_pct, amount: 20, duration_s: 10, max_stars: 0 }
+    - { text: "… 25%. (1★)", trigger: battle_start, target: all_items, filter: { tags_any: [weapon] }, action: add_stat_pct, stat: haste_pct, amount: 25, duration_s: 10, min_stars: 1, max_stars: 1 }
+    - { text: "… 30%. (2★)", trigger: battle_start, target: all_items, filter: { tags_any: [weapon] }, action: add_stat_pct, stat: haste_pct, amount: 30, duration_s: 10, min_stars: 2, max_stars: 3 }
+    - { text: "… 40%. (4★)", trigger: battle_start, target: all_items, filter: { tags_any: [weapon] }, action: add_stat_pct, stat: haste_pct, amount: 40, duration_s: 10, min_stars: 4 }
+
+- id: eagle
+  effects:
+    - { text: "Every 5s: Remove 6 buffs from whichever of the enemy's Focus or Dodge has more.", trigger: timer, interval_s: 5, target: enemy, action: remove_status, pick_from: [focus, dodge], count: 6, count_unit: stacks, max_stars: 0 }
+    - { text: "Every 4s: Remove 6. (1★)", trigger: timer, interval_s: 4, target: enemy, action: remove_status, pick_from: [focus, dodge], count: 6, count_unit: stacks, min_stars: 1, max_stars: 1 }
+    - { text: "Every 4s: Remove 8. (2★)", trigger: timer, interval_s: 4, target: enemy, action: remove_status, pick_from: [focus, dodge], count: 8, count_unit: stacks, min_stars: 2, max_stars: 3 }
+    - { text: "Every 4s: Remove 10. (4★)", trigger: timer, interval_s: 4, target: enemy, action: remove_status, pick_from: [focus, dodge], count: 10, count_unit: stacks, min_stars: 4 }
+
+- id: raccoon
+  effects:
+    - { text: "Start of Battle: Deals 4x ATK DMG.", trigger: battle_start, target: enemy, action: deal_damage, damage_type: weapon, can_crit: true, value: { ratio: 4.0, scales_with: atk }, max_stars: 0 }
+    - { text: "… 6x ATK DMG. (1★)", trigger: battle_start, target: enemy, action: deal_damage, damage_type: weapon, can_crit: true, value: { ratio: 6.0, scales_with: atk }, min_stars: 1, max_stars: 3 }
+    - { text: "… 6x ATK DMG, Crit Rate +50%. (4★)", trigger: battle_start, target: enemy, action: deal_damage, damage_type: weapon, can_crit: true, crit_bonus_pct: 50, value: { ratio: 6.0, scales_with: atk }, min_stars: 4 }
+    - { text: "… plus DMG equal to 10% of the enemy's Max HP. (2★)", trigger: battle_start, target: enemy, action: deal_damage, value: { ratio: 0.1, scales_with: enemy_hp }, min_stars: 2 }
+
+- id: sheep
+  effects:
+    - { text: "Start of Battle: Gain 0.25x HP Block.", trigger: battle_start, target: player, action: gain_block, value: { ratio: 0.25, scales_with: hp }, max_stars: 0 }
+    - { text: "… 0.30x. (1★)", trigger: battle_start, target: player, action: gain_block, value: { ratio: 0.3, scales_with: hp }, min_stars: 1, max_stars: 1 }
+    - { text: "… 0.35x. (2★)", trigger: battle_start, target: player, action: gain_block, value: { ratio: 0.35, scales_with: hp }, min_stars: 2, max_stars: 3 }
+    - { text: "… 0.40x. (4★)", trigger: battle_start, target: player, action: gain_block, value: { ratio: 0.4, scales_with: hp }, min_stars: 4 }
+
+- id: pink_slime
+  effects:
+    - { text: "Every 4s: Heal 0.05x HP.", trigger: timer, interval_s: 4, target: player, action: heal, value: { ratio: 0.05, scales_with: hp }, max_stars: 0 }
+    - { text: "… 0.07x HP. (1★)", trigger: timer, interval_s: 4, target: player, action: heal, value: { ratio: 0.07, scales_with: hp }, min_stars: 1, max_stars: 3 }
+    - { text: "… 0.10x HP. (4★)", trigger: timer, interval_s: 4, target: player, action: heal, value: { ratio: 0.1, scales_with: hp }, min_stars: 4 }
+    - { text: "and Cleanse 5 random debuffs.", trigger: timer, interval_s: 4, target: player, action: cleanse, count: 5, max_stars: 1 }
+    - { text: "… Cleanse 10. (2★)", trigger: timer, interval_s: 4, target: player, action: cleanse, count: 10, min_stars: 2 }
+
+- id: golem
+  effects:
+    - { text: "Start of Battle: Deal 3x ATK DMG.", trigger: battle_start, target: enemy, action: deal_damage, damage_type: weapon, can_crit: true, value: { ratio: 3.0, scales_with: atk }, max_stars: 0 }
+    - { text: "… 4.5x ATK DMG. (1★)", trigger: battle_start, target: enemy, action: deal_damage, damage_type: weapon, can_crit: true, value: { ratio: 4.5, scales_with: atk }, min_stars: 1 }
+    - { text: "and 50% chance to Stun the enemy for 1s.", trigger: battle_start, chance_pct: 50, target: enemy, action: apply_status, status: stun, stacks: 1, duration_s: 1, max_stars: 1 }
+    - { text: "… 100% chance. (2★)", trigger: battle_start, target: enemy, action: apply_status, status: stun, stacks: 1, duration_s: 1, min_stars: 2, max_stars: 3 }
+    - { text: "… Stun for 2.5s. (4★)", trigger: battle_start, target: enemy, action: apply_status, status: stun, stacks: 1, duration_s: 2.5, min_stars: 4 }
+
+- id: poison_mushroom
+  effects:
+    - { text: "Start of Battle: Inflict 12 Poison.", trigger: battle_start, target: enemy, action: apply_status, status: poison, stacks: 12, max_stars: 0 }
+    - { text: "… 18. (1★)", trigger: battle_start, target: enemy, action: apply_status, status: poison, stacks: 18, min_stars: 1, max_stars: 1 }
+    - { text: "… 24. (2★)", trigger: battle_start, target: enemy, action: apply_status, status: poison, stacks: 24, min_stars: 2, max_stars: 3 }
+    - { text: "… 30. (4★)", trigger: battle_start, target: enemy, action: apply_status, status: poison, stacks: 30, min_stars: 4 }
+
+- id: brown_wolf
+  effects:
+    - { text: "Start of Battle: Strongest weapon Haste +20% for 10s.", trigger: battle_start, target: all_items, filter: { tags_any: [weapon], pick: strongest }, action: add_stat_pct, stat: haste_pct, amount: 20, duration_s: 10, max_stars: 0 }
+    - { text: "… 25%. (1★)", trigger: battle_start, target: all_items, filter: { tags_any: [weapon], pick: strongest }, action: add_stat_pct, stat: haste_pct, amount: 25, duration_s: 10, min_stars: 1, max_stars: 1 }
+    - { text: "… 30%. (2★)", trigger: battle_start, target: all_items, filter: { tags_any: [weapon], pick: strongest }, action: add_stat_pct, stat: haste_pct, amount: 30, duration_s: 10, min_stars: 2, max_stars: 3 }
+    - { text: "… 40%. (4★)", trigger: battle_start, target: all_items, filter: { tags_any: [weapon], pick: strongest }, action: add_stat_pct, stat: haste_pct, amount: 40, duration_s: 10, min_stars: 4 }
+
+- id: hedgehog
+  effects:
+    - { text: "Start of Battle: Gain 0.15x HP Block.", trigger: battle_start, target: player, action: gain_block, value: { ratio: 0.15, scales_with: hp }, max_stars: 1 }
+    - { text: "… 0.20x. (2★)", trigger: battle_start, target: player, action: gain_block, value: { ratio: 0.2, scales_with: hp }, min_stars: 2, max_stars: 3 }
+    - { text: "… 0.25x. (4★)", trigger: battle_start, target: player, action: gain_block, value: { ratio: 0.25, scales_with: hp }, min_stars: 4 }
+    - { text: "and 5 Spike.", trigger: battle_start, target: player, action: apply_status, status: spike, stacks: 5, max_stars: 0 }
+    - { text: "… 10 Spike. (1★)", trigger: battle_start, target: player, action: apply_status, status: spike, stacks: 10, min_stars: 1 }
+
+- id: skeleton_reaper
+  effects:
+    - { text: "Start of Battle: Inflict 25% Reduction to enemy Healing.", trigger: battle_start, target: enemy, action: apply_status, status: heal_amount_reduction, stacks: 25, max_stars: 0 }
+    - { text: "… 35%. (1★)", trigger: battle_start, target: enemy, action: apply_status, status: heal_amount_reduction, stacks: 35, min_stars: 1, max_stars: 1 }
+    - { text: "… 45%. (2★)", trigger: battle_start, target: enemy, action: apply_status, status: heal_amount_reduction, stacks: 45, min_stars: 2 }
+    - { text: "Inflicts an additional 10 Freeze. (4★)", trigger: battle_start, target: enemy, action: apply_status, status: freeze, stacks: 10, min_stars: 4 }
+
+- id: polar_bear
+  effects:
+    - { text: "Start of Battle: Deal 3x ATK DMG.", trigger: battle_start, target: enemy, action: deal_damage, damage_type: weapon, can_crit: true, value: { ratio: 3.0, scales_with: atk }, max_stars: 0 }
+    - { text: "… 4.5x ATK DMG. (1★)", trigger: battle_start, target: enemy, action: deal_damage, damage_type: weapon, can_crit: true, value: { ratio: 4.5, scales_with: atk }, min_stars: 1, max_stars: 3 }
+    - { text: "… 4.5x ATK DMG, Crit Rate +50%. (4★)", trigger: battle_start, target: enemy, action: deal_damage, damage_type: weapon, can_crit: true, crit_bonus_pct: 50, value: { ratio: 4.5, scales_with: atk }, min_stars: 4 }
+    - { text: "and inflict 10 Freeze.", trigger: battle_start, target: enemy, action: apply_status, status: freeze, stacks: 10, max_stars: 1 }
+    - { text: "… 15 Freeze. (2★)", trigger: battle_start, target: enemy, action: apply_status, status: freeze, stacks: 15, min_stars: 2 }

@@ -1,0 +1,22 @@
+# Items a skin skill puts in the bag (user's screenshots, 2026-10-17).
+
+- id: blood_moon_familiar
+  name: Blood Moon Familiar
+  kind: skin_spawn
+  rarity: rare
+  tags: [weapon, creature]
+  footprint: "#"
+  stats:
+    damage: { ratio: 1.1, scales_with: atk }
+    cooldown: 3.3
+    accuracy: 85
+    crit_chance: 50
+  effect_text: "On Hit: Heal 0.03x HP."
+  effects:
+    - { text: "On Hit: Heal 0.03x HP.", trigger: on_hit, target: player, action: heal, value: { ratio: 0.03, scales_with: hp }, assumption: "Blood Moon Familiar's shape is a guess (#, one cell): the skin isn't released yet." }
+  effects_status: complete
+  value: 1
+  source: observed
+  verified: true
+  observed_with: { hp: "5.53M", atk: "1.65M" }
+  notes: "Shown 1.81M DMG at 1.65M ATK (1.1x ATK) and Heal 166.1K at 5.53M HP (0.03x HP); 3.3s, 85% accuracy, 50% crit, value 1. Summoned by Eternal Red Moon Rose's My minions!. The shape # is the user's guess."

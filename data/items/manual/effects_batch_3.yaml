@@ -1,0 +1,338 @@
+# Structured item effects — batch 3 (SPEC §5.2). AWAITING REVIEW: verified: false until confirmed.
+#
+# Scope: phase 6 mechanics — Stun, timed statuses, Heal Amount Reduction, per-stack bonuses,
+# cleanse / remove / steal, damage reduction, "On Attacked: chance to reduce DMG taken", and the
+# pet-spawned items (eggs hatching, spiders and bugs). Each `text` is the exact part of effect_text.
+#
+# Assumptions to check (also in the phase 6 summary):
+#   - "within 3s hatches": hatches at exactly 3 s. (confirmed)
+#   - "Every Ns" on items without a cooldown = their cooldown (same rule as batch 2).
+#   - Heal Amount Reduction "15%" = 15 stacks of heal_amount_reduction (1% each); it behaves like a stat
+#     and can't be cleansed or stolen. (confirmed)
+#   - Broom "Cleanse Remove 5 random debuff(s)" = cleanse 5 removable debuff stacks; Bloody Crown "Remove
+#     Buff Steal 5 random buff(s)" = steal 5. (confirmed)
+
+# ---------------------------------------------------------------- pet-spawned items
+
+- id: poison_bug_egg
+  effects:
+    - { text: "After start of battle within 3s hatches into Poison Bug.", trigger: timer, at_s: 3, target: self_item, action: transform_item, item: poison_bug }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 3 (awaiting review). Hatches at 3 s.'
+
+- id: poison_bug
+  stats: { cooldown: 6 }
+  effects:
+    - { text: "Every 6s: Inflict 1 Poison.", trigger: on_activation, target: enemy, action: apply_status, status: poison, stacks: 1 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 3 (awaiting review). "Every 6s" = cooldown.'
+
+- id: venomous_spider_egg_sack
+  effects:
+    - { text: "After start of battle within 3s hatches into Mini Venomous Spider", trigger: timer, at_s: 3, target: self_item, action: transform_item, item: mini_venomous_spider }
+    - { text: "and inflicts 5 Poison.", trigger: timer, at_s: 3, target: enemy, action: apply_status, status: poison, stacks: 5 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 3 (awaiting review). At 3 s it hatches and the 5 Poison is inflicted (same tick).'
+
+- id: mini_venomous_spider
+  stats: { cooldown: 6 }
+  effects:
+    - { text: "Every 6s: Inflicts 2 Poison.", trigger: on_activation, target: enemy, action: apply_status, status: poison, stacks: 2 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 3 (awaiting review). "Every 6s" = cooldown.'
+
+- id: hefty_egg_sack
+  effects:
+    - { text: "After start of battle within 3s hatches into Large Venomous Spider", trigger: timer, at_s: 3, target: self_item, action: transform_item, item: large_venomous_spider }
+    - { text: "and inflicts 10 Poison.", trigger: timer, at_s: 3, target: enemy, action: apply_status, status: poison, stacks: 10 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 3 (awaiting review).'
+
+- id: large_venomous_spider
+  stats: { cooldown: 6 }
+  effects:
+    - { text: "Every 6s: Inflict 10 Poison.", trigger: on_activation, target: enemy, action: apply_status, status: poison, stacks: 10 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 3 (awaiting review). "Every 6s" = cooldown.'
+
+# ---------------------------------------------------------------- Stun
+
+- id: combat_hammer
+  effects:
+    - { text: "On Hit: 45% chance to Stun the enemy for 0.6s.", trigger: on_hit, chance_pct: 45, target: enemy, action: apply_status, status: stun, stacks: 1, duration_s: 0.6 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 3 (awaiting review).'
+
+- id: stone_hammer
+  effects:
+    - { text: "On Hit: 70% chance to Stun the enemy for 1s.", trigger: on_hit, chance_pct: 70, target: enemy, action: apply_status, status: stun, stacks: 1, duration_s: 1 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 3 (awaiting review).'
+
+- id: lightning_rod_wand
+  effects:
+    - { text: "On Hit: 50% chance to Stun for 0.5s.", trigger: on_hit, chance_pct: 50, target: enemy, action: apply_status, status: stun, stacks: 1, duration_s: 0.5 }
+    - { text: "On Enemy Stun: Activate [dot] Spell.", trigger: on_stun, uses_dots: true, target: items_under_dots, filter: { tags_any: [spell] }, action: activate_item }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 3 (awaiting review). "On Enemy Stun" = whenever I stun the enemy (any item).'
+
+- id: astrape
+  effects:
+    - { text: "On Hit: 50% chance to Stun for 0.5s.", trigger: on_hit, chance_pct: 50, target: enemy, action: apply_status, status: stun, stacks: 1, duration_s: 0.5 }
+    - { text: "On Enemy Stun: Activate [dot] Spell.", trigger: on_stun, uses_dots: true, target: items_under_dots, filter: { tags_any: [spell] }, action: activate_item }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 3 (awaiting review).'
+
+# ---------------------------------------------------------------- timed statuses and Heal Amount Reduction
+
+- id: torch
+  effects:
+    - { text: "Start of Battle: Inflict 15% Reduction to enemy Healing", trigger: battle_start, target: enemy, action: apply_status, status: heal_amount_reduction, stacks: 15 }
+    - { text: "and 4 Burn for 6s.", trigger: battle_start, target: enemy, action: apply_status, status: burn, stacks: 4, duration_s: 6 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 3 (awaiting review). Is the healing reduction also only for 6 s? Read as the whole battle.'
+
+- id: candlestick
+  effects:
+    - { text: "Start of Battle: Inflict 6 Burn for 6s.", trigger: battle_start, target: enemy, action: apply_status, status: burn, stacks: 6, duration_s: 6 }
+    - { text: "Inflict 50% Reduction to enemy Healing.", trigger: battle_start, target: enemy, action: apply_status, status: heal_amount_reduction, stacks: 50 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 3 (awaiting review).'
+
+- id: flame_sword
+  effects:
+    - { text: "On Hit: Inflict 2 Burn for 6s.", trigger: on_hit, target: enemy, action: apply_status, status: burn, stacks: 2, duration_s: 6 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 3 (awaiting review).'
+
+- id: beginner_magic_ice_beat
+  effects:
+    - { text: "On Hit: Inflict 3 Freeze for 6s.", trigger: on_hit, target: enemy, action: apply_status, status: freeze, stacks: 3, duration_s: 6 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 3 (awaiting review).'
+
+- id: intermediate_magic_icicle_summon
+  effects:
+    - { text: "On Hit: Inflict 6 Freeze for 6s.", trigger: on_hit, target: enemy, action: apply_status, status: freeze, stacks: 6, duration_s: 6 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 3 (awaiting review).'
+
+- id: advanced_magic_crystal_fall
+  effects:
+    - { text: "On Hit: Inflict 6 Freeze for 8s.", trigger: on_hit, target: enemy, action: apply_status, status: freeze, stacks: 6, duration_s: 8 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 3 (awaiting review).'
+
+- id: crow_hat
+  effects:
+    - { text: "Start of Battle: Gain 0.20x Block,", trigger: battle_start, target: player, action: gain_block, value: { ratio: 0.2, scales_with: hp } }
+    - { text: "and Gain 25 Dodge for 4s.", trigger: battle_start, target: player, action: apply_status, status: dodge, stacks: 25, duration_s: 4 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 3 (awaiting review).'
+
+- id: fairy_dust
+  effects:
+    - { text: "When HP is below or equal to 50%: Gain 15 Dodge for 4s.", trigger: hp_below, hp_pct: 50, target: player, action: apply_status, status: dodge, stacks: 15, duration_s: 4, limit: { per_battle: 1 } }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 3 (awaiting review).'
+
+- id: shiny_bow
+  effects:
+    - { text: "When HP is below or equal to 50%: Gain 15 Dodge for 4s.", trigger: hp_below, hp_pct: 50, target: player, action: apply_status, status: dodge, stacks: 15, duration_s: 4 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 3 (awaiting review). No "once per battle" on the wiki: fires each time HP drops to 50% again.'
+
+- id: arbalest
+  effects:
+    - { text: "Start of Battle: Gain 45% Accuracy for 10s,", trigger: battle_start, target: self_item, action: add_stat_pct, stat: accuracy_pct, amount: 45, duration_s: 10 }
+    - { text: "immediately Attack.", trigger: battle_start, target: self_item, action: attack }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 3 (awaiting review). The accuracy is for this weapon only.'
+
+- id: triple_crossbow
+  stats: { hits: 3 }
+  effects:
+    - { text: "Start of Battle: Gain 50% Accuracy", trigger: battle_start, target: self_item, action: add_stat_pct, stat: accuracy_pct, amount: 50, duration_s: 10 }
+    - { text: "and 25% Crit Rate for 10s,", trigger: battle_start, target: self_item, action: add_stat_pct, stat: crit_chance_pct, amount: 25, duration_s: 10 }
+    - { text: "immediately Attack.", trigger: battle_start, target: self_item, action: attack }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 3 (awaiting review). "Attack three times" → 3 hits per attack.'
+
+# ---------------------------------------------------------------- bonuses per status stack
+
+- id: trackers_bow
+  effects:
+    - { text: "Start of Battle: Gain 15 Focus for 15s.", trigger: battle_start, target: player, action: apply_status, status: focus, stacks: 15, duration_s: 15 }
+    - { text: "Crit Rate increases by 0.25% per Focus stack.", trigger: passive, target: self_item, action: add_stat_pct, stat: crit_chance_pct, amount: 0.25, per_status: { status: focus, on: self } }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 3 (awaiting review).'
+
+- id: skull_crusher
+  effects:
+    - { text: "Start of Battle: Gain 11 Spike.", trigger: battle_start, target: player, action: apply_status, status: spike, stacks: 11 }
+    - { text: "Per stack of Spike, the weapon's Crit Rate increases by 1%,", trigger: passive, target: self_item, action: add_stat_pct, stat: crit_chance_pct, amount: 1, per_status: { status: spike, on: self } }
+    - { text: "and the weapon deals an additional 10% DMG.", trigger: passive, target: self_item, action: add_stat_pct, stat: damage_pct, amount: 10, per_status: { status: spike, on: self } }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 3 (awaiting review). "additional 10% DMG" read as +10% type bonus per stack (not flat damage).'
+
+- id: dragonfire_sword
+  effects:
+    - { text: "On Hit: Inflict 2 Burn.", trigger: on_hit, target: enemy, action: apply_status, status: burn, stacks: 2 }
+    - { text: "For each Burn stack on the enemy, increase DMG by 10%.", trigger: passive, target: self_item, action: add_stat_pct, stat: damage_pct, amount: 10, per_status: { status: burn, on: enemy } }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 3 (awaiting review).'
+
+# ---------------------------------------------------------------- cleanse / remove / steal
+
+- id: broom
+  stats: { cooldown: 5.5 }
+  effects:
+    - { text: "Every 5.5s: Cleanse Remove 5 random debuff(s)", trigger: on_activation, target: player, action: cleanse, count: 5 }
+    - { text: "and gain 0.05x Block.", trigger: on_activation, target: player, action: gain_block, value: { ratio: 0.05, scales_with: hp } }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 3 (awaiting review). Wiki text "Cleanse Remove" read as cleanse 5. "Every 5.5s" = cooldown.'
+
+- id: absorbing_necklace
+  stats: { cooldown: 5.5 }
+  effects:
+    - { text: "Every 5.5s: Remove 2 random buff(s) from the enemy", trigger: on_activation, target: enemy, action: remove_status, count: 2 }
+    - { text: "and HP Heal 0.06x Max HP.", trigger: on_activation, target: player, action: heal, value: { ratio: 0.06, scales_with: hp } }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 3 (awaiting review). "Every 5.5s" = cooldown.'
+
+- id: heros_circlet
+  stats: { cooldown: 3.5 }
+  effects:
+    - { text: "Start of Battle: Gain 0.30x Block.", trigger: battle_start, target: player, action: gain_block, value: { ratio: 0.3, scales_with: hp } }
+    - { text: "Every 3.5s: Remove Buff 5 random buff(s) from the enemy.", trigger: on_activation, target: enemy, action: remove_status, count: 5 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 3 (awaiting review). "Every 3.5s" = cooldown.'
+
+- id: bloody_crown
+  stats: { cooldown: 3.5 }
+  effects:
+    - { text: "Start of Battle: Lose 0.35x Max HP,", trigger: battle_start, target: player, action: lose_hp, value: { ratio: 0.35, scales_with: hp } }
+    - { text: "gain 0.70x Block,", trigger: battle_start, target: player, action: gain_block, value: { ratio: 0.7, scales_with: hp } }
+    - { text: "and gain 4 Vamp.", trigger: battle_start, target: player, action: apply_status, status: vamp, stacks: 4 }
+    - { text: "Every 3.5s: Remove Buff Steal 5 random buff(s) from the enemy.", trigger: on_activation, target: enemy, action: steal_status, count: 5 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 3 (awaiting review). Wiki text "Remove Buff Steal" read as steal 5. "Every 3.5s" = cooldown.'
+
+- id: bear_trap
+  effects:
+    - { text: "On Attack: Remove 10 Dodge from the enemy.", trigger: on_attack, target: enemy, action: remove_status, status: dodge, count: 10 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 3 (awaiting review). Completes batch 2 (max_attacks 1).'
+
+- id: enhanced_bear_trap
+  stats: { max_attacks: 1 }
+  effects:
+    - { text: "On Attack: Remove 20 Dodge from the enemy.", trigger: on_attack, target: enemy, action: remove_status, status: dodge, count: 20 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 3 (awaiting review). "Attacks once per battle" → max_attacks 1.'
+
+- id: hound
+  effects:
+    - { text: "On [dot] Weapon Hit: 50% chance to Attack.", trigger: on_weapon_hit, watch: dots, watch_filter: { tags_any: [weapon] }, chance_pct: 50, target: self_item, action: attack }
+    - { text: "On Attack: Remove 5 Dodge from the enemy.", trigger: on_attack, target: enemy, action: remove_status, status: dodge, count: 5 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 3 (awaiting review).'
+
+# ---------------------------------------------------------------- damage reduction, blood
+
+- id: buckler
+  effects:
+    - { text: "On Attacked: 30% chance to reduce DMG taken by 20%.", trigger: before_attacked, chance_pct: 30, target: player, action: reduce_hit_damage, pct: 20 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 3 (awaiting review). Reduces the hit being taken; adds to other reductions (25% floor).'
+
+- id: wooden_shield
+  effects:
+    - { text: "On Attacked: 50% chance to reduce DMG taken by 20%.", trigger: before_attacked, chance_pct: 50, target: player, action: reduce_hit_damage, pct: 20 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 3 (awaiting review).'
+
+- id: steel_shield
+  effects:
+    - { text: "On Attacked: 50% chance to reduce DMG taken by 30%.", trigger: before_attacked, chance_pct: 50, target: player, action: reduce_hit_damage, pct: 30 }
+    - { text: "Start of Battle: Gain 0.05x Block.", trigger: battle_start, target: player, action: gain_block, value: { ratio: 0.05, scales_with: hp } }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 3 (awaiting review).'
+
+- id: blood_stone
+  effects:
+    - { text: "Start of Battle: Lose 0.15x Max HP,", trigger: battle_start, target: player, action: lose_hp, value: { ratio: 0.15, scales_with: hp } }
+    - { text: "gain 0.30x Block", trigger: battle_start, target: player, action: gain_block, value: { ratio: 0.3, scales_with: hp } }
+    - { text: "and 2 Vamp.", trigger: battle_start, target: player, action: apply_status, status: vamp, stacks: 2 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 3 (awaiting review).'

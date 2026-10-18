@@ -1,0 +1,504 @@
+# Gear stat lines, structured from the wiki text in rarity_effects / bonus_stat (generated once, then hand-kept).
+# Stats are calculated from gear, blessings and auras (user, 2026-10-16): each equipped piece adds its
+# stat_lines up to its rarity, and its bonus (the in-game value typed on the weapon, or config gear.bonus_stat_known).
+
+- id: natures_ring
+  stat_lines:
+    - rarity: uncommon
+      stat: atk_pct
+      amount: 10
+      text: ATK +10%
+    - rarity: epic
+      stat: atk_pct
+      amount: 15
+      text: ATK +15%
+  source: manual
+  verified: false
+- id: ring_of_chaotic_spikes
+  stat_lines:
+    - rarity: uncommon
+      stat: atk_pct
+      amount: 10
+      text: ATK +10%
+    - rarity: epic
+      stat: atk_pct
+      amount: 15
+      text: ATK +15%
+  source: manual
+  verified: false
+- id: archwizards_ring
+  stat_lines:
+    - rarity: uncommon
+      stat: atk_pct
+      amount: 10
+      text: ATK +10%
+    - rarity: epic
+      stat: atk_pct
+      amount: 15
+      text: ATK +15%
+  source: manual
+  verified: false
+- id: mighty_warriors_ring
+  stat_lines:
+    - rarity: uncommon
+      stat: atk_pct
+      amount: 10
+      text: ATK +10%
+    - rarity: epic
+      stat: atk_pct
+      amount: 15
+      text: ATK +15%
+  source: manual
+  verified: false
+- id: garnet_ring
+  stat_lines:
+    - rarity: rare
+      stat: atk_pct
+      amount: 10
+      text: ATK +10%
+  source: manual
+  verified: false
+- id: silver_ring
+  stat_lines:
+    - rarity: rare
+      stat: atk_pct
+      amount: 10
+      text: ATK +10%
+  source: manual
+  verified: false
+- id: gold_ring
+  stat_lines:
+    - rarity: rare
+      stat: atk_pct
+      amount: 10
+      text: ATK +10%
+  source: manual
+  verified: false
+- id: lightning_gloves
+  stat_lines:
+    - rarity: uncommon
+      stat: hp_pct
+      amount: 25
+      text: HP +25%
+  source: manual
+  verified: false
+- id: gloves_of_plague
+  stat_lines:
+    - rarity: uncommon
+      stat: hp_pct
+      amount: 25
+      text: HP +25%
+  source: manual
+  verified: false
+- id: brawlers_gloves
+  stat_lines:
+    - rarity: uncommon
+      stat: hp_pct
+      amount: 25
+      text: HP +25%
+  source: manual
+  verified: false
+- id: clerics_gloves
+  stat_lines:
+    - rarity: rare
+      stat: hp_pct
+      amount: 10
+      text: HP +10%
+  source: manual
+  verified: false
+- id: guards_gloves
+  stat_lines:
+    - rarity: rare
+      stat: hp_pct
+      amount: 10
+      text: HP +10%
+  source: manual
+  verified: false
+- id: forest_keepers_gloves
+  stat_lines:
+    - rarity: rare
+      stat: hp_pct
+      amount: 10
+      text: HP +10%
+  source: manual
+  verified: false
+- id: spiral_spear
+  stat_lines:
+    - rarity: rare
+      stat: atk_pct
+      amount: 25
+      text: ATK +25%
+    - rarity: epic
+      stat: spike_dmg_increase
+      amount: 35
+      text: Spike DMG +35%
+  bonus:
+    stat: all_dmg_increase
+    amount: 12.5
+    text: All DMG +12.5%
+  source: manual
+  verified: false
+- id: elderwood_bow
+  stat_lines:
+    - rarity: rare
+      stat: atk_pct
+      amount: 25
+      text: ATK +25%
+    - rarity: epic
+      stat: poison_dmg_increase
+      amount: 35
+      text: Poison DMG +35%
+    - rarity: legendary
+      stat: poison_inflict_increase
+      amount: 50
+      text: Poison Inflict +50%
+  bonus:
+    stat: all_dmg_increase
+    amount: 12.5
+    text: All DMG +12.5%
+  source: manual
+  verified: false
+- id: staff_of_vitality
+  stat_lines:
+    - rarity: rare
+      stat: hp_pct
+      amount: 25
+      text: HP +25%
+    - rarity: epic
+      stat: healing_power_enhance
+      amount: 20
+      text: Healing power enchance +20%
+  bonus:
+    stat: dmg_reduction
+    amount: 12.5
+    text: All DMG Reduction +12.5%
+  source: manual
+  verified: false
+- id: meteor_hammer
+  stat_lines:
+    - rarity: rare
+      stat: hp_pct
+      amount: 25
+      text: HP +25%
+    - rarity: epic
+      stat: stun_rate
+      amount: 20
+      text: Stun Rate +20%
+    - rarity: legendary
+      stat: dmg_vs_stunned
+      amount: 50
+      text: DMG against Stunned enemies +50%
+  bonus:
+    stat: all_dmg_increase
+    amount: 12.5
+    text: All DMG +12.5%
+  source: manual
+  verified: false
+- id: deathrattle
+  stat_lines:
+    - rarity: rare
+      stat: atk_pct
+      amount: 25
+      text: ATK +25%
+    - rarity: epic
+      stat: crit_dmg
+      amount: 35
+      text: Crit DMG +35%
+  bonus:
+    stat: crit_rate
+    amount: 12.5
+    text: Crit Rate +12.5%
+  source: manual
+  verified: false
+- id: primal_flame
+  stat_lines:
+    - rarity: rare
+      stat: atk_pct
+      amount: 25
+      text: ATK +25%
+    - rarity: epic
+      stat: burn_dmg_increase
+      amount: 35
+      text: Burn DMG +35%
+    - rarity: legendary
+      stat: burn_inflict_increase
+      amount: 50
+      text: Burn inflict +50%
+  bonus:
+    stat: crit_rate
+    amount: 12.5
+    text: Crit Rate +12.5%
+  source: manual
+  verified: false
+- id: omnicleaver
+  stat_lines:
+    - rarity: rare
+      stat: atk_pct
+      amount: 25
+      text: ATK +25%
+    - rarity: epic
+      stat: attack_dmg_increase
+      amount: 25
+      text: Attack DMG +25%
+  bonus:
+    stat: all_dmg_increase
+    amount: 12.5
+    text: All DMG +12.5%
+  source: manual
+  verified: false
+- id: everfrozen
+  stat_lines:
+    - rarity: rare
+      stat: atk_pct
+      amount: 25
+      text: ATK +25%
+    - rarity: epic
+      stat: freeze_inflict_increase
+      amount: 20
+      text: Freeze Inflict +20%
+  bonus:
+    stat: all_dmg_increase
+    amount: 12.5
+    text: All DMG +12.5%
+  source: manual
+  verified: false
+- id: divine_smite
+  stat_lines:
+    - rarity: rare
+      stat: hp_pct
+      amount: 25
+      text: HP +25%
+    - rarity: epic
+      stat: block_gain
+      amount: 20
+      text: Block Gain +20%
+  bonus:
+    stat: dmg_reduction
+    amount: 12.5
+    text: All DMG Reduction +12.5%
+  source: manual
+  verified: false
+- id: thunderbolt_spike
+  stat_lines:
+    - rarity: rare
+      stat: atk_pct
+      amount: 25
+      text: ATK +25%
+    - rarity: epic
+      stat: attack_dmg_increase
+      amount: 25
+      text: Attack DMG +25%
+  bonus:
+    stat: all_dmg_increase
+    amount: 12.5
+    text: All DMG +12.5%
+  source: manual
+  verified: false
+- id: frost_staff
+  stat_lines:
+    - rarity: rare
+      stat: atk_pct
+      amount: 10
+      text: ATK +10%
+    - rarity: legendary
+      stat: atk_pct
+      amount: 15
+      text: ATK +15%
+  bonus:
+    stat: crit_rate
+    amount: 3
+    text: Crit Rate +3%
+  source: manual
+  verified: false
+- id: guardians_bow
+  stat_lines:
+    - rarity: rare
+      stat: atk_pct
+      amount: 10
+      text: ATK +10%
+    - rarity: legendary
+      stat: atk_pct
+      amount: 15
+      text: ATK +15%
+  bonus:
+    stat: all_dmg_increase
+    amount: 3
+    text: All DMG +3%
+  source: manual
+  verified: false
+- id: novices_sword
+  stat_lines:
+    - rarity: rare
+      stat: atk_pct
+      amount: 10
+      text: ATK +10%
+    - rarity: legendary
+      stat: atk_pct
+      amount: 15
+      text: ATK +15%
+  bonus:
+    stat: all_dmg_increase
+    amount: 3
+    text: All DMG +3%
+  source: manual
+  verified: false
+- id: exotic_spear
+  stat_lines:
+    - rarity: rare
+      stat: atk_pct
+      amount: 10
+      text: ATK +10%
+    - rarity: legendary
+      stat: atk_pct
+      amount: 15
+      text: ATK +15%
+  bonus:
+    stat: all_dmg_increase
+    amount: 3
+    text: All DMG +3%
+  source: manual
+  verified: false
+- id: steel_mace
+  stat_lines:
+    - rarity: rare
+      stat: atk_pct
+      amount: 10
+      text: ATK +10%
+    - rarity: legendary
+      stat: atk_pct
+      amount: 15
+      text: ATK +15%
+  bonus:
+    stat: dmg_reduction
+    amount: 3
+    text: All DMG Reduction +3%
+  source: manual
+  verified: false
+- id: morningstar
+  stat_lines:
+    - rarity: rare
+      stat: atk_pct
+      amount: 10
+      text: ATK +10%
+    - rarity: legendary
+      stat: atk_pct
+      amount: 15
+      text: ATK +15%
+  bonus:
+    stat: dmg_reduction
+    amount: 3
+    text: All DMG Reduction +3%
+  source: manual
+  verified: false
+- id: vampire_crossbow
+  stat_lines:
+    - rarity: rare
+      stat: atk_pct
+      amount: 10
+      text: ATK +10%
+    - rarity: legendary
+      stat: atk_pct
+      amount: 15
+      text: ATK +15%
+  bonus:
+    stat: all_dmg_increase
+    amount: 3
+    text: All DMG +3%
+  source: manual
+  verified: false
+- id: ember_staff
+  stat_lines:
+    - rarity: rare
+      stat: atk_pct
+      amount: 10
+      text: ATK +10%
+    - rarity: legendary
+      stat: atk_pct
+      amount: 15
+      text: ATK +15%
+  bonus:
+    stat: all_dmg_increase
+    amount: 3
+    text: All DMG +3%
+  source: manual
+  verified: false
+- id: flowing_blade
+  stat_lines:
+    - rarity: rare
+      stat: atk_pct
+      amount: 10
+      text: ATK +10%
+    - rarity: legendary
+      stat: atk_pct
+      amount: 15
+      text: ATK +15%
+  bonus:
+    stat: all_dmg_increase
+    amount: 3
+    text: All DMG +3%
+  source: manual
+  verified: false
+- id: princes_dagger
+  stat_lines:
+    - rarity: rare
+      stat: atk_pct
+      amount: 10
+      text: ATK +10%
+    - rarity: legendary
+      stat: atk_pct
+      amount: 15
+      text: ATK +15%
+  bonus:
+    stat: crit_rate
+    amount: 3
+    text: Crit Rate +3%
+  source: manual
+  verified: false
+- id: celestial_shield
+  stat_lines:
+    - rarity: uncommon
+      stat: hp_pct
+      amount: 10
+      text: HP +10%
+    - rarity: epic
+      stat: hp_pct
+      amount: 15
+      text: HP +15%
+  source: manual
+  verified: false
+- id: infernal_shield
+  stat_lines:
+    - rarity: uncommon
+      stat: hp_pct
+      amount: 10
+      text: HP +10%
+    - rarity: epic
+      stat: hp_pct
+      amount: 15
+      text: HP +15%
+  source: manual
+  verified: false
+- id: wooden_shield_gear
+  stat_lines:
+    - rarity: rare
+      stat: hp_pct
+      amount: 10
+      text: HP +10%
+  source: manual
+  verified: false
+- id: spiked_shield_gear
+  stat_lines:
+    - rarity: rare
+      stat: hp_pct
+      amount: 10
+      text: HP +10%
+  source: manual
+  verified: false
+- id: iron_shield
+  stat_lines:
+    - rarity: rare
+      stat: hp_pct
+      amount: 10
+      text: HP +10%
+  source: manual
+  verified: false

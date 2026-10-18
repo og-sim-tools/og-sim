@@ -1,0 +1,92 @@
+# Structured item effects — batch 1 (SPEC §5.2). AWAITING REVIEW: verified: false until confirmed.
+#
+# Scope: "Start of Battle" flat % bonuses to the items under an item's dots (haste, damage,
+# accuracy, crit damage). Each effect's `text` is the exact part of effect_text it encodes.
+# Items marked "partial" have other effect parts that are still text only (later batches).
+#
+# Left out of this batch on purpose (questions in the phase 3 summary):
+#   rope_trap, spiked_gloves, boulder — "slowed by N%": negative haste or a Freeze-like multiplier?
+#   miracle_sword — "[dot] Armor Increase DMG by 25%": armor doesn't deal damage.
+#   lance — "This item and [dot] Weapon gain 10% haste": once at start, or on every hit?
+#   greatsword, mithril_ingot, anvil, plate_armor, … — "per [dot] X" counts (batch 2).
+
+- id: leather_gloves
+  effects:
+    - { text: "Start of Battle: [dot] Item gains 15% Haste.", trigger: battle_start, uses_dots: true, target: items_under_dots, action: add_stat_pct, stat: haste_pct, amount: 15 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 1 (awaiting review). Complete.'
+
+- id: whetstone
+  effects:
+    - { text: "Start of Battle: Increase [dot] Weapon DMG by 30%.", trigger: battle_start, uses_dots: true, target: items_under_dots, filter: { tags_any: [weapon] }, action: add_stat_pct, stat: damage_pct, amount: 30 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 1 (awaiting review). Complete.'
+
+- id: gladius
+  effects:
+    - { text: "Start of Battle: Increase [dot] Weapon DMG by 30%.", trigger: battle_start, uses_dots: true, target: items_under_dots, filter: { tags_any: [weapon] }, action: add_stat_pct, stat: damage_pct, amount: 30 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 1 (awaiting review). Complete.'
+
+- id: heros_longsword
+  effects:
+    - { text: "Start of Battle: Increase [dot] Weapon DMG by 80%.", trigger: battle_start, uses_dots: true, target: items_under_dots, filter: { tags_any: [weapon] }, action: add_stat_pct, stat: damage_pct, amount: 80 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 1 (awaiting review). Complete.'
+
+- id: golden_hero_statue
+  effects:
+    - { text: "Start of Battle: Increase [dot] Weapon DMG by 25%.", trigger: battle_start, uses_dots: true, target: items_under_dots, filter: { tags_any: [weapon] }, action: add_stat_pct, stat: damage_pct, amount: 25 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 1 (awaiting review). Complete.'
+
+- id: warrior_flesh
+  effects:
+    - { text: "Start of Battle: Increase [dot] Creature DMG by 40%.", trigger: battle_start, uses_dots: true, target: items_under_dots, filter: { tags_any: [creature] }, action: add_stat_pct, stat: damage_pct, amount: 40 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 1 (awaiting review). Complete.'
+
+- id: magic_stone
+  effects:
+    - { text: "Start of Battle: Increase [dot] Spell DMG by 40%.", trigger: battle_start, uses_dots: true, target: items_under_dots, filter: { tags_any: [spell] }, action: add_stat_pct, stat: damage_pct, amount: 40 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 1 (awaiting review). Complete.'
+
+- id: flame_gloves
+  effects:
+    - { text: "Start of Battle: [dot] Staff gains 15% Haste", trigger: battle_start, uses_dots: true, target: items_under_dots, filter: { tags_any: [staff] }, action: add_stat_pct, stat: haste_pct, amount: 15 }
+    - { text: "DMG of [dot] Spell and [dot] Staff increases by 15%.", trigger: battle_start, uses_dots: true, target: items_under_dots, filter: { tags_any: [spell, staff] }, action: add_stat_pct, stat: damage_pct, amount: 15 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 1 (awaiting review). Complete.'
+
+- id: telescope
+  effects:
+    - { text: "Start of Battle: [dot] Weapon Accuracy increases by 45%.", trigger: battle_start, uses_dots: true, target: items_under_dots, filter: { tags_any: [weapon] }, action: add_stat_pct, stat: accuracy_pct, amount: 45 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 1 (awaiting review). Complete.'
+
+- id: hawk_feather_talisman
+  effects:
+    - { text: "Start of Battle: [dot] Weapon Increases Crit DMG by 40%.", trigger: battle_start, uses_dots: true, target: items_under_dots, filter: { tags_any: [weapon] }, action: add_stat_pct, stat: crit_damage_pct, amount: 40 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'Effects batch 1 (awaiting review). Complete.'

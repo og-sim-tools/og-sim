@@ -1,0 +1,331 @@
+# Hero skills in battle (SPEC §4.6, built 2026-10-16 on request). The active hero's own two skills
+# and the skills in their link slots run as effects. Wiki text only, so everything is unverified;
+# readings I had to choose are in each skill's notes.
+# status: complete · partial (part of the text isn't simulated) · shop (no battle effect) ·
+#         needs_values (the wiki text has no numbers: _x_ / x?).
+
+# ---------------------------------------------------------------- Ranger
+- id: erwen
+  skill_effects:
+    spirit_affinity:
+      status: shop
+      effects: []
+      notes: Enhanced Fire / Wind slots, Spirit Stones and summoning all happen in the shop.
+    chasing_arrow:
+      status: complete
+      effects:
+        - { text: "Upon gaining 10 Swift: Gain 3 Focus.", trigger: on_status_applied, watch: any, params: { status: swift }, every: 10, target: player, action: apply_status, status: focus, stacks: 3 }
+      notes: Counts Swift my items give me (10 gained in total → 3 Focus, then the next 10 …).
+  source: manual
+  verified: false
+
+- id: raven
+  skill_effects:
+    outlaw_tactics:
+      status: complete
+      effects:
+        - { text: "Start of Battle: Evade all attacks for 3s.", trigger: battle_start, target: player, action: apply_status, status: evade, stacks: 1, duration_s: 3 }
+      notes: Weapon attacks (and gear skill hits) miss; each counts as a dodge.
+    call_it_survival_instinct:
+      status: complete
+      effects:
+        - { text: "When receiving a lethal attack: Consume 5 Focus to evade the attack. The cost increases by 5 with each activation.", trigger: on_lethal, target: player, action: prevent_lethal, status: focus, stacks: 5, stacks_growth: 5, avoid: true }
+      notes: Any lethal damage (status damage too), not just weapon hits. Not enough Focus = no evade.
+  source: manual
+  verified: false
+
+- id: talin
+  skill_effects:
+    pursuit:
+      status: complete
+      effects:
+        - { text: "If your Weapon lands as a Critical Hit: Refunds 15% of remaining Cooldown.", trigger: on_crit, watch: any, watch_filter: { tags_any: [weapon] }, target: event_item, action: refund_cooldown, pct: 15, pct_of: remaining }
+      notes: Right after an attack almost the whole cooldown remains, so this is close to 15% of the cooldown.
+    hawk_eye:
+      status: complete
+      effects:
+        - { text: "10% chance for your Weapon's Critical Hit", trigger: passive, target: player, action: add_player_stat, player_stat: weapon_crit_proc_chance, amount: 10 }
+        - { text: "to deal 100% increased DMG.", trigger: passive, target: player, action: add_player_stat, player_stat: weapon_crit_proc_dmg, amount: 100 }
+      notes: The crit hit is × 2 on top of Crit DMG. Gear skill hits count as weapon hits.
+  source: manual
+  verified: false
+
+- id: venom
+  skill_effects:
+    poison_coating:
+      status: complete
+      effects:
+        - { text: "Start of Battle: Items in enhanced slots inflict 50% more Poison.", trigger: battle_start, target: all_items, filter: { enhanced: true }, action: add_inflict_pct, status: poison, amount: 50 }
+      notes: The 2 enhanced slots are random each run, so mark them on the layout (Enhanced cells). Added to Poison Inflict Increase.
+    web_weaving:
+      status: shop
+      effects: []
+  source: manual
+  verified: false
+
+- id: lua
+  skill_effects:
+    fairy_wisdom:
+      status: complete
+      effects:
+        - { text: "On Over Heal: Gain 3 Focus", trigger: on_heal, watch: any, min_event_amount: 0, target: player, action: apply_status, status: focus, stacks: 3 }
+        - { text: "and increase Crit Rate of all Weapons by 5% for 5s.", trigger: on_heal, watch: any, min_event_amount: 0, target: all_items, filter: { tags_any: [weapon] }, action: add_stat_pct, stat: crit_chance_pct, amount: 5, duration_s: 5 }
+      notes: Every heal with overheal counts (Regen / Vamp included). Each one adds another +5% for 5s (stacking, not refreshing).
+    naive_fairy:
+      status: shop
+      effects: []
+  source: manual
+  verified: false
+
+- id: acrobat
+  skill_effects:
+    agile_movement:
+      status: complete
+      effects:
+        - { text: "Start of Battle: Gain 10 Dodge.", trigger: battle_start, target: player, action: apply_status, status: dodge, stacks: 10 }
+        - { text: "On Successful Evasion: For 2s, increase DMG dealt by 10%.", trigger: on_dodge, target: player, action: add_player_stat, player_stat: all_dmg_increase, amount: 10, duration_s: 2 }
+      notes: '"DMG dealt" read as All DMG. Each dodge adds another +10% for 2s (stacking, not refreshing).'
+    thiefs_hobby:
+      status: shop
+      effects: []
+  source: manual
+  verified: false
+
+- id: sniper
+  skill_effects:
+    ultra_focus:
+      status: complete
+      effects:
+        - { text: "Start of Battle: Gain 30 Focus.", trigger: battle_start, target: player, action: apply_status, status: focus, stacks: 30 }
+        - { text: "When HP is below or equal to 60%: Lose 30 Focus.", trigger: hp_below, hp_pct: 60, target: player, action: remove_status, status: focus, count: 30, count_unit: stacks }
+      notes: Fires again if healed above 60% and dropped back below.
+    western_crossbowman:
+      status: shop
+      effects: []
+  source: manual
+  verified: false
+
+- id: archer
+  skill_effects:
+    focus_training:
+      status: complete
+      effects:
+        - { text: "Gain 5% Accuracy", trigger: passive, target: player, action: add_player_stat, player_stat: accuracy_bonus, amount: 5 }
+      notes: +5 accuracy points on every weapon (like Accuracy Bonus).
+    pickpocket:
+      status: shop
+      effects: []
+  source: manual
+  verified: false
+
+# ---------------------------------------------------------------- Warrior
+- id: bjorn
+  skill_effects:
+    gigantization:
+      status: complete
+      effects:
+        - { text: "In proportion to your Max HP increase, All DMG increases up to 30%.", trigger: passive, target: player, action: add_player_stat, player_stat: all_dmg_increase, amount: 30, amount_from: { stat: hp_pct, factor: 0.3, max: 30 } }
+      notes: Guess — "Max HP increase" = my HP % bonus from gear and blessings; +100% HP → +30% All DMG (cap). Check in game.
+    flesh_burst:
+      status: complete
+      effects:
+        - { text: "Upon losing HP yourself: Remove 50% of your", trigger: on_self_hp_loss, target: player, action: remove_block, pct_of_current: 50 }
+        - { text: "and 10% of the opponent's Block respectively,", trigger: on_self_hp_loss, target: enemy, action: remove_block, pct_of_current: 10 }
+        - { text: "and deal Attack DMG x3.0 DMG. For each 100% of max HP of Block removed, Flesh Burst DMG increases by Attack DMG x0.4.", trigger: on_self_hp_loss, target: enemy, action: deal_damage, damage_type: weapon, value: { ratio: 3.0, scales_with: atk }, bonus_per_removed_block: { ratio: 0.4, scales_with: atk } }
+      notes: 'From the user (ATK 702.2K): 2.10M = 3.0× ATK, +280.8K = 0.4× ATK for each 100% of my max HP in Block removed from both sides together (prorated: 50% of max HP → +0.2× ATK). Weapon damage. Fires for every HP loss my own items or skills cause (Price of the Pact included).'
+  source: manual
+  verified: false
+
+- id: rose
+  skill_effects:
+    impale:
+      status: complete
+      effects:
+        - { text: "Your Spike, Poison and Burn ignores the enemy's Block and deals penetration DMG.", trigger: passive, target: player, action: add_player_stat, player_stat: status_ignores_block, amount: 1 }
+    parting_rose:
+      status: complete
+      effects:
+        - { text: "If your Spike stacks exceed 10 times the opponent's current HP %, Execute the opponent.", trigger: passive, condition: { who: self, status_over_foe_hp: { status: spike, factor: 10 } }, target: enemy, action: execute }
+      notes: Checked every tick. Enemy at 30% HP → more than 300 Spike executes.
+  source: manual
+  verified: false
+
+- id: darkan
+  skill_effects:
+    forbidden_power:
+      status: complete
+      effects:
+        - { text: "Accuracy decreases by 6%,", trigger: passive, target: player, action: add_player_stat, player_stat: accuracy_bonus, amount: -6 }
+        - { text: "but all weapon DMG", trigger: passive, target: all_items, filter: { tags_any: [weapon] }, action: add_stat_pct, stat: damage_pct, amount: 25, amount_from: { missing_hp: true, factor: 0.25, max: 25 } }
+        - { text: "and Haste increase up to 25% in proportion to your missing HP.", trigger: passive, target: all_items, filter: { tags_any: [weapon] }, action: add_stat_pct, stat: haste_pct, amount: 25, amount_from: { missing_hp: true, factor: 0.25, max: 25 } }
+      notes: Guess — linear, +25% at 100% missing HP (so +12.5% at half HP). Check in game.
+    price_of_the_pact:
+      status: complete
+      effects:
+        - { text: "Every 2s: Lose 0.05x HP,", trigger: timer, interval_s: 2, target: player, action: lose_hp, value: { ratio: 0.05, scales_with: hp } }
+        - { text: "then cover it to Block.", trigger: timer, interval_s: 2, target: player, action: gain_block, value: { ratio: 0.05, scales_with: hp } }
+      notes: 'From the user (HP 4.35M): 217.6K = 0.05× max HP lost and gained as Block every 2s. Block Gain bonuses apply to the Block part.'
+  source: manual
+  verified: false
+
+- id: rebecca
+  skill_effects:
+    courage_to_protect_all:
+      status: complete
+      effects:
+        - { text: "Start of Battle: Gain 0.2x HP Block.", trigger: battle_start, target: player, action: gain_block, value: { ratio: 0.2, scales_with: hp } }
+        - { text: "All weapons deal additional DMG equal to 10% of current Block.", trigger: passive, target: player, action: add_player_stat, player_stat: weapon_dmg_from_block_pct, amount: 10 }
+      notes: 'From the user (HP 4.35M): 870.7K = 0.2× max HP. The extra damage uses the Block I have right before each hit, added before the final multiplier.'
+    safety_first:
+      status: shop
+      effects: []
+  source: manual
+  verified: false
+
+- id: kai
+  skill_effects:
+    sword_master:
+      status: complete
+      effects:
+        - { text: "Increase Sword DMG by 6% for each different Sword in the backpack.", trigger: passive, target: all_items, filter: { tags_any: [sword] }, action: add_stat_pct, stat: damage_pct, amount: 6, per_bag: { tags_any: [sword] } }
+      notes: Counted once at the start of battle; "different" = different item kinds (two Longswords count once).
+    enhancement_master:
+      status: shop
+      effects: []
+  source: manual
+  verified: false
+
+- id: spearman
+  skill_effects:
+    spearmans_pride:
+      status: complete
+      effects:
+        - { text: "Spear DMG +30%. For each non-Spear weapon (excluding gear), reduce Spear DMG by 10%.", trigger: passive, target: all_items, filter: { tags_any: [spear] }, action: add_stat_pct, stat: damage_pct, amount: 30, per_bag_reduce: { tags_any: [weapon], tags_none: [spear], exclude_gear: true, step: 10, min: 0 } }
+      notes: 'From the user (the wiki has no text). Counts each non-Spear weapon item in the bag at the start of battle; 3 or more → +0%.'
+    aesthetic_insight:
+      status: shop
+      effects: []
+  source: manual
+  verified: false
+
+- id: barbarian
+  skill_effects:
+    battle_cry:
+      status: complete
+      effects:
+        - { text: "On Attacked: 25% chance to gain 1 Spike,", trigger: on_attacked, chance_pct: 25, roll_group: cry, target: player, action: apply_status, status: spike, stacks: 1 }
+        - { text: "and Haste +5% for 2.5s.", trigger: on_attacked, chance_pct: 25, roll_group: cry, target: all_items, action: add_stat_pct, stat: haste_pct, amount: 5, duration_s: 2.5 }
+      notes: One 25% roll for both parts. The Haste goes to all my items and stacks.
+    thats_mine:
+      status: shop
+      effects: []
+  source: manual
+  verified: false
+
+- id: fighter
+  skill_effects:
+    valiant_hero:
+      status: shop
+      effects: []
+      notes: '"Braver than others" — no effect.'
+    artisans_spirit:
+      status: shop
+      effects: []
+  source: manual
+  verified: false
+
+# ---------------------------------------------------------------- Wizard
+- id: trixie
+  skill_effects:
+    ill_be_having_that:
+      status: complete
+      effects:
+        - { text: "When removing an enemy buff: 30% chance to steal that buff instead.", trigger: passive, target: player, action: add_player_stat, player_stat: steal_on_remove_pct, amount: 30 }
+      notes: One roll per removal effect; on success I gain everything it removed.
+    consider_this_yours:
+      status: complete
+      effects:
+        - { text: "Reflects 20% of received debuffs.", trigger: passive, target: player, action: add_player_stat, player_stat: debuff_reflect_pct, amount: 20 }
+      notes: I still get the full debuff; 20% of the stacks (fractions alternate) also go onto the enemy.
+  source: manual
+  verified: false
+
+- id: cecilia
+  skill_effects:
+    instant_casting:
+      status: complete
+      effects:
+        - { text: "Every 4s: Activate spells in enhanced slots.", trigger: timer, interval_s: 4, target: all_items, filter: { tags_any: [spell], enhanced: true }, action: activate_item }
+      notes: The enhanced slot is random each run, so mark it on the layout (Enhanced cells).
+    backmasking:
+      status: complete
+      effects:
+        - { text: "Whenever 20 enemy Burn or Freeze is removed: Randomly activate a Spell in the backpack.", trigger: on_status_removed, params: { statuses: [burn, freeze] }, every: 20, target: all_items, filter: { tags_any: [spell] }, action: activate_item, pick_random: 1 }
+      notes: Counts Burn and Freeze taken off the enemy by effects (cleanse, remove, steal), not stacks running out.
+  source: manual
+  verified: false
+
+- id: spark
+  skill_effects:
+    electrostatic_force:
+      status: complete
+      effects:
+        - { text: "Stun's chance increases by 15%.", trigger: passive, target: player, action: add_player_stat, player_stat: stun_rate, amount: 15 }
+      notes: '+15 points on every chance to Stun (40% → 55%). Stuns without a chance are unchanged.'
+    spark_body:
+      status: shop
+      effects: []
+  source: manual
+  verified: false
+
+- id: feline_mage
+  skill_effects:
+    meow:
+      status: complete
+      effects:
+        - { text: "On Spell Hit: Increase Total ATK during the current battle by 0.1%.", trigger: on_hit, watch: any, watch_filter: { tags_any: [spell] }, target: player, action: add_atk_pct, amount: 0.1 }
+    track_scent:
+      status: shop
+      effects: []
+  source: manual
+  verified: false
+
+- id: fire_mage
+  skill_effects:
+    short_term_memory:
+      status: complete
+      effects:
+        - { text: "Increase all DMG inversely proportional to the number of Weapon Spells in your backpack by 30%.", trigger: passive, target: player, action: add_player_stat, player_stat: all_dmg_increase, amount: 30, per_bag: { tags_all: [weapon, spell], inverse: true } }
+      notes: Guess — 30% ÷ the number of different Weapon Spells (none or one → 30%, two → 15%, three → 10%). Check in game.
+    affinity:
+      status: shop
+      effects: []
+  source: manual
+  verified: false
+
+- id: ice_mage
+  skill_effects:
+    snowball_fight:
+      status: complete
+      effects:
+        - { text: "Increase the duration of Burn", trigger: passive, target: player, action: add_player_stat, player_stat: burn_duration_bonus_s, amount: 1 }
+        - { text: "and Freeze you inflict by 1s,", trigger: passive, target: player, action: add_player_stat, player_stat: freeze_duration_bonus_s, amount: 1 }
+        - { text: "and your item(s) will have a 50% chance to no longer consume Freeze.", trigger: passive, target: player, action: add_player_stat, player_stat: freeze_keep_on_consume_pct, amount: 50 }
+      notes: 'From the user: timed Burn / Freeze get +1s. Items that consume Freeze (Transformation Magic: Instant Freeze …) have a 50% chance to keep it; those items still need their effects entered (remove_status with consume: true).'
+    do_you_want_to_build_a_snowball:
+      status: shop
+      effects: []
+  source: manual
+  verified: false
+
+- id: mage
+  skill_effects:
+    magical_aptitude:
+      status: complete
+      effects:
+        - { text: "Increase all DMG by 5%.", trigger: passive, target: player, action: add_player_stat, player_stat: all_dmg_increase, amount: 5 }
+    master_negotiator:
+      status: shop
+      effects: []
+  source: manual
+  verified: false

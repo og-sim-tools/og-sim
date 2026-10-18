@@ -1,0 +1,18 @@
+# Item values the wiki showed as ? (user, in game, 2026-10-17). Pet-spawned items are worth 0.
+
+- { id: fairy_dragon, value: 17, value_unknown: false, source: observed, verified: true }
+- { id: red_rose_rapier, value: 13, value_unknown: false, source: observed, verified: true }
+- { id: red_rose, value: 6, value_unknown: false, source: observed, verified: true }
+- { id: knights_order_banner, value: 7, value_unknown: false, source: observed, verified: true }
+- { id: shadow_hunter, value: 32, value_unknown: false, source: observed, verified: true }
+- { id: spider_fang, value: 4, value_unknown: false, source: observed, verified: true }
+- { id: black_feather, value: 7, value_unknown: false, source: observed, verified: true }
+- { id: adrenaline, value: 4, value_unknown: false, source: observed, verified: true }
+- { id: millennium_dragon, value: 15, value_unknown: false, source: observed, verified: true }
+- { id: meow_missile, value: 12, value_unknown: false, source: observed, verified: true }
+- { id: poison_bug_egg, value: 0, value_unknown: false, source: observed, verified: true }
+- { id: poison_bug, value: 0, value_unknown: false, source: observed, verified: true }
+- { id: venomous_spider_egg_sack, value: 0, value_unknown: false, source: observed, verified: true }
+- { id: mini_venomous_spider, value: 0, value_unknown: false, source: observed, verified: true }
+- { id: hefty_egg_sack, value: 0, value_unknown: false, source: observed, verified: true }
+- { id: large_venomous_spider, value: 0, value_unknown: false, source: observed, verified: true }

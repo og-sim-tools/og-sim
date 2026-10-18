@@ -1,0 +1,27 @@
+# Erwen's Spirits (corrections.md §1 text), structured. Unverified reading: "for 10s, inflict 12 Burn"
+# = 12 Burn that lasts 10s; "gain 10 Swift for 10s" likewise. The [Spirit] Burn Inflict & Swift Gain
+# blessing raises both (item_inflict_statuses).
+
+- id: fire_spirit
+  effects:
+    - { text: "Start of Battle: for 10s, inflict 12 Burn per [dot] Spirit.", trigger: battle_start, per_dot: { tags_any: [spirit] }, target: enemy, action: apply_status, status: burn, stacks: 12, duration_s: 10 }
+    - { text: "On [dot] Bow Hit: refund 30% of Cooldown.", trigger: on_weapon_hit, watch: dots, watch_filter: { tags_any: [bow] }, target: self_item, action: refund_cooldown, pct: 30 }
+  effects_status: complete
+  source: manual
+  verified: false
+
+- id: wind_spirit
+  effects:
+    - { text: "Start of Battle: for 10s, gain 10 Swift per [dot] Spirit.", trigger: battle_start, per_dot: { tags_any: [spirit] }, target: player, action: apply_status, status: swift, stacks: 10, duration_s: 10 }
+    - { text: "On [dot] Spirit Hit: gain 1 Swift.", trigger: on_weapon_hit, watch: dots, watch_filter: { tags_any: [spirit] }, target: player, action: apply_status, status: swift, stacks: 1 }
+  effects_status: complete
+  source: manual
+  verified: false
+
+- id: spirit_stone
+  effects:
+    - { text: "Start of Battle: for 8s, per [dot] Spirit: gain 4 Swift", trigger: battle_start, per_dot: { tags_any: [spirit] }, target: player, action: apply_status, status: swift, stacks: 4, duration_s: 8 }
+    - { text: "and inflict 4 Burn on the enemy.", trigger: battle_start, per_dot: { tags_any: [spirit] }, target: enemy, action: apply_status, status: burn, stacks: 4, duration_s: 8 }
+  effects_status: complete
+  source: manual
+  verified: false

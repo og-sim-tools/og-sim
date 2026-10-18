@@ -1,0 +1,124 @@
+# My confirmed fixes, from docs/wiki-data/corrections.md. Same id = override field by field.
+# Shapes, dots and weapon basic attacks still need entering for every gear piece (item editor, phase 4).
+
+# ---------------------------------------------------------------- S-rank weapons (tags from me, corrections.md §7)
+
+- id: spiral_spear
+  tags: [weapon, spear]
+  source: manual
+  verified: true
+
+- id: omnicleaver
+  tags: [weapon, spear]
+  source: manual
+  verified: true
+
+- id: primal_flame
+  tags: [weapon, sword]
+  source: manual
+  verified: true
+
+- id: thunderbolt_spike
+  tags: [weapon, sword]
+  source: manual
+  verified: true
+
+- id: staff_of_vitality
+  tags: [weapon, staff]
+  source: manual
+  verified: true
+
+- id: everfrozen
+  tags: [weapon, staff]
+  source: manual
+  verified: true
+
+- id: elderwood_bow
+  tags: [weapon, bow]
+  skill:
+    text: "Triggers a Poison Explosion, dealing DMG equal to 3 times the Poison DMG. _Activates every 8 seconds._"
+    trigger_text: Activates every 8 seconds
+    interval_s: 8
+  gear_effect_text: "On Basic Attack Hit: Inflict 1 Poison."
+  source: observed
+  verified: true
+  notes: corrections.md §2 — the wiki had the skill and gear effect swapped. Tags from corrections.md §7.
+
+- id: deathrattle
+  tags: [weapon, bow]
+  source: manual
+  verified: true
+
+- id: meteor_hammer
+  tags: [weapon, blunted]
+  source: manual
+  verified: true
+
+- id: divine_smite
+  tags: [weapon, blunted]
+  skill:
+    text: "Deal 3.0x ATK DMG. Gain 0.35x Block and gain Divine Grace 3 time(s). _Activates every 8 seconds._"
+    damage: { ratio: 3.0, scales_with: atk }
+    interval_s: 8
+  source: observed
+  verified: true
+  notes: corrections.md §3 — the wiki's "Divine Blessing" in the skill is the same mechanic as Divine Grace. Tags from corrections.md §7.
+
+# ---------------------------------------------------------------- other weapons (type from the name)
+
+- id: frost_staff
+  tags: [weapon, staff]
+  source: manual
+  verified: true
+
+- id: ember_staff
+  tags: [weapon, staff]
+  source: manual
+  verified: true
+
+- id: guardians_bow
+  tags: [weapon, bow]
+  source: manual
+  verified: true
+
+- id: novices_sword
+  tags: [weapon, sword]
+  source: manual
+  verified: true
+
+- id: exotic_spear
+  tags: [weapon, spear]
+  source: manual
+  verified: true
+
+# Type not obvious from the name — only `weapon` until confirmed.
+
+- id: steel_mace
+  tags: [weapon]
+  source: manual
+  verified: true
+  notes: Blunted? Not confirmed.
+
+- id: morningstar
+  tags: [weapon]
+  source: manual
+  verified: true
+  notes: Blunted? Not confirmed.
+
+- id: vampire_crossbow
+  tags: [weapon]
+  source: manual
+  verified: true
+  notes: Crossbow? Not confirmed.
+
+- id: flowing_blade
+  tags: [weapon]
+  source: manual
+  verified: true
+  notes: Sword? Not confirmed.
+
+- id: princes_dagger
+  tags: [weapon]
+  source: manual
+  verified: true
+  notes: Sword (like the Dagger item)? Not confirmed.

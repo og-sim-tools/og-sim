@@ -1,0 +1,1850 @@
+# Item sprite images from the wiki (tools/fetch-icons.ts, 2026-10-16). image_size is the sprite's native pixel size.
+
+- id: spear
+  image: items/spear.png
+  image_size:
+    w: 11
+    h: 47
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/4/4f/Spear.png
+  verified: false
+- id: whip
+  image: items/whip.png
+  image_size:
+    w: 13
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/7/71/Whip.png
+  verified: false
+- id: dagger
+  image: items/dagger.png
+  image_size:
+    w: 9
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/4/45/Dagger.png
+  verified: false
+- id: combat_hammer
+  image: items/combat_hammer.png
+  image_size:
+    w: 13
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/d/dc/Combat_Hammer.png
+  verified: false
+- id: stone_hammer
+  image: items/stone_hammer.png
+  image_size:
+    w: 29
+    h: 43
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/1/19/Stone_Hammer.png
+  verified: false
+- id: torch
+  image: items/torch.png
+  image_size:
+    w: 12
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/b/b2/Torch.png
+  verified: false
+- id: candlestick
+  image: items/candlestick.png
+  image_size:
+    w: 41
+    h: 45
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/b/b5/Candlestick.png
+  verified: false
+- id: friendly_dog
+  image: items/friendly_dog.png
+  image_size:
+    w: 28
+    h: 27
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/8/87/Friendly_Dog.png
+  verified: false
+- id: fairy
+  image: items/fairy.png
+  image_size:
+    w: 28
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/4/43/Fairy.png
+  verified: false
+- id: dragon
+  image: items/dragon.png
+  image_size:
+    w: 29
+    h: 28
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/c/c7/Dragon.png
+  verified: false
+- id: fairy_dragon
+  image: items/fairy_dragon.png
+  image_size:
+    w: 29
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/2/28/Fairy_Dragon.png
+  verified: false
+- id: rock
+  image: items/rock.png
+  image_size:
+    w: 13
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/d/d4/Stone.png
+  verified: false
+- id: boulder
+  image: items/boulder.png
+  image_size:
+    w: 28
+    h: 27
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/2/21/Boulder.png
+  verified: false
+- id: buckler
+  image: items/buckler.png
+  image_size:
+    w: 13
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/7/74/Buckler.png
+  verified: false
+- id: wooden_shield
+  image: items/wooden_shield.png
+  image_size:
+    w: 13
+    h: 28
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/6/61/Wooden_Shield.png
+  verified: false
+- id: leather_helmet
+  image: items/leather_helmet.png
+  image_size:
+    w: 13
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/6/6e/Leather_Helmet.png
+  verified: false
+- id: leather_armor
+  image: items/leather_armor.png
+  image_size:
+    w: 29
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/3/3c/Leather_Armor.png
+  verified: false
+- id: leather_gloves
+  image: items/leather_gloves.png
+  image_size:
+    w: 11
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/f/ff/Leather_Gloves.png
+  verified: false
+- id: hp_potion
+  image: items/hp_potion.png
+  image_size:
+    w: 11
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/1/15/HP_Potion-0_Deg.png
+  verified: false
+- id: large_hp_potion
+  image: items/large_hp_potion.png
+  image_size:
+    w: 11
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/1/12/Large_HP_Potion-0_Deg.png
+  verified: false
+- id: absorbing_necklace
+  image: items/absorbing_necklace.png
+  image_size:
+    w: 13
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/4/4c/Absorbing_Necklace.png
+  verified: false
+- id: broom
+  image: items/broom.png
+  image_size:
+    w: 13
+    h: 45
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/2/26/Broom.png
+  verified: false
+- id: whetstone
+  image: items/whetstone.png
+  image_size:
+    w: 13
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/9/9f/Whetstone.png
+  verified: false
+- id: golden_pig
+  image: items/golden_pig.png
+  image_size:
+    w: 13
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/5/5f/Golden_Pig.png
+  verified: false
+- id: pile_of_gold
+  image: items/pile_of_gold.png
+  image_size:
+    w: 13
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/6/6e/Pile_of_Coins.png
+  verified: false
+- id: reroll_sale_card
+  image: items/reroll_sale_card.png
+  image_size:
+    w: 13
+    h: 9
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/7/7b/Reroll_Sale_Card.png
+  verified: false
+- id: shop_vip_card
+  image: items/shop_vip_card.png
+  image_size:
+    w: 13
+    h: 9
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/2/28/Shop_VIP_Card.png
+  verified: false
+- id: shop_vvip_card
+  image: items/shop_vvip_card.png
+  image_size:
+    w: 13
+    h: 9
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/b/b2/Shop_VVIP_Card.png
+  verified: false
+- id: training_sword
+  image: items/training_sword.png
+  image_size:
+    w: 11
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/d/de/Training_Sword.png
+  verified: false
+- id: longsword
+  image: items/longsword.png
+  image_size:
+    w: 13
+    h: 45
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/3/34/Longsword.png
+  verified: false
+- id: greatsword
+  image: items/greatsword.png
+  image_size:
+    w: 13
+    h: 61
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/6/68/Greatsword.png
+  verified: false
+- id: miracle_sword
+  image: items/miracle_sword.png
+  image_size:
+    w: 13
+    h: 78
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/4/48/Miracle_Sword.png
+  verified: false
+- id: serrated_sword
+  image: items/serrated_sword.png
+  image_size:
+    w: 13
+    h: 45
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/1/1e/Serrated_Sword.png
+  verified: false
+- id: bloodletting_sword
+  image: items/bloodletting_sword.png
+  image_size:
+    w: 13
+    h: 45
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/1/1b/Bloodletting_Sword.png
+  verified: false
+- id: blood_demon_sword
+  image: items/blood_demon_sword.png
+  image_size:
+    w: 13
+    h: 61
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/3/31/Blood_Demon_Sword.png
+  verified: false
+- id: flame_sword
+  image: items/flame_sword.png
+  image_size:
+    w: 13
+    h: 45
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/1/1f/Flame_Sword.png
+  verified: false
+- id: dragonfire_sword
+  image: items/dragonfire_sword.png
+  image_size:
+    w: 13
+    h: 61
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/b/ba/Dragonfire_Sword.png
+  verified: false
+- id: gladius
+  image: items/gladius.png
+  image_size:
+    w: 13
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/c/c5/Gladius.png
+  verified: false
+- id: heros_longsword
+  image: items/heros_longsword.png
+  image_size:
+    w: 13
+    h: 46
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/0/09/Hero%27s_Longsword.png
+  verified: false
+- id: piggycalibur
+  image: items/piggycalibur.png
+  image_size:
+    w: 13
+    h: 45
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/a/a6/Piggycalibur.png
+  verified: false
+- id: club
+  image: items/club.png
+  image_size:
+    w: 11
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/5/50/Club.png
+  verified: false
+- id: spiked_club
+  image: items/spiked_club.png
+  image_size:
+    w: 12
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/b/b4/Spiked_Club.png
+  verified: false
+- id: giant_spiked_club
+  image: items/giant_spiked_club.png
+  image_size:
+    w: 13
+    h: 45
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/4/41/Giant_Spike_Club.png
+  verified: false
+- id: skull_crusher
+  image: items/skull_crusher.png
+  image_size:
+    w: 13
+    h: 45
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/b/be/Skull_Crusher.png
+  verified: false
+- id: spiked_whip
+  image: items/spiked_whip.png
+  image_size:
+    w: 45
+    h: 45
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/8/84/Spiked_Whip.png
+  verified: false
+- id: throwing_axe
+  image: items/throwing_axe.png
+  image_size:
+    w: 29
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/1/15/Throwing_Axe.png
+  verified: false
+- id: axe
+  image: items/axe.png
+  image_size:
+    w: 27
+    h: 45
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/f/fb/Axe.png
+  verified: false
+- id: double_bit_axe
+  image: items/double_bit_axe.png
+  image_size:
+    w: 45
+    h: 45
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/4/40/Double-Bit_Axe.png
+  verified: false
+- id: bloodstained_axe
+  image: items/bloodstained_axe.png
+  image_size:
+    w: 28
+    h: 45
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/0/00/Bloodstained_Axe.png
+  verified: false
+- id: blood_frenzy
+  image: items/blood_frenzy.png
+  image_size:
+    w: 46
+    h: 61
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/6/66/Blood_Frenzy.png
+  verified: false
+- id: pulverizing_hammer
+  image: items/pulverizing_hammer.png
+  image_size:
+    w: 13
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/f/f5/Pulverizing_Hammer.png
+  verified: false
+- id: massive_hammer
+  image: items/massive_hammer.png
+  image_size:
+    w: 43
+    h: 45
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/4/40/Massive_Hammer.png
+  verified: false
+- id: assault_spear
+  image: items/assault_spear.png
+  image_size:
+    w: 11
+    h: 61
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/3/3a/Assault_Spear.png
+  verified: false
+- id: lance
+  image: items/lance.png
+  image_size:
+    w: 13
+    h: 61
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/f/f8/Lance.png
+  verified: false
+- id: red_rose_rapier
+  image: items/red_rose_rapier.png
+  image_size:
+    w: 13
+    h: 61
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/8/8c/Red_Rose_Rapier.png
+  verified: false
+- id: bloodstained_dagger
+  image: items/bloodstained_dagger.png
+  image_size:
+    w: 9
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/a/a6/Bloodstained_Dagger.png
+  verified: false
+- id: golden_dragon
+  image: items/golden_dragon.png
+  image_size:
+    w: 29
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/4/45/Golden_Dragon.png
+  verified: false
+- id: dragon_knight
+  image: items/dragon_knight.png
+  image_size:
+    w: 29
+    h: 43
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/4/4e/Dragon_Knight.png
+  verified: false
+- id: well_trained_dog
+  image: items/well_trained_dog.png
+  image_size:
+    w: 28
+    h: 28
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/9/9a/Well-Trained_Dog.png
+  verified: false
+- id: plate_helmet
+  image: items/plate_helmet.png
+  image_size:
+    w: 13
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/7/7b/Plate_Helmet.png
+  verified: false
+- id: mithril_helmet
+  image: items/mithril_helmet.png
+  image_size:
+    w: 13
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/9/93/Mithril_Helmet.png
+  verified: false
+- id: warriors_helmet
+  image: items/warriors_helmet.png
+  image_size:
+    w: 29
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/c/cd/Warrior%27s_Helmet.png
+  verified: false
+- id: heros_circlet
+  image: items/heros_circlet.png
+  image_size:
+    w: 28
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/1/1c/Hero%27s_Circlet.png
+  verified: false
+- id: bloody_crown
+  image: items/bloody_crown.png
+  image_size:
+    w: 30
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/a/ad/Bloody_Crown.png
+  verified: false
+- id: plate_armor
+  image: items/plate_armor.png
+  image_size:
+    w: 29
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/d/d7/Plate_Armor.png
+  verified: false
+- id: mithril_armor
+  image: items/mithril_armor.png
+  image_size:
+    w: 29
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/9/9b/Mithril_Armor.png
+  verified: false
+- id: spiked_armor
+  image: items/spiked_armor.png
+  image_size:
+    w: 29
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/1/18/Spiked_Armor.png
+  verified: false
+- id: plate_gloves
+  image: items/plate_gloves.png
+  image_size:
+    w: 13
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/6/6b/Plate_Gloves.png
+  verified: false
+- id: mithril_gloves
+  image: items/mithril_gloves.png
+  image_size:
+    w: 12
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/d/d6/Mithril_Gloves.png
+  verified: false
+- id: spiked_gloves
+  image: items/spiked_gloves.png
+  image_size:
+    w: 13
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/c/c2/Spiked_Gloves.png
+  verified: false
+- id: blood_soaked_gloves
+  image: items/blood_soaked_gloves.png
+  image_size:
+    w: 13
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/6/68/Blood-Soaked_Gloves.png
+  verified: false
+- id: steel_shield
+  image: items/steel_shield.png
+  image_size:
+    w: 13
+    h: 28
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/2/21/Steel_Shield.png
+  verified: false
+- id: mithril_shield
+  image: items/mithril_shield.png
+  image_size:
+    w: 13
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/d/d6/Mithril_Shield.png
+  verified: false
+- id: spiked_shield
+  image: items/spiked_shield.png
+  image_size:
+    w: 13
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/6/63/Spiked_Shield.png
+  verified: false
+- id: warrior_flesh
+  image: items/warrior_flesh.png
+  image_size:
+    w: 29
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/0/02/Warrior_Flesh.png
+  verified: false
+- id: steak
+  image: items/steak.png
+  image_size:
+    w: 29
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/6/66/Steak.png
+  verified: false
+- id: smithing_stone
+  image: items/smithing_stone.png
+  image_size:
+    w: 13
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/4/4c/Smithing_Stone.png
+  verified: false
+- id: mithril_ingot
+  image: items/mithril_ingot.png
+  image_size:
+    w: 13
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/4/46/Mithril_Ignot.png
+  verified: false
+- id: anvil
+  image: items/anvil.png
+  image_size:
+    w: 29
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/d/dd/Anvil.png
+  verified: false
+- id: red_dust
+  image: items/red_dust.png
+  image_size:
+    w: 13
+    h: 12
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/1/1a/Red_Dust.png
+  verified: false
+- id: berserk_potion
+  image: items/berserk_potion.png
+  image_size:
+    w: 11
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/7/7d/Berserk_Potion-0_Deg.png
+  verified: false
+- id: blood_stone
+  image: items/blood_stone.png
+  image_size:
+    w: 13
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/2/27/Blood_Stone.png
+  verified: false
+- id: blood_demon_stone
+  image: items/blood_demon_stone.png
+  image_size:
+    w: 13
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/2/2a/Blood_Demon_Stone.png
+  verified: false
+- id: golden_hero_statue
+  image: items/golden_hero_statue.png
+  image_size:
+    w: 13
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/3/32/Golden_Hero_Statue.png
+  verified: false
+- id: red_rose
+  image: items/red_rose.png
+  image_size:
+    w: 13
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/d/d5/Red_Rose.png
+  verified: false
+- id: knights_order_banner
+  image: items/knights_order_banner.png
+  image_size:
+    w: 13
+    h: 45
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/5/5f/Knight%27s_Order_Banner.png
+  verified: false
+- id: training_bow
+  image: items/training_bow.png
+  image_size:
+    w: 11
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/c/c1/Training_Bow.png
+  verified: false
+- id: hunters_bow
+  image: items/hunters_bow.png
+  image_size:
+    w: 12
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/1/16/Hunter%27s_Bow.png
+  verified: false
+- id: trackers_bow
+  image: items/trackers_bow.png
+  image_size:
+    w: 13
+    h: 45
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/1/19/Tracker%27s_Bow.png
+  verified: false
+- id: true_sight
+  image: items/true_sight.png
+  image_size:
+    w: 13
+    h: 61
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/b/b9/True_Sight.png
+  verified: false
+- id: flaming_trail
+  image: items/flaming_trail.png
+  image_size:
+    w: 13
+    h: 45
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/9/97/Flaming_Trail.png
+  verified: false
+- id: shiny_bow
+  image: items/shiny_bow.png
+  image_size:
+    w: 13
+    h: 45
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/9/9d/Shiny_Bow.png
+  verified: false
+- id: black_bow
+  image: items/black_bow.png
+  image_size:
+    w: 13
+    h: 45
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/2/23/Black_Bow.png
+  verified: false
+- id: shadow_hunter
+  image: items/shadow_hunter.png
+  image_size:
+    w: 28
+    h: 45
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/d/d2/Shadow_Hunter.png
+  verified: false
+- id: fairy_bow
+  image: items/fairy_bow.png
+  image_size:
+    w: 28
+    h: 45
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/b/b1/Fairy_Bow.png
+  verified: false
+- id: fairy_forest_twig
+  image: items/fairy_forest_twig.png
+  image_size:
+    w: 13
+    h: 45
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/b/bd/Fairy_Forest_Twig.png
+  verified: false
+- id: poison_bow
+  image: items/poison_bow.png
+  image_size:
+    w: 13
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/6/67/Poison_Bow.png
+  verified: false
+- id: crossbow
+  image: items/crossbow.png
+  image_size:
+    w: 29
+    h: 44
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/7/79/Crossbow.png
+  verified: false
+- id: arbalest
+  image: items/arbalest.png
+  image_size:
+    w: 45
+    h: 45
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/f/ff/Arbalest.png
+  verified: false
+- id: bola_launcher
+  image: items/bola_launcher.png
+  image_size:
+    w: 45
+    h: 45
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/1/1c/Bola_Launcher.png
+  verified: false
+- id: dragon_slayer
+  image: items/dragon_slayer.png
+  image_size:
+    w: 45
+    h: 45
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/0/0e/Dragon_Slayer.png
+  verified: false
+- id: poison_crossbow
+  image: items/poison_crossbow.png
+  image_size:
+    w: 29
+    h: 45
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/a/ab/Poison_Crossbow.png
+  verified: false
+- id: venomous_crossbow
+  image: items/venomous_crossbow.png
+  image_size:
+    w: 29
+    h: 45
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/f/f1/Venomous_Crossbow.png
+  verified: false
+- id: violet_assassin
+  image: items/violet_assassin.png
+  image_size:
+    w: 29
+    h: 45
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/3/3b/Violet_Assassin.png
+  verified: false
+- id: triple_crossbow
+  image: items/triple_crossbow.png
+  image_size:
+    w: 45
+    h: 45
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/2/24/Triple_Crossbow.png
+  verified: false
+- id: rope_whip
+  image: items/rope_whip.png
+  image_size:
+    w: 29
+    h: 45
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/f/f8/Rope_Whip.png
+  verified: false
+- id: cobra_whip
+  image: items/cobra_whip.png
+  image_size:
+    w: 29
+    h: 44
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/7/72/Cobra_Whip.png
+  verified: false
+- id: galeclaw
+  image: items/galeclaw.png
+  image_size:
+    w: 29
+    h: 45
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/8/8a/Galeclaw.png
+  verified: false
+- id: harpoon
+  image: items/harpoon.png
+  image_size:
+    w: 13
+    h: 61
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/d/dc/Harpoon.png
+  verified: false
+- id: golden_harpoon
+  image: items/golden_harpoon.png
+  image_size:
+    w: 13
+    h: 61
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/3/3b/Golden_Harpoon.png
+  verified: false
+- id: spider_fang
+  image: items/spider_fang.png
+  image_size:
+    w: 11
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/2/25/Spider_Fang.png
+  verified: false
+- id: dancing_crescent_moon
+  image: items/dancing_crescent_moon.png
+  image_size:
+    w: 29
+    h: 28
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/9/94/Dancing_Crescent_Moon.png
+  verified: false
+- id: bear_trap
+  image: items/bear_trap.png
+  image_size:
+    w: 29
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/9/92/Bear_Trap.png
+  verified: false
+- id: enhanced_bear_trap
+  image: items/enhanced_bear_trap.png
+  image_size:
+    w: 29
+    h: 30
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/9/9a/Enhanced_Bear_Trap.png
+  verified: false
+- id: bola
+  image: items/bola.png
+  image_size:
+    w: 29
+    h: 45
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/a/ae/Bola.png
+  verified: false
+- id: baby_hawk
+  image: items/baby_hawk.png
+  image_size:
+    w: 13
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/a/a6/Baby_Hawk.png
+  verified: false
+- id: hawk
+  image: items/hawk.png
+  image_size:
+    w: 29
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/3/3c/Hawk.png
+  verified: false
+- id: war_hawk
+  image: items/war_hawk.png
+  image_size:
+    w: 29
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/e/e0/War_Hawk.png
+  verified: false
+- id: large_crow
+  image: items/large_crow.png
+  image_size:
+    w: 45
+    h: 45
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/5/58/Large_Crow.png
+  verified: false
+- id: detection_dog
+  image: items/detection_dog.png
+  image_size:
+    w: 29
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/b/b9/Detection_Dog.png
+  verified: false
+- id: hound
+  image: items/hound.png
+  image_size:
+    w: 29
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/c/cc/Hound.png
+  verified: false
+- id: beast_hunter
+  image: items/beast_hunter.png
+  image_size:
+    w: 45
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/d/d2/Beast_Hunter.png
+  verified: false
+- id: venomous_fairy
+  image: items/venomous_fairy.png
+  image_size:
+    w: 28
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/1/11/Venomous_Fairy.png
+  verified: false
+- id: marksmans_hat
+  image: items/marksmans_hat.png
+  image_size:
+    w: 29
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/5/5c/Marksman%27s_Hat.png
+  verified: false
+- id: crow_hat
+  image: items/crow_hat.png
+  image_size:
+    w: 29
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/0/00/Crow_at.png
+  verified: false
+- id: fairy_armor
+  image: items/fairy_armor.png
+  image_size:
+    w: 29
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/4/45/Fairy_Armor.png
+  verified: false
+- id: hawks_claw_gloves
+  image: items/hawks_claw_gloves.png
+  image_size:
+    w: 11
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/5/55/Hawk%27s_Claw_Gloves.png
+  verified: false
+- id: leather_boots
+  image: items/leather_boots.png
+  image_size:
+    w: 15
+    h: 27
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/f/fd/Leather_Boots.png
+  verified: false
+- id: winged_boots
+  image: items/winged_boots.png
+  image_size:
+    w: 13
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/d/d1/Winged_Boots.png
+  verified: false
+- id: air_walker
+  image: items/air_walker.png
+  image_size:
+    w: 29
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/2/28/Air_Walker.png
+  verified: false
+- id: crows_claw
+  image: items/crows_claw.png
+  image_size:
+    w: 13
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/3/3e/Crow%27s_Claw.png
+  verified: false
+- id: crows_footsteps
+  image: items/crows_footsteps.png
+  image_size:
+    w: 29
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/c/ce/Crow%27s_Footsteps.png
+  verified: false
+- id: crow_necklace
+  image: items/crow_necklace.png
+  image_size:
+    w: 13
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/6/63/Crow_Necklace.png
+  verified: false
+- id: venomous_insect
+  image: items/venomous_insect.png
+  image_size:
+    w: 13
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/5/5e/Venomous_Insect.png
+  verified: false
+- id: widow_spider
+  image: items/widow_spider.png
+  image_size:
+    w: 29
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/0/08/Widow_Spider.png
+  verified: false
+- id: poison_potion
+  image: items/poison_potion.png
+  image_size:
+    w: 13
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/0/0a/Poison_Potion.png
+  verified: false
+- id: massive_poison_potion
+  image: items/massive_poison_potion.png
+  image_size:
+    w: 13
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/5/53/Massive_Poison_Potion-0_Deg.png
+  verified: false
+- id: target
+  image: items/target.png
+  image_size:
+    w: 13
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/0/09/Target.png
+  verified: false
+- id: focus_potion
+  image: items/focus_potion.png
+  image_size:
+    w: 13
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/2/28/Focus_Potion.png
+  verified: false
+- id: fairy_dust
+  image: items/fairy_dust.png
+  image_size:
+    w: 13
+    h: 12
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/f/fc/Fairy_Dust.png
+  verified: false
+- id: clone_potion
+  image: items/clone_potion.png
+  image_size:
+    w: 9
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/5/58/Clone_Potion-0_Deg.png
+  verified: false
+- id: glowstone
+  image: items/glowstone.png
+  image_size:
+    w: 13
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/9/91/Glowstone.png
+  verified: false
+- id: fairy_blessing
+  image: items/fairy_blessing.png
+  image_size:
+    w: 13
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/a/aa/Fairy_Blessing.png
+  verified: false
+- id: monocle
+  image: items/monocle.png
+  image_size:
+    w: 29
+    h: 12
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/0/00/Monocle.png
+  verified: false
+- id: telescope
+  image: items/telescope.png
+  image_size:
+    w: 29
+    h: 11
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/6/6c/Telescope.png
+  verified: false
+- id: hawk_feather_talisman
+  image: items/hawk_feather_talisman.png
+  image_size:
+    w: 12
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/9/98/Hawk_Feather_Talisman.png
+  verified: false
+- id: black_feather
+  image: items/black_feather.png
+  image_size:
+    w: 12
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/3/35/Black_Feather.png
+  verified: false
+- id: hawks_claw
+  image: items/hawks_claw.png
+  image_size:
+    w: 13
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/8/81/Hawk%27s_Claw.png
+  verified: false
+- id: crow_amulet
+  image: items/crow_amulet.png
+  image_size:
+    w: 13
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/6/6f/Crow_Amulet.png
+  verified: false
+- id: rope_trap
+  image: items/rope_trap.png
+  image_size:
+    w: 29
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/d/d6/Rope_Trap.png
+  verified: false
+- id: poison_powder
+  image: items/poison_powder.png
+  image_size:
+    w: 13
+    h: 12
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/2/22/Poison_Powder.png
+  verified: false
+- id: adrenaline
+  image: items/adrenaline.png
+  image_size:
+    w: 13
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/e/e3/Adrenaline.png
+  verified: false
+- id: training_staff
+  image: items/training_staff.png
+  image_size:
+    w: 13
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/c/c9/Training_Staff.png
+  verified: false
+- id: wyrdwood_staff
+  image: items/wyrdwood_staff.png
+  image_size:
+    w: 13
+    h: 45
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/7/74/Wyrdwood_Staff.png
+  verified: false
+- id: archmages_staff
+  image: items/archmages_staff.png
+  image_size:
+    w: 13
+    h: 46
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/6/66/Archmage%27s_Staff.png
+  verified: false
+- id: staff_of_the_sage
+  image: items/staff_of_the_sage.png
+  image_size:
+    w: 13
+    h: 61
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/4/49/Staff_of_the_Sage.png
+  verified: false
+- id: maestro
+  image: items/maestro.png
+  image_size:
+    w: 28
+    h: 28
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/f/fa/Maestro.png
+  verified: false
+- id: flame_staff
+  image: items/flame_staff.png
+  image_size:
+    w: 13
+    h: 46
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/0/01/Flame_Staff.png
+  verified: false
+- id: ice_spear_staff
+  image: items/ice_spear_staff.png
+  image_size:
+    w: 11
+    h: 61
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/f/ff/Ice_Spear_Staff.png
+  verified: false
+- id: lightning_rod_wand
+  image: items/lightning_rod_wand.png
+  image_size:
+    w: 13
+    h: 44
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/f/f7/Lightning_Rod_Wand.png
+  verified: false
+- id: astrape
+  image: items/astrape.png
+  image_size:
+    w: 13
+    h: 61
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/5/58/Astrape.png
+  verified: false
+- id: scorching_firefly
+  image: items/scorching_firefly.png
+  image_size:
+    w: 13
+    h: 61
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/b/b6/Scorching_Firefly.png
+  verified: false
+- id: spell_thief
+  image: items/spell_thief.png
+  image_size:
+    w: 13
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/0/0c/Spell_Theif.png
+  verified: false
+- id: frozen_dog
+  image: items/frozen_dog.png
+  image_size:
+    w: 29
+    h: 28
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/a/ab/Frozen_Dog.png
+  verified: false
+- id: frost_spirit
+  image: items/frost_spirit.png
+  image_size:
+    w: 45
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/c/c6/Frost_Spirit.png
+  verified: false
+- id: blazing_hound
+  image: items/blazing_hound.png
+  image_size:
+    w: 29
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/8/89/Blazing_Hound.png
+  verified: false
+- id: blazing_spirit
+  image: items/blazing_spirit.png
+  image_size:
+    w: 29
+    h: 42
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/5/50/Blazing_Spirit.png
+  verified: false
+- id: snowball
+  image: items/snowball.png
+  image_size:
+    w: 13
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/0/04/Snowball.png
+  verified: false
+- id: mr_snowman
+  image: items/mr_snowman.png
+  image_size:
+    w: 13
+    h: 30
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/1/19/Mr._Snowman.png
+  verified: false
+- id: hat_thief
+  image: items/hat_thief.png
+  image_size:
+    w: 28
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/1/13/Hat_Theif.png
+  verified: false
+- id: thunder_dragon
+  image: items/thunder_dragon.png
+  image_size:
+    w: 29
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/3/3b/Thunder_Dragon.png
+  verified: false
+- id: millennium_dragon
+  image: items/millennium_dragon.png
+  image_size:
+    w: 29
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/f/f0/Millennium_Dragon.png
+  verified: false
+- id: beginner_magic_ice_beat
+  image: items/beginner_magic_ice_beat.png
+  image_size:
+    w: 13
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/7/7c/Beginner_Magic-_Ice_Beat.png
+  verified: false
+- id: intermediate_magic_icicle_summon
+  image: items/intermediate_magic_icicle_summon.png
+  image_size:
+    w: 13
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/b/b7/Intermediate_Magic-_Icicle_Summon.png
+  verified: false
+- id: advanced_magic_crystal_fall
+  image: items/advanced_magic_crystal_fall.png
+  image_size:
+    w: 29
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/f/f6/Advanced_Magic-_Crystal_Fall.png
+  verified: false
+- id: fusion_magic_icicle_rain
+  image: items/fusion_magic_icicle_rain.png
+  image_size:
+    w: 29
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/8/8f/Fusion_Magic-_Icicle_Rain.png
+  verified: false
+- id: ultimate_magic_blizzard
+  image: items/ultimate_magic_blizzard.png
+  image_size:
+    w: 29
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/9/92/Ultimate_Magic-_Blizzard.png
+  verified: false
+- id: alchemy_magic_ice_spear
+  image: items/alchemy_magic_ice_spear.png
+  image_size:
+    w: 29
+    h: 45
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/0/01/Alchemy_Magic-_Ice_Spear.png
+  verified: false
+- id: beginner_magic_fire_bolt
+  image: items/beginner_magic_fire_bolt.png
+  image_size:
+    w: 13
+    h: 45
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/0/00/Beginner_Magic-_Fire_Bolt.png
+  verified: false
+- id: intermediate_magic_fireball
+  image: items/intermediate_magic_fireball.png
+  image_size:
+    w: 29
+    h: 45
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/d/d9/Intermediate_Magic-_Fireball.png
+  verified: false
+- id: advanced_magic_meteor
+  image: items/advanced_magic_meteor.png
+  image_size:
+    w: 45
+    h: 45
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/b/b8/Advanced_Magic-_Meteor.png
+  verified: false
+- id: fusion_magic_deep_impact
+  image: items/fusion_magic_deep_impact.png
+  image_size:
+    w: 45
+    h: 45
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/6/6d/Fusion_Magic-_Deep_Impact.png
+  verified: false
+- id: ultimate_magic_apocalypse
+  image: items/ultimate_magic_apocalypse.png
+  image_size:
+    w: 45
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/e/e4/Ultimate_Magic-_Apocalypse.png
+  verified: false
+- id: alchemy_magic_dragons_breath
+  image: items/alchemy_magic_dragons_breath.png
+  image_size:
+    w: 45
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/c/c1/Alchemy_Magic-_Dragon%27s_Breath.png
+  verified: false
+- id: intermediate_magic_spark
+  image: items/intermediate_magic_spark.png
+  image_size:
+    w: 13
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/d/d8/Intermediate_Magic-_Spark.png
+  verified: false
+- id: advanced_magic_thunderstrike
+  image: items/advanced_magic_thunderstrike.png
+  image_size:
+    w: 29
+    h: 45
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/5/56/Advanced_Magic-_Thunderstrike.png
+  verified: false
+- id: fusion_magic_lightning_storm
+  image: items/fusion_magic_lightning_storm.png
+  image_size:
+    w: 29
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/7/70/Fusion_Magic-_LIghtning_Storm.png
+  verified: false
+- id: fusion_magic_firestorm
+  image: items/fusion_magic_firestorm.png
+  image_size:
+    w: 29
+    h: 45
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/d/d4/Fusion_Magic-_Firestorm.png
+  verified: false
+- id: beginner_magic_energy_bolt
+  image: items/beginner_magic_energy_bolt.png
+  image_size:
+    w: 29
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/3/3d/Beginner_Magic-_Energy_Bolt.png
+  verified: false
+- id: intermediate_magic_magic_missile
+  image: items/intermediate_magic_magic_missile.png
+  image_size:
+    w: 29
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/a/a0/Intermediate_Magic-_Magic_Missle.png
+  verified: false
+- id: meow_missile
+  image: items/meow_missile.png
+  image_size:
+    w: 29
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/a/ac/Meow_Missle.png
+  verified: false
+- id: transformation_magic_instant_freeze
+  image: items/transformation_magic_instant_freeze.png
+  image_size:
+    w: 13
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/6/6a/Transformation_Magic-_Instant_Freeze.png
+  verified: false
+- id: intermediate_magic_ignite
+  image: items/intermediate_magic_ignite.png
+  image_size:
+    w: 29
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/8/87/Intermediate_Magic-_Ignite.png
+  verified: false
+- id: transformation_magic_charm
+  image: items/transformation_magic_charm.png
+  image_size:
+    w: 29
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/e/e2/Transformation_Magic-_Charm.png
+  verified: false
+- id: transformation_magic_drizzle
+  image: items/transformation_magic_drizzle.png
+  image_size:
+    w: 13
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/b/bd/Transformation_Magic-_Drizzle.png
+  verified: false
+- id: transformation_magic_spell_amplification
+  image: items/transformation_magic_spell_amplification.png
+  image_size:
+    w: 13
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/f/ff/Transformation_Magic-_Spell_Amplification.png
+  verified: false
+- id: alchemy_magic_ice_shield
+  image: items/alchemy_magic_ice_shield.png
+  image_size:
+    w: 29
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/7/78/Alchemy_Magic-_Ice_Shield.png
+  verified: false
+- id: wizards_hat
+  image: items/wizards_hat.png
+  image_size:
+    w: 29
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/8/88/Wizard%27s_Hat.png
+  verified: false
+- id: frost_mages_hat
+  image: items/frost_mages_hat.png
+  image_size:
+    w: 29
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/0/09/Frost_Mage%27s_Hat.png
+  verified: false
+- id: flame_mages_hat
+  image: items/flame_mages_hat.png
+  image_size:
+    w: 29
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/2/2a/Flame_Mage%27s_Hat.png
+  verified: false
+- id: ice_robe
+  image: items/ice_robe.png
+  image_size:
+    w: 29
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/c/c0/Ice_Robe.png
+  verified: false
+- id: flame_robe
+  image: items/flame_robe.png
+  image_size:
+    w: 29
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/6/6f/Flame_Robe.png
+  verified: false
+- id: ice_gloves
+  image: items/ice_gloves.png
+  image_size:
+    w: 11
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/b/b4/Ice_Gloves.png
+  verified: false
+- id: flame_gloves
+  image: items/flame_gloves.png
+  image_size:
+    w: 11
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/5/5a/Flame_Gloves.png
+  verified: false
+- id: spark_gloves
+  image: items/spark_gloves.png
+  image_size:
+    w: 11
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/b/b7/Spark_Gloves.png
+  verified: false
+- id: magic_shield
+  image: items/magic_shield.png
+  image_size:
+    w: 13
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/e/ed/Magic_Shield.png
+  verified: false
+- id: witchs_mirror
+  image: items/witchs_mirror.png
+  image_size:
+    w: 28
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/7/74/Witch%27s_Mirror.png
+  verified: false
+- id: wyrd_branch
+  image: items/wyrd_branch.png
+  image_size:
+    w: 13
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/9/9a/Wyrd_Branch.png
+  verified: false
+- id: hourglass
+  image: items/hourglass.png
+  image_size:
+    w: 11
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/1/11/Hourglass.png
+  verified: false
+- id: lavafield_flask
+  image: items/lavafield_flask.png
+  image_size:
+    w: 13
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/6/6e/Lavafield_Flask-0_Deg.png
+  verified: false
+- id: chilling_potion
+  image: items/chilling_potion.png
+  image_size:
+    w: 11
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/0/0a/Chilling_Potion-0_Deg.png
+  verified: false
+- id: midwinter_brush
+  image: items/midwinter_brush.png
+  image_size:
+    w: 13
+    h: 46
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/e/ed/Midwinter_Brush.png
+  verified: false
+- id: magic_stone
+  image: items/magic_stone.png
+  image_size:
+    w: 13
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/6/63/Magic_Stone.png
+  verified: false
+- id: element_amplifier
+  image: items/element_amplifier.png
+  image_size:
+    w: 13
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/d/d2/Element_Amplifier.png
+  verified: false
+- id: snow_powder
+  image: items/snow_powder.png
+  image_size:
+    w: 13
+    h: 12
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/a/a7/Snow_Powder.png
+  verified: false
+- id: poison_bug_egg
+  image: items/poison_bug_egg.png
+  image_size:
+    w: 9
+    h: 10
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/8/82/Poison_Bug_Egg.png
+  verified: false
+- id: poison_bug
+  image: items/poison_bug.png
+  image_size:
+    w: 12
+    h: 12
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/1/15/Poison_Bug.png
+  verified: false
+- id: venomous_spider_egg_sack
+  image: items/venomous_spider_egg_sack.png
+  image_size:
+    w: 18
+    h: 11
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/b/b8/Venomous_Spider_Egg_Sack.png
+  verified: false
+- id: mini_venomous_spider
+  image: items/mini_venomous_spider.png
+  image_size:
+    w: 13
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/7/71/Mini_Venomous_Spider.png
+  verified: false
+- id: hefty_egg_sack
+  image: items/hefty_egg_sack.png
+  image_size:
+    w: 29
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/e/ee/Hefty_Egg_Sack.png
+  verified: false
+- id: large_venomous_spider
+  image: items/large_venomous_spider.png
+  image_size:
+    w: 29
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/2/2c/Large_Venomous_Spider.png
+  verified: false
+- id: big_spike
+  image: items/big_spike.png
+  image_size:
+    w: 13
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/b/b1/Big_Spike.png
+  verified: false
+- id: erwens_bow
+  image: items/erwens_bow.png
+  image_size:
+    w: 13
+    h: 61
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/8/81/Erwen%27s_Bow.png
+  verified: false
+- id: fire_spirit
+  image: items/fire_spirit.png
+  image_size:
+    w: 29
+    h: 28
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/d/dc/Fire_Spirit.png
+  verified: false
+- id: wind_spirit
+  image: items/wind_spirit.png
+  image_size:
+    w: 19
+    h: 28
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/d/de/Wind_Spirit.png
+  verified: false
+- id: spirit_stone
+  image: items/spirit_stone.png
+  image_size:
+    w: 13
+    h: 14
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/c/c3/Spirit_Stone.png
+  verified: false
+- id: lithinum
+  image: items/lithinum.png
+  image_size:
+    w: 13
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/4/47/Lithinum.png
+  verified: false
+- id: lithinum_greatshield
+  image: items/lithinum_greatshield.png
+  image_size:
+    w: 29
+    h: 45
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/b/bc/Lithinum_Greatshield.png
+  verified: false
+- id: steel_spike
+  image: items/steel_spike.png
+  image_size:
+    w: 13
+    h: 13
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/8/8d/Steel_Spike.png
+  verified: false
+- id: greatdog
+  image: items/greatdog.png
+  image_size:
+    w: 59
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/3/34/Greatdog.png
+  verified: false
+- id: transformation_magic_heavy_rain
+  image: items/transformation_magic_heavy_rain.png
+  image_size:
+    w: 45
+    h: 29
+  source: wiki
+  url: https://static.wikia.nocookie.net/backpack-arena/images/4/4d/Transformation_Magic-_Deluge.png
+  verified: false

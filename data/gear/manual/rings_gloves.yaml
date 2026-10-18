@@ -1,0 +1,94 @@
+# Ring and glove setup from my rules (2026-10-16). Constant for every piece, so set here rather than one by one.
+# Rings: weapon tag, 1x ATK, 6 s base cooldown (S-rank shows 4.5 s: S gear is epic+, so the rare -1.5 s always applies), 85% accuracy, 0% crit, 1 hit, 1x1.
+# Gloves: armor tag, o#o below epic, oo#oo from epic ("+2 [dot] Slots"). The editor (user_edits.yaml) still wins over this file.
+
+- id: natures_ring
+  tags: [weapon]
+  footprint: "#"
+  basic_attack: { damage: { ratio: 1, scales_with: atk }, cooldown: 6, accuracy: 85, crit_chance: 0, hits: 1 }
+  source: observed
+  verified: true
+
+- id: ring_of_chaotic_spikes
+  tags: [weapon]
+  footprint: "#"
+  basic_attack: { damage: { ratio: 1, scales_with: atk }, cooldown: 6, accuracy: 85, crit_chance: 0, hits: 1 }
+  source: observed
+  verified: true
+
+- id: archwizards_ring
+  tags: [weapon]
+  footprint: "#"
+  basic_attack: { damage: { ratio: 1, scales_with: atk }, cooldown: 6, accuracy: 85, crit_chance: 0, hits: 1 }
+  source: observed
+  verified: true
+
+- id: mighty_warriors_ring
+  tags: [weapon]
+  footprint: "#"
+  basic_attack: { damage: { ratio: 1, scales_with: atk }, cooldown: 6, accuracy: 85, crit_chance: 0, hits: 1 }
+  source: observed
+  verified: true
+
+- id: garnet_ring
+  tags: [weapon]
+  footprint: "#"
+  basic_attack: { damage: { ratio: 1, scales_with: atk }, cooldown: 6, accuracy: 85, crit_chance: 0, hits: 1 }
+  source: observed
+  verified: true
+
+- id: silver_ring
+  tags: [weapon]
+  footprint: "#"
+  basic_attack: { damage: { ratio: 1, scales_with: atk }, cooldown: 6, accuracy: 85, crit_chance: 0, hits: 1 }
+  source: observed
+  verified: true
+
+- id: gold_ring
+  tags: [weapon]
+  footprint: "#"
+  basic_attack: { damage: { ratio: 1, scales_with: atk }, cooldown: 6, accuracy: 85, crit_chance: 0, hits: 1 }
+  source: observed
+  verified: true
+
+- id: lightning_gloves
+  tags: [armor]
+  footprint: "o#o"
+  rarity_footprints: [{ min_rarity: epic, footprint: "oo#oo" }]
+  source: observed
+  verified: true
+
+- id: gloves_of_plague
+  tags: [armor]
+  footprint: "o#o"
+  rarity_footprints: [{ min_rarity: epic, footprint: "oo#oo" }]
+  source: observed
+  verified: true
+
+- id: brawlers_gloves
+  tags: [armor]
+  footprint: "o#o"
+  rarity_footprints: [{ min_rarity: epic, footprint: "oo#oo" }]
+  source: observed
+  verified: true
+
+- id: clerics_gloves
+  tags: [armor]
+  footprint: "o#o"
+  rarity_footprints: [{ min_rarity: epic, footprint: "oo#oo" }]
+  source: observed
+  verified: true
+
+- id: guards_gloves
+  tags: [armor]
+  footprint: "o#o"
+  rarity_footprints: [{ min_rarity: epic, footprint: "oo#oo" }]
+  source: observed
+  verified: true
+
+- id: forest_keepers_gloves
+  tags: [armor]
+  footprint: "o#o"
+  rarity_footprints: [{ min_rarity: epic, footprint: "oo#oo" }]
+  source: observed
+  verified: true

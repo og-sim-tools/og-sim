@@ -1,0 +1,19 @@
+# Seen in game (user screenshots, 2026-10-17; ATK 1.61M, HP 5.29M as Trixie). In-game values beat the wiki.
+- id: maestro
+  stats: { cooldown: 2.2 }
+  source: observed
+  verified: true
+  notes: 2.2s in game (wiki 2.1).
+- id: miracle_sword
+  value: 21
+  source: observed
+  verified: true
+- id: thunder_dragon
+  value: 25
+  source: observed
+  verified: true
+- id: witchs_mirror
+  value: 17
+  value_unknown: false
+  source: observed
+  verified: true

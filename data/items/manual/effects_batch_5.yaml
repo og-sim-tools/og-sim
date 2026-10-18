@@ -1,0 +1,973 @@
+# Effects batch 5 (2026-10-17): every item effect not simulated before, structured from the wiki text.
+# Unverified until checked in game. Readings the text doesn't settle carry an `assumption` (shown in battle).
+# Lists replace earlier ones whole, so partly done items repeat their existing effects here.
+
+# ---------------------------------------------------------------- universal / economy
+- id: reroll_sale_card
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: Shop only (economy, later); nothing in battle.
+- id: shop_vip_card
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: Shop only (economy, later); nothing in battle.
+- id: shop_vvip_card
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: Shop only (economy, later); nothing in battle.
+- id: throwing_axe
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: The text is flavour; no effect.
+- id: golden_pig
+  effects:
+    - { text: "Start of Battle: gain 0.03x HP Max HP per [dot] Tool.", trigger: battle_start, target: player, action: add_max_hp_pct, amount: 3, per_dot: { tags_any: [tool] } }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: The shop part (1 Coin) is economy.
+- id: piggycalibur
+  effects:
+    - { text: "Start of Battle: [dot] Weapon DMG increased by 30%.", trigger: battle_start, uses_dots: true, filter: { tags_any: [weapon] }, action: add_stat_pct, target: items_under_dots, stat: damage_pct, amount: 30 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: The shop part (2 Coins) is economy.
+
+# ---------------------------------------------------------------- warrior weapons
+- id: axe
+  effects:
+    - { text: "On Hit: Increase DMG by 20%.", trigger: on_hit, target: self_item, action: add_stat_pct, stat: damage_pct, amount: 20 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: Stacks with every hit for the rest of the battle.
+- id: double_bit_axe
+  effects:
+    - { text: "On Hit: Increase DMG by 40%.", trigger: on_hit, target: self_item, action: add_stat_pct, stat: damage_pct, amount: 40 }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: bloodstained_axe
+  effects:
+    - { text: "Start of Battle: Gain 5 Vamp.", trigger: battle_start, target: player, action: apply_status, status: vamp, stacks: 5 }
+    - { text: "On Hit: Increase DMG by 30%.", trigger: on_hit, target: self_item, action: add_stat_pct, stat: damage_pct, amount: 30 }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: blood_frenzy
+  effect_text: "Start of Battle: Gain 6 Vamp. On 15% HP Loss: DMG increases by 0.5x ATK."
+  effects:
+    - { text: "Start of Battle: Gain 6 Vamp.", trigger: battle_start, target: player, action: apply_status, status: vamp, stacks: 6 }
+    - { text: "On 15% HP Loss: DMG increases by 0.5x ATK.", trigger: on_hp_lost, every: { ratio: 0.15, scales_with: hp }, target: self_item, action: add_stat_pct, stat: atk_dmg_pct, amount: 50 }
+  effects_status: complete
+  source: observed
+  verified: true
+  notes: 'In game (2026-10-17): "On 15% HP Loss: DMG increases by 807.6K" = 0.5x ATK (flat, not +50%).'
+
+- id: longsword
+  effects:
+    - { text: "On Hit: 50% chance to increase DMG by 10%.", trigger: on_hit, chance_pct: 50, target: self_item, action: add_stat_pct, stat: damage_pct, amount: 10 }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: serrated_sword
+  effects:
+    - { text: "On Hit: 50% chance to remove 1.5x Block", trigger: on_hit, chance_pct: 50, roll_group: serrate, target: enemy, action: remove_block, value: { ratio: 1.5, scales_with: atk } }
+    - { text: "and increase DMG by 10%.", trigger: on_hit, chance_pct: 50, roll_group: serrate, target: self_item, action: add_stat_pct, stat: damage_pct, amount: 10 }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: bloodletting_sword
+  effects:
+    - { text: "Start of Battle: Lose 0.15x Max HP,", trigger: battle_start, target: player, action: lose_hp, value: { ratio: 0.15, scales_with: hp } }
+    - { text: "gain 0.30x Block,", trigger: battle_start, target: player, action: gain_block, value: { ratio: 0.3, scales_with: hp } }
+    - { text: "and gain 4 Vamp.", trigger: battle_start, target: player, action: apply_status, status: vamp, stacks: 4 }
+    - { text: "On Hit: Remove 1.0x Block", trigger: on_hit, target: enemy, action: remove_block, value: { ratio: 1.0, scales_with: atk } }
+    - { text: "and 3 Spike.", trigger: on_hit, target: enemy, action: remove_status, status: spike, count: 3, count_unit: stacks }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: blood_demon_sword
+  effects:
+    - { text: "Start of Battle: Lose 0.20x Max HP", trigger: battle_start, target: player, action: lose_hp, value: { ratio: 0.2, scales_with: hp } }
+    - { text: "to gain 0.40x Block", trigger: battle_start, target: player, action: gain_block, value: { ratio: 0.4, scales_with: hp } }
+    - { text: "and 4 Vamp.", trigger: battle_start, target: player, action: apply_status, status: vamp, stacks: 4 }
+    - { text: "On Hit: Lose 0.10x Max HP", trigger: on_hit, target: player, action: lose_hp, value: { ratio: 0.1, scales_with: hp } }
+    - { text: "and increase DMG by 30%.", trigger: on_hit, target: self_item, action: add_stat_pct, stat: damage_pct, amount: 30 }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: bloodstained_dagger
+  effects:
+    - { text: "On [dot] Weapon Hit: Refunds 30% of Cooldown.", trigger: on_weapon_hit, watch: dots, watch_filter: { tags_any: [weapon] }, target: self_item, action: refund_cooldown, pct: 30 }
+    - { text: "On Hit: Gain 1 Vamp", trigger: on_hit, limit: { per_battle: 6 }, target: player, action: apply_status, status: vamp, stacks: 1 }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: assault_spear
+  effects:
+    - { text: "On Hit: Remove 1.2x Block", trigger: on_hit, target: enemy, action: remove_block, value: { ratio: 1.2, scales_with: atk } }
+    - { text: "and gain 10% haste.", trigger: on_hit, target: self_item, action: add_stat_pct, stat: haste_pct, amount: 10 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: The haste stacks with every hit.
+- id: spear
+  value: 6
+  effect_text: "On Hit: Removes 1.2x Block and gains 6% Haste."
+  effects:
+    - { text: "On Hit: Removes 1.2x Block", trigger: on_hit, target: enemy, action: remove_block, value: { ratio: 1.2, scales_with: atk } }
+    - { text: "and gains 6% Haste.", trigger: on_hit, target: self_item, action: add_stat_pct, stat: haste_pct, amount: 6 }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: lance
+  effects:
+    - { text: "On Hit: Remove 1.2x Block.", trigger: on_hit, target: enemy, action: remove_block, value: { ratio: 1.2, scales_with: atk } }
+    - { text: "This item and [dot] Weapon gain 10% haste.", trigger: on_hit, target: self_item, action: add_stat_pct, stat: haste_pct, amount: 10 }
+    - { text: "This item and [dot] Weapon gain 10% haste.", trigger: on_hit, uses_dots: true, filter: { tags_any: [weapon] }, target: items_under_dots, action: add_stat_pct, stat: haste_pct, amount: 10 }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: pulverizing_hammer
+  effects:
+    - { text: "On Hit: 60% chance to Stun for 0.6s.", trigger: on_hit, chance_pct: 60, target: enemy, action: apply_status, status: stun, stacks: 1, duration_s: 0.6 }
+    - { text: "Increase DMG by up to 50% based on the caster's remaining HP.", trigger: passive, target: self_item, action: add_stat_pct, stat: damage_pct, amount: 0, amount_from: { remaining_hp: true, factor: 0.5 } }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: +50% at full HP, falling with HP.
+- id: massive_hammer
+  effects:
+    - { text: "On Hit: 60% chance to Stun for 1s.", trigger: on_hit, chance_pct: 60, target: enemy, action: apply_status, status: stun, stacks: 1, duration_s: 1 }
+    - { text: "Increase DMG by up to 100% based on the caster's remaining HP.", trigger: passive, target: self_item, action: add_stat_pct, stat: damage_pct, amount: 0, amount_from: { remaining_hp: true, factor: 1 } }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: greatsword
+  effects:
+    - { text: "Start of Battle: [dot] Increase DMG by 18% for every [dot] Armor.", trigger: battle_start, target: self_item, action: add_stat_pct, stat: damage_pct, amount: 18, per_dot: { tags_any: [armor] } }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: miracle_sword
+  effects:
+    - { text: "Start of Battle: [dot] Armor Increase DMG by 25%.", trigger: battle_start, target: self_item, action: add_stat_pct, stat: damage_pct, amount: 25, per_dot: { tags_any: [armor] } }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: red_rose_rapier
+  effects:
+    - { text: "Start of Battle: Gain 3 Spike.", trigger: battle_start, target: player, action: apply_status, status: spike, stacks: 3 }
+    - { text: "On Hit: Activate Spike.", trigger: on_hit, target: player, action: trigger_status, status: spike }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: dragon_knight
+  effects:
+    - { text: "Start of Battle: Gain 0.30x Block.", trigger: battle_start, target: player, action: gain_block, value: { ratio: 0.3, scales_with: hp } }
+    - { text: "On Hit: Gain 0.10x Block", trigger: on_hit, target: player, action: gain_block, value: { ratio: 0.1, scales_with: hp } }
+    - { text: "and inflict 5 Burn.", trigger: on_hit, target: enemy, action: apply_status, status: burn, stacks: 5 }
+    - { text: "Deal additional DMG equal to 20% of current Block.", trigger: passive, target: self_item, action: add_stat_pct, stat: block_dmg_pct, amount: 20 }
+  effects_status: complete
+  source: manual
+  verified: false
+
+# ---------------------------------------------------------------- warrior armor / tools
+- id: anvil
+  effects:
+    - { text: "Start of Battle: Gain 0.04x Block for every [dot] Armor.", trigger: battle_start, target: player, action: gain_block, value: { ratio: 0.04, scales_with: hp }, per_dot: { tags_any: [armor] } }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: plate_armor
+  effects:
+    - { text: "Start of Battle: Gain 0.35x Block,", trigger: battle_start, target: player, action: gain_block, value: { ratio: 0.35, scales_with: hp } }
+    - { text: "and for every [dot] Armor, gain 0.05x Block additionally.", trigger: battle_start, target: player, action: gain_block, value: { ratio: 0.05, scales_with: hp }, per_dot: { tags_any: [armor] } }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: mithril_armor
+  effects:
+    - { text: "Reduce Attack DMG taken by 20%.", trigger: passive, target: player, action: add_combatant_stat, combat_stat: attack_dmg_reduction, amount: 20 }
+    - { text: "Start of Battle: Gain 0.40x Block,", trigger: battle_start, target: player, action: gain_block, value: { ratio: 0.4, scales_with: hp } }
+    - { text: "and gain additional 0.05x Block per [dot] Armor.", trigger: battle_start, target: player, action: gain_block, value: { ratio: 0.05, scales_with: hp }, per_dot: { tags_any: [armor] } }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: plate_helmet
+  effects:
+    - { text: "Start of Battle: Gain 0.20x Block.", trigger: battle_start, target: player, action: gain_block, value: { ratio: 0.2, scales_with: hp } }
+    - { text: "Deal additional [dot] Weapon DMG equal to 15% of current Block.", trigger: passive, uses_dots: true, filter: { tags_any: [weapon] }, target: items_under_dots, action: add_stat_pct, stat: block_dmg_pct, amount: 15 }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: mithril_helmet
+  effects:
+    - { text: "Start of Battle: Gain 0.20x Block,", trigger: battle_start, target: player, action: gain_block, value: { ratio: 0.2, scales_with: hp } }
+    - { text: "and reduce Attack DMG taken by 20% for 5s.", trigger: battle_start, target: player, action: add_combatant_stat, combat_stat: attack_dmg_reduction, amount: 20, duration_s: 5 }
+    - { text: "[dot] Weapon deals additional DMG equal to 25% of your current Block.", trigger: passive, uses_dots: true, filter: { tags_any: [weapon] }, target: items_under_dots, action: add_stat_pct, stat: block_dmg_pct, amount: 25 }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: plate_gloves
+  effects:
+    - { text: "Start of Battle: [dot] Item gains 15% Haste.", trigger: battle_start, uses_dots: true, action: add_stat_pct, target: items_under_dots, stat: haste_pct, amount: 15 }
+    - { text: "On [dot] Weapon Hit: 50% chance to gain 0.03x Block.", trigger: on_weapon_hit, watch: dots, watch_filter: { tags_any: [weapon] }, chance_pct: 50, target: player, action: gain_block, value: { ratio: 0.03, scales_with: hp } }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: mithril_gloves
+  effects:
+    - { text: "Start of Battle: [dot] Item gains 15% Haste.", trigger: battle_start, uses_dots: true, action: add_stat_pct, target: items_under_dots, stat: haste_pct, amount: 15 }
+    - { text: "On [dot] Weapon Hit: Gain 0.03x Block.", trigger: on_weapon_hit, watch: dots, watch_filter: { tags_any: [weapon] }, target: player, action: gain_block, value: { ratio: 0.03, scales_with: hp } }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: spiked_gloves
+  effects:
+    - { text: "Start of Battle: [dot] Weapon deals 20% increased DMG", trigger: battle_start, uses_dots: true, filter: { tags_any: [weapon] }, target: items_under_dots, action: add_stat_pct, stat: damage_pct, amount: 20 }
+    - { text: "and is slowed by 10%.", trigger: battle_start, uses_dots: true, filter: { tags_any: [weapon] }, target: items_under_dots, action: add_stat_pct, stat: haste_pct, amount: -10 }
+    - { text: "On [dot] Weapon Hit: Gain 1 Spike.", trigger: on_weapon_hit, watch: dots, watch_filter: { tags_any: [weapon] }, target: player, action: apply_status, status: spike, stacks: 1 }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: blood_soaked_gloves
+  effects:
+    - { text: "Start of Battle: After 5s, gain 5 Vamp,", trigger: timer, at_s: 5, target: player, action: apply_status, status: vamp, stacks: 5 }
+    - { text: "and [dot] Item Haste +25%.", trigger: timer, at_s: 5, uses_dots: true, target: items_under_dots, action: add_stat_pct, stat: haste_pct, amount: 25 }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: mithril_shield
+  effects:
+    - { text: "On Attacked: 50% chance to reduce DMG taken by 40%,", trigger: before_attacked, chance_pct: 50, roll_group: shield, target: player, action: reduce_hit_damage, pct: 40 }
+    - { text: "and Seal the weapon that hit for 0.6s.", trigger: before_attacked, chance_pct: 50, roll_group: shield, target: event_item, action: seal_item, duration_s: 0.6 }
+    - { text: "Start of Battle: Gain 0.07x Block.", trigger: battle_start, target: player, action: gain_block, value: { ratio: 0.07, scales_with: hp } }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: blood_demon_stone
+  effects:
+    - { text: "Start of Battle: Lose 0.30x Max HP", trigger: battle_start, target: player, action: lose_hp, value: { ratio: 0.3, scales_with: hp } }
+    - { text: "to increase Max HP by 15%.", trigger: battle_start, target: player, action: add_max_hp_pct, amount: 15 }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: smithing_stone
+  effects:
+    - { text: "On [dot] Weapon Hit: 50% chance to increase DMG by 10%.", trigger: on_weapon_hit, watch: dots, watch_filter: { tags_any: [weapon] }, chance_pct: 50, target: event_item, action: add_stat_pct, stat: damage_pct, amount: 10, max_stacks: 6 }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: red_rose
+  stats: { cooldown: 3.3 }
+  effects:
+    - { text: "Start of Battle: Gain 2 Spike.", trigger: battle_start, target: player, action: apply_status, status: spike, stacks: 2 }
+    - { text: "Every 3.3s: Activate Spike.", trigger: on_activation, target: player, action: trigger_status, status: spike }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: steak
+  effects:
+    - { text: "Start of Battle: Heal increased by 10%.", trigger: battle_start, target: player, action: add_player_stat, player_stat: healing_power_enhance, amount: 10 }
+    - { text: "When HP is below or equal to 50%: Heal 0.25x Max HP", trigger: hp_below, hp_pct: 50, limit: { per_battle: 1 }, target: player, action: heal, value: { ratio: 0.25, scales_with: hp } }
+    - { text: "and gain 5 Regen.", trigger: hp_below, hp_pct: 50, limit: { per_battle: 1 }, target: player, action: apply_status, status: regen, stacks: 5 }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: knights_order_banner
+  effects:
+    - { text: "Start of Battle: Increase all Item Block Gain by 10%.", trigger: battle_start, target: player, action: add_player_stat, player_stat: block_gain, amount: 10 }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: lithinum
+  effects:
+    - { text: "On losing HP from an item: gain 0.04x HP Max HP.", trigger: on_self_hp_loss, target: player, action: add_max_hp_pct, amount: 4 }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: lithinum_greatshield
+  effects:
+    - { text: "On losing HP from an item: gain 0.08x HP Max HP.", trigger: on_self_hp_loss, target: player, action: add_max_hp_pct, amount: 8 }
+    - { text: "On Attacked: 50% chance to reduce DMG taken by 30%.", trigger: before_attacked, chance_pct: 50, target: player, action: reduce_hit_damage, pct: 30 }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: red_dust
+  effects:
+    - { text: "Start of Battle: Increase Max HP by 10%", trigger: battle_start, target: player, action: add_max_hp_pct, amount: 10 }
+    - { text: "and 1 Vamp.", trigger: battle_start, target: player, action: apply_status, status: vamp, stacks: 1 }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: berserk_potion
+  stats: { cooldown: 3.5 }
+  effects:
+    - { text: "Start of Battle: Increase Max HP by 15%.", trigger: battle_start, target: player, action: add_max_hp_pct, amount: 15 }
+    - { text: "Every 3.5s Lose 0.15x Max HP,", trigger: on_activation, target: player, action: lose_hp, value: { ratio: 0.15, scales_with: hp }, value_growth: 0.05 }
+    - { text: "and [dot] gains 15% Haste.", trigger: on_activation, uses_dots: true, target: items_under_dots, action: add_stat_pct, stat: haste_pct, amount: 15 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: 'The HP lost grows by 0.05x Max HP each activation (0.15, 0.20, 0.25 …). The haste stacks.'
+
+# ---------------------------------------------------------------- universal tools / potions / creatures
+- id: chilling_potion
+  stats: { cooldown: 5.5 }
+  effects:
+    - { text: "Every 5.5s: Heal 0.10x Max HP", trigger: on_activation, target: player, action: heal, value: { ratio: 0.1, scales_with: hp } }
+    - { text: "and gain 6 Freeze for 5s.", trigger: on_activation, target: player, action: apply_status, status: freeze, stacks: 6, duration_s: 5 }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: clone_potion
+  stats: { cooldown: 5.5 }
+  effects:
+    - { text: "Every 5.5s: Heal 0.15x Max HP.", trigger: on_activation, target: player, action: heal, value: { ratio: 0.15, scales_with: hp } }
+    - { text: "When HP is below or equal to 50%: gain 15 Dodge for 5s", trigger: hp_below, hp_pct: 50, limit: { per_battle: 1 }, target: player, action: apply_status, status: dodge, stacks: 15, duration_s: 5 }
+    - { text: "and immediately Heal 0.15x Max HP.", trigger: hp_below, hp_pct: 50, limit: { per_battle: 1 }, target: player, action: heal, value: { ratio: 0.15, scales_with: hp } }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: lavafield_flask
+  stats: { cooldown: 5.5 }
+  effects:
+    - { text: "Every 5.5s: Heal 0.10x Max HP.", trigger: on_activation, target: player, action: heal, value: { ratio: 0.1, scales_with: hp } }
+    - { text: "On Attacked: Inflict 1 Burn.", trigger: on_attacked, target: enemy, action: apply_status, status: burn, stacks: 1 }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: poison_potion
+  stats: { cooldown: 5.5 }
+  effects:
+    - { text: "Every 5.5s: Heal 0.10x Max HP.", trigger: on_activation, target: player, action: heal, value: { ratio: 0.1, scales_with: hp } }
+    - { text: "On [dot] Weapon Hit: Inflict 1 Poison.", trigger: on_weapon_hit, watch: dots, watch_filter: { tags_any: [weapon] }, target: enemy, action: apply_status, status: poison, stacks: 1 }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: massive_poison_potion
+  stats: { cooldown: 5.5 }
+  effects:
+    - { text: "Every 5.5s: Heal 0.24x Max HP.", trigger: on_activation, target: player, action: heal, value: { ratio: 0.24, scales_with: hp } }
+    - { text: "On [dot] Weapon Hit: Inflict 1 Poison.", trigger: on_weapon_hit, watch: dots, watch_filter: { tags_any: [weapon] }, target: enemy, action: apply_status, status: poison, stacks: 1 }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: hourglass
+  stats: { cooldown: 3.5 }
+  value: 5
+  value_unknown: false
+  effect_text: "Every 3.5s: Cleanse 5 Burn and Freeze from the enemy, and increase [dot] Weapon DMG by 0.1x ATK for each type of Cleansed debuff."
+  effects:
+    - { text: "increase [dot] Weapon DMG by 0.1x ATK for each type of Cleansed debuff.", trigger: on_activation, condition: { who: enemy, status: burn }, uses_dots: true, filter: { tags_any: [weapon] }, target: items_under_dots, action: add_stat_pct, stat: atk_dmg_pct, amount: 10 }
+    - { text: "Every 3.5s: Cleanse 5 Burn and Freeze from the enemy,", trigger: on_activation, target: enemy, action: remove_status, status: burn, count: 5, count_unit: stacks }
+    - { text: "increase [dot] Weapon DMG by 0.1x ATK for each type of Cleansed debuff.", trigger: on_activation, condition: { who: enemy, status: freeze }, uses_dots: true, filter: { tags_any: [weapon] }, target: items_under_dots, action: add_stat_pct, stat: atk_dmg_pct, amount: 10 }
+    - { text: "Every 3.5s: Cleanse 5 Burn and Freeze from the enemy,", trigger: on_activation, target: enemy, action: remove_status, status: freeze, count: 5, count_unit: stacks }
+  effects_status: complete
+  source: observed
+  verified: true
+  notes: 'In game (2026-10-17): Rare, 5 coins, Cecilia exclusive; "increase Weapon DMG by 161.5K (0.1x ATK) for each type of Cleansed debuff".'
+
+- id: glowstone
+  effects:
+    - { text: "Start of Battle: [dot] Weapon Accuracy increases by 5%.", trigger: battle_start, uses_dots: true, filter: { tags_any: [weapon] }, action: add_stat_pct, target: items_under_dots, stat: accuracy_pct, amount: 5 }
+    - { text: "On [dot] Weapon Hit: 40% chance to Heal 0.05x Max HP.", trigger: on_weapon_hit, watch: dots, watch_filter: { tags_any: [weapon] }, chance_pct: 40, target: player, action: heal, value: { ratio: 0.05, scales_with: hp } }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: adrenaline
+  effects:
+    - { text: "Increase [dot] Weapon Crit Rate by the amount Accuracy exceeds 100%.", trigger: passive, uses_dots: true, filter: { tags_any: [weapon] }, target: items_under_dots, action: add_stat_pct, stat: crit_chance_pct, amount: 0, amount_from: { accuracy_over: 100, factor: 1 } }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: The weapon's own accuracy with its bonuses and Focus, before the enemy's evasion.
+- id: element_amplifier
+  effects:
+    - { text: "Increase Burn & Freeze inflicted from [dot] Item by 20%.", trigger: battle_start, uses_dots: true, target: items_under_dots, action: add_inflict_pct, status: burn, amount: 20 }
+    - { text: "Increase Burn & Freeze inflicted from [dot] Item by 20%.", trigger: battle_start, uses_dots: true, target: items_under_dots, action: add_inflict_pct, status: freeze, amount: 20 }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: widow_spider
+  effects:
+    - { text: "Start of Battle: Increase the amount of Poison inflicted by [dot] Item by 25%.", trigger: battle_start, uses_dots: true, target: items_under_dots, action: add_inflict_pct, status: poison, amount: 25 }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: rope_trap
+  effects:
+    - { text: "Start of Battle: [dot] Item slows down by 20%,", trigger: battle_start, uses_dots: true, target: items_under_dots, action: add_stat_pct, stat: haste_pct, amount: -20 }
+    - { text: "but Crit Rate increases by 50%.", trigger: battle_start, uses_dots: true, target: items_under_dots, action: add_stat_pct, stat: crit_chance_pct, amount: 50 }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: boulder
+  stats: { max_attacks: 1 }
+  effects:
+    - { text: "All Weapon DMG increased by 50%.", trigger: passive, filter: { tags_any: [weapon] }, target: all_items, action: add_stat_pct, stat: damage_pct, amount: 50 }
+    - { text: "All items slowed by 30%.", trigger: passive, target: all_items, action: add_stat_pct, stat: haste_pct, amount: -30 }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: bola_launcher
+  stats: { hits: 2 }
+  effects:
+    - { text: "Start of Battle: Immediately Attack.", trigger: battle_start, target: self_item, action: attack }
+    - { text: "On Hit: Remove 3.0x Block.", trigger: on_hit, target: enemy, action: remove_block, value: { ratio: 3.0, scales_with: atk } }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: whip
+  effects:
+    - { text: "On Hit: [dot] Creature Haste +5%.", trigger: on_hit, uses_dots: true, filter: { tags_any: [creature] }, target: items_under_dots, action: add_stat_pct, stat: haste_pct, amount: 5 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: Stacks with every hit.
+- id: rope_whip
+  effects:
+    - { text: "On Hit: [dot] Creature Haste +15%.", trigger: on_hit, uses_dots: true, filter: { tags_any: [creature] }, target: items_under_dots, action: add_stat_pct, stat: haste_pct, amount: 15 }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: cobra_whip
+  effects:
+    - { text: "For each Poison stack on the enemy, [dot] Creature gains 0.2% Haste.", trigger: passive, uses_dots: true, filter: { tags_any: [creature] }, target: items_under_dots, action: add_stat_pct, stat: haste_pct, amount: 0.2, per_status: { status: poison, on: enemy } }
+    - { text: "On Hit: Inflict 1 Poison for each [dot] Creature.", trigger: on_hit, target: enemy, action: apply_status, status: poison, stacks: 1, per_dot: { tags_any: [creature] } }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: galeclaw
+  effects:
+    - { text: "On Hit: [dot] Creature gains 15% Haste.", trigger: on_hit, uses_dots: true, filter: { tags_any: [creature] }, target: items_under_dots, action: add_stat_pct, stat: haste_pct, amount: 15 }
+    - { text: "[dot] Creature gains 0.25% Crit Rate per Focus stack.", trigger: passive, uses_dots: true, filter: { tags_any: [creature] }, target: items_under_dots, action: add_stat_pct, stat: crit_chance_pct, amount: 0.25, per_status: { status: focus, on: self } }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: beast_hunter
+  effects:
+    - { text: "On [dot] Weapon Hit: 50% chance to Attack.", trigger: on_weapon_hit, watch: dots, watch_filter: { tags_any: [weapon] }, chance_pct: 50, target: self_item, action: attack }
+    - { text: "DMG scales with enemy HP, up to 100%.", trigger: passive, target: self_item, action: add_stat_pct, stat: damage_pct, amount: 0, amount_from: { enemy_remaining_hp: true, factor: 1 } }
+    - { text: "On Attack: Remove 5 Dodge from the enemy.", trigger: on_attack, target: enemy, action: remove_status, status: dodge, count: 5, count_unit: stacks }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: golden_harpoon
+  effects:
+    - { text: "On [dot] Crossbow Hit: 50% chance to Attack.", trigger: on_weapon_hit, watch: dots, watch_filter: { tags_any: [crossbow] }, chance_pct: 50, target: self_item, action: attack }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: harpoon
+  effects:
+    - { text: "On [dot] Crossbow Hit: 35% chance to Attack.", trigger: on_weapon_hit, watch: dots, watch_filter: { tags_any: [crossbow] }, chance_pct: 35, target: self_item, action: attack }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: detection_dog
+  effects:
+    - { text: "On Hit: Increases [dot] Weapon's Accuracy by 50% until the next hit,", trigger: on_hit, uses_dots: true, filter: { tags_any: [weapon] }, target: items_under_dots, action: add_stat_pct, stat: accuracy_pct, amount: 50, until_hit: true }
+    - { text: "and that weapon refunds 40% of Cooldown.", trigger: on_hit, uses_dots: true, filter: { tags_any: [weapon] }, target: items_under_dots, action: refund_cooldown, pct: 40 }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: monocle
+  effects:
+    - { text: "On [dot] Weapon Miss: [dot] Weapon's next attack gains 45% Accuracy.", trigger: on_miss, watch: dots, watch_filter: { tags_any: [weapon] }, target: event_item, action: add_stat_pct, stat: accuracy_pct, amount: 45, until_hit: true }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: dancing_crescent_moon
+  effects:
+    - { text: "On Evasion and [dot] Weapon Attack: Refunds 25% of Cooldown.", trigger: on_dodge, target: self_item, action: refund_cooldown, pct: 25 }
+    - { text: "On Evasion and [dot] Weapon Attack: Refunds 25% of Cooldown.", trigger: on_attack, watch: dots, watch_filter: { tags_any: [weapon] }, target: self_item, action: refund_cooldown, pct: 25 }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: spell_thief
+  effects:
+    - { text: "On Hit: Increase DMG by 10%.", trigger: on_hit, target: self_item, action: add_stat_pct, stat: damage_pct, amount: 10 }
+    - { text: "On [dot] Spell Activation: Refunds 30% of Cooldown.", trigger: on_activation, watch: dots, watch_filter: { tags_any: [spell] }, target: self_item, action: refund_cooldown, pct: 30 }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: spider_fang
+  effects:
+    - { text: "Start of Battle: [dot] items' Poison Inflict +15%.", trigger: battle_start, uses_dots: true, target: items_under_dots, action: add_inflict_pct, status: poison, amount: 15 }
+    - { text: "On Poison applied by a [dot] item: refund 20% of Cooldown.", trigger: on_status_applied, watch: dots, params: { status: poison }, target: self_item, action: refund_cooldown, pct: 20 }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: large_crow
+  effects:
+    - { text: "On Hit: Gain 5 Dodge by consuming 5 Focus.", trigger: on_hit, condition: { who: self, status: focus, min_stacks: 5 }, target: player, action: apply_status, status: dodge, stacks: 5 }
+    - { text: "On Hit: Gain 5 Dodge by consuming 5 Focus.", trigger: on_hit, condition: { who: self, status: focus, min_stacks: 5 }, target: player, action: remove_status, status: focus, count: 5, count_unit: stacks }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: Only when there are 5 Focus to pay.
+- id: venomous_fairy
+  effects:
+    - { text: "On Hit: Inflict 5 Poison.", trigger: on_hit, target: enemy, action: apply_status, status: poison, stacks: 5 }
+    - { text: "On Inflicting 30 Poison: Gain 0.08x Block.", trigger: on_status_applied, watch: any, params: { status: poison }, every: 30, target: player, action: gain_block, value: { ratio: 0.08, scales_with: hp } }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: war_hawk
+  effects:
+    - { text: "Start of Battle: Increase Crit DMG of [dot] Weapon by 40%.", trigger: battle_start, uses_dots: true, filter: { tags_any: [weapon] }, action: add_stat_pct, target: items_under_dots, stat: crit_damage_pct, amount: 40 }
+    - { text: "On [dot] Weapon Hit: 25% chance to gain 3 Focus .", trigger: on_weapon_hit, watch: dots, watch_filter: { tags_any: [weapon] }, chance_pct: 25, target: player, action: apply_status, status: focus, stacks: 3 }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: hat_thief
+  effects:
+    - { text: "On Hit: Heal 0.08x Max HP.", trigger: on_hit, target: player, action: heal, value: { ratio: 0.08, scales_with: hp } }
+    - { text: "On [dot] Spell Activation: 50% chance to Attack.", trigger: on_activation, watch: dots, watch_filter: { tags_any: [spell] }, chance_pct: 50, target: self_item, action: attack }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: fairy_dragon
+  effects:
+    - { text: "On Hit: Inflict 2 Burn.", trigger: on_hit, target: enemy, action: apply_status, status: burn, stacks: 2 }
+    - { text: "Heal 0.10x Max HP,", trigger: on_hit, target: player, action: heal, value: { ratio: 0.1, scales_with: hp } }
+    - { text: "Heal 0.002x Max HP more for every Burn stack on the enemy.", trigger: on_hit, target: player, action: heal, value: { ratio: 0.002, scales_with: hp }, scale_per_status: { status: burn, on: enemy } }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: blazing_hound
+  effects:
+    - { text: "On Inflicting 35 Burn: Attack.", trigger: on_status_applied, watch: any, params: { status: burn }, every: 35, target: self_item, action: attack }
+    - { text: "On [dot] Weapon Hit: 50% chance to Attack.", trigger: on_weapon_hit, watch: dots, watch_filter: { tags_any: [weapon] }, chance_pct: 50, target: self_item, action: attack }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: Counts Burn any of my items inflict.
+- id: frozen_dog
+  effects:
+    - { text: "On Inflicting 35 Freeze: Attack.", trigger: on_status_applied, watch: any, params: { status: freeze }, every: 35, target: self_item, action: attack }
+    - { text: "On [dot] Weapon Hit: 50% chance to Attack.", trigger: on_weapon_hit, watch: dots, watch_filter: { tags_any: [weapon] }, chance_pct: 50, target: self_item, action: attack }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: mr_snowman
+  effects:
+    - { text: "On Hit: Inflict 10 Freeze", trigger: on_hit, limit: { per_battle: 1 }, target: enemy, action: apply_status, status: freeze, stacks: 10 }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: snowball
+  effects:
+    - { text: "On Hit: Inflict 7 Freeze", trigger: on_hit, limit: { per_battle: 1 }, target: enemy, action: apply_status, status: freeze, stacks: 7 }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: millennium_dragon
+  effects:
+    - { text: "On Hit: Remove 10 enemy Freeze to inflict 3 Burn.", trigger: on_hit, condition: { who: enemy, status: freeze, min_stacks: 10 }, target: enemy, action: apply_status, status: burn, stacks: 3 }
+    - { text: "On Hit: Remove 10 enemy Freeze to inflict 3 Burn.", trigger: on_hit, condition: { who: enemy, status: freeze, min_stacks: 10 }, target: enemy, action: remove_status, status: freeze, count: 10, count_unit: stacks, consume: true }
+    - { text: "Remove 10 enemy Burn to inflict 3 Freeze.", trigger: on_hit, condition: { who: enemy, status: burn, min_stacks: 10 }, target: enemy, action: apply_status, status: freeze, stacks: 3 }
+    - { text: "Remove 10 enemy Burn to inflict 3 Freeze.", trigger: on_hit, condition: { who: enemy, status: burn, min_stacks: 10 }, target: enemy, action: remove_status, status: burn, count: 10, count_unit: stacks, consume: true }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: Each half only when the enemy has the 10 stacks to remove.
+- id: midwinter_brush
+  stats: { cooldown: 3 }
+  value: 11
+  effect_text: "Start of Battle: Gain 10 Dodge. Every 3s: Cleanse 10 Poison. If there is no Poison to Cleanse, inflict 5 Freeze."
+  effects:
+    - { text: "Start of Battle: Gain 10 Dodge.", trigger: battle_start, target: player, action: apply_status, status: dodge, stacks: 10 }
+    - { text: "If there is no Poison to Cleanse, inflict 5 Freeze.", trigger: on_activation, condition: { who: self, no_status: poison }, target: enemy, action: apply_status, status: freeze, stacks: 5 }
+    - { text: "Every 3s: Cleanse 10 Poison.", trigger: on_activation, condition: { who: self, status: poison }, target: player, action: cleanse, status: poison, count: 10 }
+  effects_status: complete
+  source: observed
+  verified: true
+  notes: 'In game (2026-10-17): "inflict 5 Freeze" (on the enemy); the wiki said "gain".'
+
+- id: scorching_firefly
+  stats: { hits: 5 }
+  effects:
+    - { text: "Start of Battle: Gain 10 Dodge.", trigger: battle_start, target: player, action: apply_status, status: dodge, stacks: 10 }
+    - { text: "On Hit: Inflict 1 Burn for 3s.", trigger: on_hit, target: enemy, action: apply_status, status: burn, stacks: 1, duration_s: 3 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: '"Attack five times" = 5 hits per attack.'
+
+# ---------------------------------------------------------------- ranger
+- id: erwens_bow
+  effects:
+    - { text: "Start of Battle: gain 30 Swift for 10s.", trigger: battle_start, target: player, action: apply_status, status: swift, stacks: 30, duration_s: 10 }
+    - { text: "Deal 0.2x ATK extra DMG per Swift stack.", trigger: passive, target: self_item, action: add_stat_pct, stat: atk_dmg_pct, amount: 20, per_status: { status: swift, on: self } }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: true_sight
+  effects:
+    - { text: "Start of Battle: Gain 20 Focus for 15s.", trigger: battle_start, target: player, action: apply_status, status: focus, stacks: 20, duration_s: 15 }
+    - { text: "Once 40 Focus Reached: Crit DMG increases by 80%.", trigger: on_status_applied, watch: any, params: { status: focus }, condition: { who: self, status: focus, min_stacks: 40 }, limit: { per_battle: 1 }, target: self_item, action: add_stat_pct, stat: crit_damage_pct, amount: 80 }
+    - { text: "Crit Rate increases by 0.5% per Focus stack.", trigger: passive, target: self_item, action: add_stat_pct, stat: crit_chance_pct, amount: 0.5, per_status: { status: focus, on: self } }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: hawks_claw
+  effects:
+    - { text: "[dot] Weapon Increases Crit Rate by 0.25% for every Focus stack.", trigger: passive, uses_dots: true, filter: { tags_any: [weapon] }, target: items_under_dots, action: add_stat_pct, stat: crit_chance_pct, amount: 0.25, per_status: { status: focus, on: self } }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: hawks_claw_gloves
+  effects:
+    - { text: "Start of Battle: [dot] Weapon gains 20% Haste.", trigger: battle_start, uses_dots: true, filter: { tags_any: [weapon] }, action: add_stat_pct, target: items_under_dots, stat: haste_pct, amount: 20 }
+    - { text: "[dot] Weapon's Crit Rate increases by 0.25% per Focus stack.", trigger: passive, uses_dots: true, filter: { tags_any: [weapon] }, target: items_under_dots, action: add_stat_pct, stat: crit_chance_pct, amount: 0.25, per_status: { status: focus, on: self } }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: marksmans_hat
+  effects:
+    - { text: "Start of Battle: Increase Max HP by 20%", trigger: battle_start, target: player, action: add_max_hp_pct, amount: 20 }
+    - { text: "increase [dot] Weapon Accuracy by 45%.", trigger: battle_start, uses_dots: true, filter: { tags_any: [weapon] }, action: add_stat_pct, target: items_under_dots, stat: accuracy_pct, amount: 45 }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: flaming_trail
+  effects:
+    - { text: "Start of Battle: Gain 10 Focus.", trigger: battle_start, target: player, action: apply_status, status: focus, stacks: 10 }
+    - { text: "On Hit: Inflict 2 Burn Brun for 4s", trigger: on_hit, target: enemy, action: apply_status, status: burn, stacks: 2, duration_s: 4 }
+    - { text: "and 10% Reduction to enemy Healing for 4s.", trigger: on_hit, target: enemy, action: apply_status, status: heal_amount_reduction, stacks: 10, duration_s: 4 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: '"Brun" is the wiki''s typo for Burn (left in the text).'
+- id: fairy_bow
+  effects:
+    - { text: "On Hit: Heal 0.05x Max HP.", trigger: on_hit, target: player, action: heal, value: { ratio: 0.05, scales_with: hp } }
+    - { text: "When HP is below or equal to 50%: HP Heal 0.15x Max HP.", trigger: hp_below, hp_pct: 50, limit: { per_battle: 1 }, target: player, action: heal, value: { ratio: 0.15, scales_with: hp } }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: fairy_forest_twig
+  effects:
+    - { text: "Start of Battle: Heal increased by 15%.", trigger: battle_start, target: player, action: add_player_stat, player_stat: healing_power_enhance, amount: 15 }
+    - { text: "On [dot] Weapon Hit: 40% chance to Heal 0.05x Max HP", trigger: on_weapon_hit, watch: dots, watch_filter: { tags_any: [weapon] }, chance_pct: 40, roll_group: twig, target: player, action: heal, value: { ratio: 0.05, scales_with: hp } }
+    - { text: "and randomly Cleanse 3 debuff(s).", trigger: on_weapon_hit, watch: dots, watch_filter: { tags_any: [weapon] }, chance_pct: 40, roll_group: twig, target: player, action: cleanse, count: 3 }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: fairy_armor
+  effects:
+    - { text: "Start of Battle: Gain 0.40x Block.", trigger: battle_start, target: player, action: gain_block, value: { ratio: 0.4, scales_with: hp } }
+    - { text: "When HP is below or equal to 50%: Immediately Heal 0.50x Max HP.", trigger: hp_below, hp_pct: 50, limit: { per_battle: 1 }, target: player, action: heal, value: { ratio: 0.5, scales_with: hp } }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: fairy_blessing
+  effects:
+    - { text: "On [dot] Weapon Hit: 40% chance to Heal 0.05x Max HP.", trigger: on_weapon_hit, watch: dots, watch_filter: { tags_any: [weapon] }, chance_pct: 40, target: player, action: heal, value: { ratio: 0.05, scales_with: hp } }
+    - { text: "When HP is below or equal to 50%: Gain 15 Dodge for 5s", trigger: hp_below, hp_pct: 50, limit: { per_battle: 1 }, target: player, action: apply_status, status: dodge, stacks: 15, duration_s: 5 }
+    - { text: "and Heal 0.05x Max HP.", trigger: hp_below, hp_pct: 50, limit: { per_battle: 1 }, target: player, action: heal, value: { ratio: 0.05, scales_with: hp } }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: crows_claw
+  effects:
+    - { text: "Start of Battle: Gain 10 Dodge.", trigger: battle_start, target: player, action: apply_status, status: dodge, stacks: 10 }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: crows_footsteps
+  effects:
+    - { text: "Start of Battle: Gain 10 Dodge.", trigger: battle_start, target: player, action: apply_status, status: dodge, stacks: 10 }
+    - { text: "When HP is below or equal to 50%: Gain 15 Dodge for 5s", trigger: hp_below, hp_pct: 50, limit: { per_battle: 1 }, target: player, action: apply_status, status: dodge, stacks: 15, duration_s: 5 }
+    - { text: "and Heal 0.20x Max HP.", trigger: hp_below, hp_pct: 50, limit: { per_battle: 1 }, target: player, action: heal, value: { ratio: 0.2, scales_with: hp } }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: crow_amulet
+  effects:
+    - { text: "Start of Battle: Gain 4 Dodge for every [dot] Weapon.", trigger: battle_start, target: player, action: apply_status, status: dodge, stacks: 4, per_dot: { tags_any: [weapon] } }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: crow_necklace
+  stats: { cooldown: 3.5 }
+  effects:
+    - { text: "Start of Battle: For every [dot] Item that grants Dodge, gain 7 Dodge.", trigger: battle_start, target: player, action: apply_status, status: dodge, stacks: 7, per_dot: { applies: dodge } }
+    - { text: "Every 3.5s: Remove 6 random buff(s) from the enemy.", trigger: on_activation, target: enemy, action: remove_status, count: 6 }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: winged_boots
+  effects:
+    - { text: "Start of Battle: Gain 10 Dodge.", trigger: battle_start, target: player, action: apply_status, status: dodge, stacks: 10 }
+    - { text: "If there is no Freeze to Cleanse, gain 1 Swift", trigger: on_dodge, condition: { who: self, no_status: freeze }, target: player, action: apply_status, status: swift, stacks: 1 }
+    - { text: "On Successful Evasion: Cleanse 5 Freeze.", trigger: on_dodge, condition: { who: self, status: freeze }, target: player, action: cleanse, status: freeze, count: 5 }
+  effects_status: complete
+  source: manual
+  verified: false
+
+# ---------------------------------------------------------------- wizard: staffs, hats, robes
+- id: archmages_staff
+  effects:
+    - { text: "Start of Battle: [dot] Spell DMG increases by 40%.", trigger: battle_start, uses_dots: true, filter: { tags_any: [spell] }, action: add_stat_pct, target: items_under_dots, stat: damage_pct, amount: 40 }
+    - { text: "On Attack: [dot] Spell activates.", trigger: on_attack, uses_dots: true, filter: { tags_any: [spell] }, target: items_under_dots, action: activate_item }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: staff_of_the_sage
+  stats: { cooldown: 2.3 }
+  effect_text: "Start of Battle: Increase [dot] Spell DMG by 0.4x ATK. On Attack: Activate [dot] Spell. Increase [dot] Spell Burn and Freeze by 20%."
+  effects:
+    - { text: "Start of Battle: Increase [dot] Spell DMG by 0.4x ATK.", trigger: passive, uses_dots: true, filter: { tags_any: [spell] }, target: items_under_dots, action: add_stat_pct, stat: atk_dmg_pct, amount: 40 }
+    - { text: "On Attack: Activate [dot] Spell.", trigger: on_attack, uses_dots: true, filter: { tags_any: [spell] }, target: items_under_dots, action: activate_item }
+    - { text: "Increase [dot] Spell Burn and Freeze by 20%.", trigger: battle_start, uses_dots: true, filter: { tags_any: [spell] }, target: items_under_dots, action: add_inflict_pct, status: burn, amount: 20 }
+    - { text: "Increase [dot] Spell Burn and Freeze by 20%.", trigger: battle_start, uses_dots: true, filter: { tags_any: [spell] }, target: items_under_dots, action: add_inflict_pct, status: freeze, amount: 20 }
+  effects_status: complete
+  source: observed
+  verified: true
+  notes: 'In game (2026-10-17): 2.3s cooldown (wiki 2.2), "Increase [dot] Spell DMG by 646.1K" = 0.4x ATK flat (wiki said +40%), Burn/Freeze +20% for the [dot] Spells.'
+
+- id: flame_staff
+  effects:
+    - { text: "On Attack: Activate [dot] Spell,", trigger: on_attack, uses_dots: true, filter: { tags_any: [spell] }, target: items_under_dots, action: activate_item }
+    - { text: "and inflict 3 Burn for 1s for every [dot] Spell.", trigger: on_attack, target: enemy, action: apply_status, status: burn, stacks: 3, duration_s: 1, per_dot: { tags_any: [spell] } }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: ice_spear_staff
+  effects:
+    - { text: "On Attack: Activate [dot] Spell.", trigger: on_attack, uses_dots: true, filter: { tags_any: [spell] }, target: items_under_dots, action: activate_item }
+    - { text: "On Hit: Inflict 10 Freeze for 3s,", trigger: on_hit, target: enemy, action: apply_status, status: freeze, stacks: 10, duration_s: 3 }
+    - { text: "removing 0.10x Block per Freeze.", trigger: on_hit, target: enemy, action: remove_block, value: { ratio: 1.0, scales_with: atk } }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: maestro
+  effects:
+    - { text: "Start of Battle: [dot] Creatures and Spells deal 0.6x ATK additional DMG.", trigger: passive, uses_dots: true, filter: { tags_any: [creature, spell] }, target: items_under_dots, action: add_stat_pct, stat: atk_dmg_pct, amount: 60 }
+    - { text: "On Attack: haste [dot] Creatures by 7%,", trigger: on_attack, uses_dots: true, filter: { tags_any: [creature] }, target: items_under_dots, action: add_stat_pct, stat: haste_pct, amount: 7 }
+    - { text: "then activate [dot] Spells.", trigger: on_attack, uses_dots: true, filter: { tags_any: [spell] }, target: items_under_dots, action: activate_item }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: flame_mages_hat
+  effects:
+    - { text: "Start of Battle: Gain 0.20x Block.", trigger: battle_start, target: player, action: gain_block, value: { ratio: 0.2, scales_with: hp } }
+    - { text: "On [dot] Spell Activation: 30% chance to activate again.", trigger: on_activation, watch: dots, watch_filter: { tags_any: [spell] }, chance_pct: 30, target: event_item, action: activate_item }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: frost_mages_hat
+  effects:
+    - { text: "Start of Battle: Gain 0.20x Block.", trigger: battle_start, target: player, action: gain_block, value: { ratio: 0.2, scales_with: hp } }
+    - { text: "On [dot] Spell Activation: 20% chance to activate again", trigger: on_activation, watch: dots, watch_filter: { tags_any: [spell] }, chance_pct: 20, roll_group: frost, target: event_item, action: activate_item }
+    - { text: "and gain 0.06x Block.", trigger: on_activation, watch: dots, watch_filter: { tags_any: [spell] }, chance_pct: 20, roll_group: frost, target: player, action: gain_block, value: { ratio: 0.06, scales_with: hp } }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: ice_robe
+  effects:
+    - { text: "Start of Battle: Gain 0.40x Block.", trigger: battle_start, target: player, action: gain_block, value: { ratio: 0.4, scales_with: hp } }
+    - { text: "On [dot] Spell Hit: Gain 0.06x Block.", trigger: on_hit, watch: dots, watch_filter: { tags_any: [spell] }, limit: { per_battle: 10 }, target: player, action: gain_block, value: { ratio: 0.06, scales_with: hp } }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: flame_robe
+  effects:
+    - { text: "Start of Battle: Gain 0.40x Block.", trigger: battle_start, target: player, action: gain_block, value: { ratio: 0.4, scales_with: hp } }
+    - { text: "When HP is below or equal to 30%: Every enemy inflicted with Burn will Heal 0.01x Max HP.", trigger: hp_below, hp_pct: 30, limit: { per_battle: 1 }, condition: { who: enemy, status: burn }, target: player, action: heal, value: { ratio: 0.01, scales_with: hp } }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: ice_gloves
+  effects:
+    - { text: "Start of Battle: [dot] Staff gains 15% Haste.", trigger: battle_start, uses_dots: true, filter: { tags_any: [staff] }, action: add_stat_pct, target: items_under_dots, stat: haste_pct, amount: 15 }
+    - { text: "On [dot] Spell or [dot] Staff Hit: Inflict 2 Freeze for 6s.", trigger: on_hit, watch: dots, watch_filter: { tags_any: [spell, staff] }, target: enemy, action: apply_status, status: freeze, stacks: 2, duration_s: 6 }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: spark_gloves
+  effects:
+    - { text: "Start of Battle: [dot] Staff gains 15% Haste.", trigger: battle_start, uses_dots: true, filter: { tags_any: [staff] }, action: add_stat_pct, target: items_under_dots, stat: haste_pct, amount: 15 }
+    - { text: "[dot] Spell and [dot] Staff have 30% increased DMG against Stunned Enemies.", trigger: passive, condition: { who: enemy, status: stun }, uses_dots: true, filter: { tags_any: [spell, staff] }, target: items_under_dots, action: add_stat_pct, stat: damage_pct, amount: 30 }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: magic_shield
+  effects:
+    - { text: "Start of Battle: Gain 0.20x Block.", trigger: battle_start, target: player, action: gain_block, value: { ratio: 0.2, scales_with: hp } }
+    - { text: "On Attacked: If you have Block, 50% chance to reduce DMG taken by 40%.", trigger: before_attacked, condition: { who: self, has_block: true }, chance_pct: 50, target: player, action: reduce_hit_damage, pct: 40 }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: witchs_mirror
+  effects:
+    - { text: "On [dot] Spell Activation: Remove 3 random buff(s) from the enemy.", trigger: on_activation, watch: dots, watch_filter: { tags_any: [spell] }, target: enemy, action: remove_status, count: 3 }
+    - { text: "If removed, gain 0.02x Block.", trigger: on_status_removed, params: { polarity: buff }, target: player, action: gain_block, value: { ratio: 0.02, scales_with: hp } }
+    - { text: "On Attacked: If you have Block, 50% chance to reduce DMG taken by 40%.", trigger: before_attacked, condition: { who: self, has_block: true }, chance_pct: 50, target: player, action: reduce_hit_damage, pct: 40 }
+  effects_status: complete
+  source: manual
+  verified: false
+
+# ---------------------------------------------------------------- wizard: spells
+- id: alchemy_magic_dragons_breath
+  effects:
+    - { text: "On Activation: Inflict 3 Burn.", trigger: on_activation, target: enemy, action: apply_status, status: burn, stacks: 3 }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: alchemy_magic_ice_shield
+  effects:
+    - { text: "On Activation: reduce DMG taken by 50% for 1s,", trigger: on_activation, target: player, action: add_combatant_stat, combat_stat: dmg_reduction, amount: 50, duration_s: 1 }
+    - { text: "and inflict 10 Freeze for 1s.", trigger: on_activation, target: enemy, action: apply_status, status: freeze, stacks: 10, duration_s: 1 }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: alchemy_magic_ice_spear
+  effects:
+    - { text: "On Hit: Inflict 10 Freeze for 3s", trigger: on_hit, target: enemy, action: apply_status, status: freeze, stacks: 10, duration_s: 3 }
+    - { text: "and remove 2.0x Block.", trigger: on_hit, target: enemy, action: remove_block, value: { ratio: 2.0, scales_with: atk } }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: intermediate_magic_ignite
+  effects:
+    - { text: "On Activation: Inflict 10 Burn for 1s.", trigger: on_activation, target: enemy, action: apply_status, status: burn, stacks: 10, duration_s: 1 }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: intermediate_magic_spark
+  stats: { random_extra_hits: 1 }
+  effects:
+    - { text: "Start of Battle: [dot] Staff gains 15% Haste.", trigger: battle_start, uses_dots: true, filter: { tags_any: [staff] }, action: add_stat_pct, target: items_under_dots, stat: haste_pct, amount: 15 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: '"Attack 0 ~ 1 more time(s)" = 0 or 1 more activation after each one, at random; each extra attack is its own activation (Witch''s Mirror, Wizard''s Hat and On Spell Activation effects see it). User, 2026-10-17.'
+- id: advanced_magic_thunderstrike
+  stats: { random_extra_hits: 2, auto_crit_when: { who: enemy, status: stun } }
+  effects:
+    - { text: "Start of Battle: [dot] Staff gains 15% Haste.", trigger: battle_start, uses_dots: true, filter: { tags_any: [staff] }, action: add_stat_pct, target: items_under_dots, stat: haste_pct, amount: 15 }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: fusion_magic_lightning_storm
+  stats: { random_extra_hits: 2, auto_crit_when: { who: enemy, status: stun } }
+  effects:
+    - { text: "Start of Battle: [dot] Staff gains 15% Haste.", trigger: battle_start, uses_dots: true, filter: { tags_any: [staff] }, action: add_stat_pct, target: items_under_dots, stat: haste_pct, amount: 15 }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: fusion_magic_firestorm
+  stats: { random_extra_hits: 2, auto_crit_when: { who: enemy, status: burn, min_stacks: 41 } }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: '"over 40 Burn" = 41 or more.'
+- id: advanced_magic_meteor
+  effect_text: "Increase DMG by 0.1x ATK for every Burn inflicted."
+  effects:
+    - { text: "Increase DMG by 0.1x ATK for every Burn inflicted.", trigger: passive, target: self_item, action: add_stat_pct, stat: atk_dmg_pct, amount: 10, per_status: { status: burn, on: enemy } }
+  effects_status: complete
+  source: observed
+  verified: true
+  notes: 'In game (2026-10-17): "Increase DMG by 161.5K (0.1x ATK) for every Burn inflicted" — flat damage, not +10%.'
+
+- id: fusion_magic_deep_impact
+  stats: { max_attacks: 1 }
+  effect_text: "On Activation: Inflict 15 Burn. DMG increases by 0.1x ATK for every Burn inflicted. (Activates once per battle)."
+  effects:
+    - { text: "On Activation: Inflict 15 Burn.", trigger: on_activation, target: enemy, action: apply_status, status: burn, stacks: 15 }
+    - { text: "DMG increases by 0.1x ATK for every Burn inflicted.", trigger: passive, target: self_item, action: add_stat_pct, stat: atk_dmg_pct, amount: 10, per_status: { status: burn, on: enemy } }
+  effects_status: complete
+  source: observed
+  verified: true
+  notes: 'In game (2026-10-17): 15 Burn (the wiki said 10), "DMG increases by 161.5K (0.1x ATK) for every Burn inflicted", activates once per battle. Confirmed again: +165.4K per Burn at 1.65M ATK.'
+
+- id: fusion_magic_icicle_rain
+  effects:
+    - { text: "On Hit: Inflict 6 Freeze for 9s", trigger: on_hit, target: enemy, action: apply_status, status: freeze, stacks: 6, duration_s: 9 }
+    - { text: "and 50% chance for an additional Attack.", trigger: on_hit, chance_pct: 50, target: self_item, action: attack }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: ultimate_magic_apocalypse
+  stats: { max_attacks: 1, auto_crit_when: { who: enemy, status: burn, min_stacks: 41 } }
+  effects:
+    - { text: "Every Burn, increase DMG by 20%.", trigger: passive, target: self_item, action: add_stat_pct, stat: damage_pct, amount: 20, per_status: { status: burn, on: enemy } }
+    - { text: "On Activation: Inflict 15 Burn.", trigger: on_activation, target: enemy, action: apply_status, status: burn, stacks: 15 }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: '"Activates 1 time per battle": attacks once; "over 40 Burn" = 41 or more.'
+- id: ultimate_magic_blizzard
+  effects:
+    - { text: "On Activation: Seal 3 random enemy item(s) for 1.8s", trigger: on_activation, target: enemy, action: seal_item, count: 3, duration_s: 1.8 }
+    - { text: "and inflict 10 Freeze.", trigger: on_activation, target: enemy, action: apply_status, status: freeze, stacks: 10 }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: transformation_magic_charm
+  effects:
+    - { text: "On Activation: Remove 3 random buff(s) from the enemy.", trigger: on_activation, target: enemy, action: remove_status, count: 3 }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: transformation_magic_drizzle
+  effects:
+    - { text: "On Activation: 60% chance to activate [dot] Spell.", trigger: on_activation, chance_pct: 60, uses_dots: true, filter: { tags_any: [spell] }, target: items_under_dots, action: activate_item }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: transformation_magic_heavy_rain
+  effects:
+    - { text: "On Activation: Activate [dot] Spell.", trigger: on_activation, uses_dots: true, filter: { tags_any: [spell] }, target: items_under_dots, action: activate_item }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: transformation_magic_instant_freeze
+  effects:
+    - { text: "On Activation: After inflicting 3 Freeze,", trigger: on_activation, target: enemy, action: apply_status, status: freeze, stacks: 3 }
+    - { text: "spend 25 Freeze for 0.25s to Stun.", trigger: on_activation, condition: { who: enemy, status: freeze, min_stacks: 25 }, target: enemy, action: apply_status, status: stun, stacks: 1, duration_s: 0.25 }
+    - { text: "spend 25 Freeze for 0.25s to Stun.", trigger: on_activation, condition: { who: enemy, status: freeze, min_stacks: 25 }, target: enemy, action: remove_status, status: freeze, count: 25, count_unit: stacks, consume: true }
+  effects_status: complete
+  source: manual
+  verified: false
+  notes: Spends 25 of the enemy's Freeze only when it has them.
+- id: transformation_magic_spell_amplification
+  effects:
+    - { text: "On Activation: One [dot] Spell's DMG increased by 15%.", trigger: on_activation, uses_dots: true, filter: { tags_any: [spell] }, target: items_under_dots, action: add_stat_pct, stat: damage_pct, amount: 15, pick_random: 1 }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: thunder_dragon
+  stats: { random_extra_hits: 2, auto_crit_when: { who: enemy, status: stun } }
+  effects:
+    - { text: "Start of Battle: [dot] Staff Haste increases by 15%.", trigger: battle_start, uses_dots: true, filter: { tags_any: [staff] }, action: add_stat_pct, target: items_under_dots, stat: haste_pct, amount: 15 }
+    - { text: "On Enemy Stun: Increase Crit DMG by 7%", trigger: on_stun, watch: any, target: self_item, action: add_stat_pct, stat: crit_damage_pct, amount: 7 }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: frost_spirit
+  effects:
+    - { text: "On Inflicting 35 Freeze: Attack.", trigger: on_status_applied, watch: any, params: { status: freeze }, every: 35, target: self_item, action: attack }
+    - { text: "On Hit: Inflict 3 Freeze.", trigger: on_hit, target: enemy, action: apply_status, status: freeze, stacks: 3 }
+  effects_status: complete
+  source: manual
+  verified: false
+- id: blazing_spirit
+  effects:
+    - { text: "On Inflicting 35 Burn: Attack.", trigger: on_status_applied, watch: any, params: { status: burn }, every: 35, target: self_item, action: attack }
+    - { text: "On Hit: Inflict 2 Burn.", trigger: on_hit, target: enemy, action: apply_status, status: burn, stacks: 2 }
+  effects_status: complete
+  source: manual
+  verified: false

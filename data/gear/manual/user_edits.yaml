@@ -1,0 +1,337 @@
+# Written by the item editor (SPEC §8.2). Same id as a wiki entry = override field by field.
+# Safe to hand-edit. Loaded after the other manual/ files, so these edits win.
+- id: spiral_spear
+  skill:
+    damage:
+      observations:
+        - shown: 2.10m
+          stat: 701.8k
+  footprint: "# / # / # / #"
+  basic_attack:
+    damage:
+      scales_with: atk
+      observations:
+        - shown: 842.1k
+          stat: 701.8k
+      ratio: 1.2
+    cooldown: 2
+    accuracy: 85
+    crit_chance: 0
+    hits: 1
+  source: observed
+  verified: true
+- id: elderwood_bow
+  skill:
+    damage:
+      scales_with: atk
+      ratio: 3
+  footprint: "o.. / #o. / ##o / #o. / o.."
+  basic_attack:
+    damage:
+      scales_with: atk
+      ratio: 1.2
+      observations:
+        - shown: 842.1k
+          stat: 701.8k
+    cooldown: 2
+    accuracy: 85
+    crit_chance: 0
+    hits: 1
+  source: observed
+  verified: true
+- id: staff_of_vitality
+  footprint: .o. / o#o / .#. / .#.
+  basic_attack:
+    damage:
+      scales_with: atk
+      ratio: 1.2
+    accuracy: 85
+    crit_chance: 0
+    cooldown: 2
+    hits: 1
+  source: observed
+  verified: true
+- id: meteor_hammer
+  footprint: "## / ##"
+  basic_attack:
+    damage:
+      scales_with: atk
+      ratio: 1.2
+    cooldown: 2
+    accuracy: 85
+    crit_chance: 0
+    hits: 1
+  source: observed
+  verified: true
+- id: deathrattle
+  basic_attack:
+    damage:
+      scales_with: atk
+      ratio: 1.2
+    cooldown: 2
+    accuracy: 85
+    crit_chance: 0
+    hits: 1
+  footprint: "#o / ## / #o"
+  source: observed
+  verified: true
+- id: primal_flame
+  footprint: .o. / o#o / o#o / .#.
+  basic_attack:
+    damage:
+      scales_with: atk
+      ratio: 1.2
+    cooldown: 2
+    accuracy: 85
+    crit_chance: 0
+    hits: 1
+  source: observed
+  verified: true
+- id: omnicleaver
+  footprint: "#o / #o / #o / #o"
+  basic_attack:
+    damage:
+      scales_with: atk
+      ratio: 1.2
+    cooldown: 2
+    accuracy: 85
+    crit_chance: 0
+    hits: 1
+  source: observed
+  verified: true
+- id: everfrozen
+  footprint: "# / # / #"
+  basic_attack:
+    damage:
+      scales_with: atk
+      ratio: 1.2
+    cooldown: 2
+    accuracy: 85
+    crit_chance: 0
+    hits: 1
+  source: observed
+  verified: true
+- id: divine_smite
+  footprint: "## / ##"
+  basic_attack:
+    damage:
+      scales_with: atk
+      ratio: 1.2
+    cooldown: 2
+    accuracy: 85
+    crit_chance: 0
+    hits: 1
+  source: observed
+  verified: true
+- id: thunderbolt_spike
+  skill:
+    damage:
+      observations:
+        - shown: 491.2k
+          stat: 701.8k
+  basic_attack:
+    damage:
+      scales_with: atk
+      observations:
+        - shown: 421k
+          stat: 701.8k
+      ratio: 0.6
+    cooldown: 2
+    accuracy: 85
+    crit_chance: 0
+  footprint: o#o / .#. / o#o
+  source: observed
+  verified: true
+- id: frost_staff
+  skill:
+    damage:
+      ratio: 2.1
+      observations:
+        - shown: 1.47m
+          stat: 701.8k
+  footprint: "# / # / #"
+  basic_attack:
+    damage:
+      scales_with: atk
+      ratio: 1
+    cooldown: 2
+    accuracy: 85
+    crit_chance: 0
+    hits: 1
+  source: observed
+  verified: true
+- id: guardians_bow
+  skill:
+    damage:
+      ratio: 2.1
+  footprint: "# / # / #"
+  basic_attack:
+    damage:
+      scales_with: atk
+      ratio: 1
+    cooldown: 2
+    accuracy: 85
+    crit_chance: 0
+    hits: 1
+  source: observed
+  verified: true
+- id: novices_sword
+  skill:
+    damage:
+      ratio: 2.1
+  basic_attack:
+    damage:
+      scales_with: atk
+      ratio: 1
+    cooldown: 2
+    accuracy: 85
+    crit_chance: 0
+    hits: 1
+  footprint: "# / # / #"
+  source: observed
+  verified: true
+- id: exotic_spear
+  skill:
+    damage:
+      ratio: 2.1
+  footprint: "# / # / # / #"
+  basic_attack:
+    damage:
+      scales_with: atk
+      ratio: 1
+    cooldown: 2
+    crit_chance: 0
+    accuracy: 85
+    hits: 1
+  source: observed
+  verified: true
+- id: steel_mace
+  skill:
+    damage:
+      ratio: 2.1
+  footprint: "# / # / #"
+  basic_attack:
+    damage:
+      scales_with: atk
+      ratio: 1
+    cooldown: 2
+    accuracy: 85
+    crit_chance: 0
+    hits: 1
+  source: observed
+  verified: true
+- id: morningstar
+  tags:
+    - weapon
+    - blunted
+  skill:
+    damage:
+      ratio: 2.1
+  footprint: "# / # / #"
+  basic_attack:
+    damage:
+      scales_with: atk
+      ratio: 1
+    cooldown: 2
+    accuracy: 85
+    crit_chance: 0
+    hits: 1
+  source: observed
+  verified: true
+- id: vampire_crossbow
+  tags:
+    - weapon
+    - crossbow
+  skill:
+    damage:
+      ratio: 2.1
+  footprint: ".# / ## / .#"
+  basic_attack:
+    damage:
+      scales_with: atk
+      ratio: 1
+    cooldown: 2
+    accuracy: 85
+    crit_chance: 0
+    hits: 1
+  source: observed
+  verified: true
+- id: ember_staff
+  skill:
+    damage:
+      ratio: 2.1
+  footprint: "# / # / #"
+  basic_attack:
+    damage:
+      scales_with: atk
+      ratio: 1
+    cooldown: 2
+    accuracy: 85
+    crit_chance: 0
+    hits: 1
+  source: observed
+  verified: true
+- id: flowing_blade
+  tags:
+    - weapon
+    - sword
+  skill:
+    damage:
+      ratio: 2.1
+  basic_attack:
+    damage:
+      scales_with: atk
+      ratio: 1
+    cooldown: 2
+    accuracy: 85
+    crit_chance: 0
+  footprint: "## / ##"
+  source: observed
+  verified: true
+- id: princes_dagger
+  tags:
+    - weapon
+    - sword
+  skill:
+    damage:
+      ratio: 2.1
+  basic_attack:
+    damage:
+      scales_with: atk
+      ratio: 1
+    cooldown: 2
+    accuracy: 85
+    crit_chance: 0
+  footprint: "## / ##"
+  source: observed
+  verified: true
+- id: celestial_shield
+  tags:
+    - armor
+  footprint: "# / #"
+  source: observed
+  verified: true
+- id: infernal_shield
+  tags:
+    - armor
+  footprint: "# / #"
+  source: observed
+  verified: true
+- id: wooden_shield_gear
+  tags:
+    - armor
+  footprint: "# / #"
+  source: observed
+  verified: true
+- id: spiked_shield_gear
+  tags:
+    - armor
+  footprint: "# / #"
+  source: observed
+  verified: true
+- id: iron_shield
+  tags:
+    - armor
+  footprint: "# / #"
+  source: observed
+  verified: true

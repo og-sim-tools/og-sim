@@ -1,0 +1,88 @@
+# Named, gear-specific mechanics defined as statuses (SPEC §4.5), from the wiki's gear and pet
+# text. The rules are written out here; values come from the wiki and are unverified.
+# Skill Gauge isn't a status: it's built into gear skills (skill.gauge + the charge_skill action).
+
+- id: frostbite
+  name: Frostbite
+  polarity: debuff
+  description: "DMG taken increases by 5% per stack. (Everfrozen: On Inflicting 100 Freeze, inflict 1 Frostbite.)"
+  behaviour: vulnerability
+  pct_per_stack: 5
+  stacking: true
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Gear
+  verified: false
+
+- id: divine_grace
+  name: Divine Grace
+  polarity: buff
+  description: "When taking DMG, regardless of source, sets the DMG to 1 and then disappears. (Divine Smite: every 1.0x Block gained gives 1.)"
+  behaviour: damage_to_one
+  stacking: true
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Gear
+  verified: false
+  notes: One stack is used up per damage instance.
+
+- id: charge
+  name: Charge
+  polarity: buff
+  description: "Omnicleaver: On [dot] Weapon Hit: [Charge]. For each Charge count, Skill DMG increases by 10%."
+  behaviour: counter
+  stacking: true
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Gear
+  verified: false
+  notes: A count read by Omnicleaver's skill (add_stat_pct skill_damage_pct per_status charge).
+
+- id: scream
+  name: Scream
+  polarity: buff
+  description: "Deathrattle: On [dot] Weapon Critical Hit: Charge [Scream] equal to 50% of DMG dealt. Skill deals DMG equal to charged Scream on death."
+  behaviour: counter
+  removable: false
+  stacking: true
+  source: manual
+  verified: true
+  notes: >-
+    Stacks = damage charged (charge_counter). On the hit that would kill me I get a 1-frame invincibility and deal
+    the Scream damage (release_counter on on_lethal); if that kills the enemy I survive, otherwise I die. Can't be
+    cleansed or stolen.
+
+- id: wish
+  name: Wish
+  polarity: buff
+  description: "Meteor Hammer: If a Stunned enemy gets Stunned again, make a wish. More meteors fall per Wish (skill activates when berserk is active)."
+  behaviour: counter
+  removable: false
+  stacking: true
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Gear
+  verified: false
+  notes: Counted on on_restun; the skill gets one more hit per Wish (extra_hits_per_status). Can't be cleansed or stolen. The skill only fires in PvP (berserk) [later].
+
+- id: waterdrop_cushion
+  name: Waterdrop Cushion
+  polarity: buff
+  description: "Pet Seiren: gain Waterdrop Cushion equal to x% of your max HP. While below full HP, it heals you back up, using 1 stack per 1% of max HP healed."
+  behaviour: refill_hp
+  removable: false # user 2026-10-18: can't be removed or stolen
+  stacking: true
+  source: manual
+  verified: true
+  notes: >-
+    User, 2026-10-16: it only heals when you're below 100% HP, so damage goes to Block first and the cushion
+    refills the HP that was lost (also with Block up when statuses ignore Block, e.g. Rose). 1 stack = 1% of
+    max HP. A part-percent missing uses a whole stack: config combat.refill_rounding [UNVERIFIED].
+
+- id: evade
+  name: Evade
+  polarity: buff
+  description: "Every weapon attack against the holder misses (counts as a dodge). (Raven's Outlaw Tactics: Start of Battle, for 3s.)"
+  behaviour: evade_all
+  stacking: false
+  has_duration: true
+  removable: false
+  source: manual
+  verified: false
+  notes: Made up as a status so Outlaw Tactics can be timed; assumed not removable or stealable.

@@ -1,0 +1,200 @@
+basic_stats:
+  hp: 5.29M
+  atk: 1.61M
+  initial_block: 1.85M
+detailed_stats: {}
+heroes:
+  - id: erwen
+    stars: 5
+    links: []
+    skin: null
+    blessings:
+      level: 9
+      equipped:
+        - id: erwen_spirit_gain
+          rarity: mythic
+          value: 50
+  - id: trixie
+    stars: 1
+    links: []
+    skin: null
+    blessings:
+      level: 9
+      equipped:
+        - id: trixie_ill_be_having_that
+          rarity: legendary
+          value: 10
+        - id: trixie_consider_this_yours
+          rarity: mythic
+          value: 20
+  - id: spark
+    stars: 3
+    links: []
+    skin: null
+    blessings:
+      level: 9
+      equipped: []
+  - id: bjorn
+    stars: 0
+    links: []
+    skin: null
+    blessings:
+      level: 9
+      equipped: []
+  - id: raven
+    stars: 3
+    links: []
+    skin: null
+    blessings:
+      level: 9
+      equipped: []
+  - id: rebecca
+    stars: 1
+    links: []
+    skin: null
+    blessings:
+      level: 9
+      equipped: []
+  - id: kai
+    stars: 1
+    links: []
+    skin: null
+    blessings:
+      level: 9
+      equipped: []
+  - id: spearman
+    stars: 4
+    links: []
+    skin: null
+    blessings:
+      level: 9
+      equipped: []
+  - id: barbarian
+    stars: 3
+    links: []
+    skin: null
+    blessings:
+      level: 9
+      equipped: []
+  - id: fighter
+    stars: 4
+    links: []
+    skin: null
+    blessings:
+      level: 9
+      equipped: []
+  - id: venom
+    stars: 2
+    links: []
+    skin: null
+    blessings:
+      level: 9
+      equipped: []
+  - id: acrobat
+    stars: 3
+    links: []
+    skin: null
+    blessings:
+      level: 9
+      equipped: []
+  - id: sniper
+    stars: 4
+    links: []
+    skin: null
+    blessings:
+      level: 9
+      equipped: []
+  - id: archer
+    stars: 3
+    links: []
+    skin: null
+    blessings:
+      level: 9
+      equipped: []
+  - id: cecilia
+    stars: 0
+    links: []
+    skin: null
+    blessings:
+      level: 9
+      equipped: []
+  - id: feline_mage
+    stars: 2
+    links: []
+    skin: null
+    blessings:
+      level: 9
+      equipped: []
+  - id: fire_mage
+    stars: 2
+    links: []
+    skin: null
+    blessings:
+      level: 9
+      equipped: []
+  - id: ice_mage
+    stars: 4
+    links: []
+    skin: null
+    blessings:
+      level: 9
+      equipped: []
+  - id: mage
+    stars: 3
+    links: []
+    skin: null
+    blessings:
+      level: 9
+      equipped: []
+active_hero: trixie
+gear:
+  weapon:
+    id: primal_flame
+    rarity: mythic
+    tier: 0
+    level: 40
+  shield:
+    id: celestial_shield
+    rarity: legendary
+    tier: 0
+    level: 40
+  rings:
+    - id: archwizards_ring
+      rarity: legendary
+      tier: 0
+      level: 1
+    - id: archwizards_ring
+      rarity: legendary
+      tier: 0
+      level: 1
+  gloves:
+    - id: forest_keepers_gloves
+      rarity: mythic
+      tier: 0
+      level: 1
+    - id: forest_keepers_gloves
+      rarity: legendary
+      tier: 0
+      level: 1
+pets:
+  - id: flora
+    stars: 2
+    active: true
+  - id: seiren
+    stars: 1
+    active: true
+aura: judicators_blade
+auras:
+  - id: aura_of_vitality
+    stars: 0
+  - id: aura_of_courage
+    stars: 0
+  - id: judicators_blade
+    stars: 0
+skins:
+  - id: trixie_dream_eater
+    stars: 0
+equipped_skins:
+  - trixie_dream_eater
+skin_quests_done:
+  - trixie_dream_eater
