@@ -41,7 +41,6 @@ describe('sprites', () => {
         issues={[]}
         selected={null}
         hovered={null}
-        ghost={null}
         maskEdit={false}
         onSelect={vi.fn()}
         onHover={vi.fn()}

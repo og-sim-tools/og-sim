@@ -84,6 +84,8 @@
   verified: false
 - id: venom_poison_coating
   manual_note: "Enhanced Slot +1 / +2: mark that many more enhanced cells in the bag (Venom's cells are picked by hand)."
+  # The Build tab counts them: Poison Coating's 2 slots + this value (2026-10-19).
+  adds_enhanced_slots: true
   source: manual
   verified: false
 - id: venom_poison_trigger_interval

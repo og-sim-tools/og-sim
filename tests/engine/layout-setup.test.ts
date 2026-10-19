@@ -1,4 +1,4 @@
-/** Layouts remember the hero's links/blessings, gear, pets and skin choices; hero and skin ownership and stars are account-wide. */
+/** Builds remember their hero, gear, pets and skins; stars, blessings and HP / ATK / Block are account-wide (2026-10-19). */
 import { parse } from 'yaml';
 import { describe, expect, it } from 'vitest';
 import { applySetup, setupFromProfile } from '../../src/engine/layoutSetup';
@@ -27,34 +27,61 @@ describe('layout setup', () => {
     expect(back.setup).toEqual(setup);
   });
 
-  it('loading puts them back into a profile that has moved on, keeping account-wide ownership and stars', () => {
+  it('loading puts them back into a profile that has moved on, with its stars, blessings and HP / ATK / Block', () => {
     const setup = setupFromProfile(profile, null);
-    const later = ProfileSchema.parse({ basic_stats: profile.basic_stats, heroes: [{ id: 'rose', stars: 4 }, { id: 'erwen', stars: 9 }], active_hero: 'rose', gear: {}, pets: [], skins: [{ id: 'raven_apostle_of_death', stars: 5 }] });
+    // Account-wide since 2026-10-19: nothing of that is in the build.
+    expect(setup.hero?.blessings).toBeUndefined();
+    expect(setup.pets).toEqual([{ id: 'red_dragon', active: true }]);
+    expect(setup.basic_stats).toBeUndefined();
+    expect(setup.skins).toBeUndefined();
+    const later = ProfileSchema.parse({
+      basic_stats: { hp: '5M', atk: '1M', initial_block: '1M' },
+      heroes: [{ id: 'rose', stars: 4 }, { id: 'erwen', stars: 9, blessings: { level: 6, equipped: [{ id: 'erwen_spirit_gain', rarity: 'mythic', value: 60 }] } }],
+      active_hero: 'rose',
+      owned_pets: [{ id: 'red_dragon', stars: 4 }],
+      skins: [{ id: 'raven_apostle_of_death', stars: 5 }],
+    });
     const restored = applySetup(later, setup);
     expect(restored.active_hero).toBe('erwen');
     expect(restored.heroes.map((h) => h.id)).toEqual(['rose', 'erwen']);
-    expect(restored.heroes[1]!.stars).toBe(9); // stars are account-wide, not the layout's 8
-    expect(restored.heroes[1]!.blessings!.equipped[0]!.value).toBe(50);
-    // Skins, their stars and quests are per build now (user, 2026-10-18): the layout's 2★, not the profile's 5★.
-    expect(restored.skins).toEqual([{ id: 'raven_apostle_of_death', stars: 2 }]);
+    expect(restored.heroes[1]!.stars).toBe(9);
+    expect(restored.heroes[1]!.blessings!.equipped[0]!.value).toBe(60);
+    expect(restored.skins).toEqual([{ id: 'raven_apostle_of_death', stars: 5 }]);
     expect(restored.equipped_skins).toEqual(['raven_apostle_of_death']);
     expect(restored.skin_quests_done).toEqual(['raven_apostle_of_death']);
     expect(restored.gear.gloves).toHaveLength(2);
-    expect(restored.pets).toEqual([{ id: 'red_dragon', stars: 2, active: true }]);
-    // Other heroes and basic stats untouched; no setup = no change.
+    expect(restored.pets).toEqual([{ id: 'red_dragon', stars: 4, active: true }]);
+    expect(restored.basic_stats).toEqual(later.basic_stats);
     expect(restored.heroes[0]!.stars).toBe(4);
     expect(applySetup(later, undefined)).toBe(later);
+    // A pet I don't own (yet) plays at 0 stars.
+    expect(applySetup(later, { pets: [{ id: 'seiren', active: true }] }).pets).toEqual([{ id: 'seiren', stars: 0, active: true }]);
   });
 
-  it("blessings come from the build; the hero's stars and skill links stay the account's", () => {
-    const setup = setupFromProfile(ProfileSchema.parse({ ...profile, heroes: [{ id: 'erwen', stars: 8, links: ['impale'], blessings: profile.heroes[1]!.blessings }] }), null);
-    const account = ProfileSchema.parse({ basic_stats: profile.basic_stats, heroes: [{ id: 'erwen', stars: 9, links: ['parting_rose'] }] });
-    const hero = applySetup(account, setup).heroes[0]!;
-    expect(hero).toMatchObject({ stars: 9, links: ['parting_rose'] });
-    expect(hero.blessings?.equipped[0]?.id).toBe('erwen_spirit_gain');
-    // A build with no blessings for its hero has none (they don't leak in from anywhere else).
-    const bare = applySetup(ProfileSchema.parse({ ...account, heroes: [{ id: 'erwen', stars: 9, blessings: { level: 3, equipped: [{ id: 'all_dmg', rarity: 'rare', value: 3 }] } }] }), { hero: { id: 'erwen', stars: 0, links: [], skin: null } });
-    expect(bare.heroes[0]!.blessings).toBeUndefined();
+  it("an older build's own blessings, stars and HP / ATK / Block win, so it plays as it did; stars and links stay the account's", () => {
+    const account = ProfileSchema.parse({
+      basic_stats: profile.basic_stats,
+      heroes: [{ id: 'erwen', stars: 9, links: ['parting_rose'], blessings: { level: 3, equipped: [{ id: 'all_dmg', rarity: 'rare', value: 3 }] } }],
+      owned_pets: [{ id: 'red_dragon', stars: 1 }],
+      skins: [{ id: 'raven_apostle_of_death', stars: 1 }],
+    });
+    const old = {
+      hero: { id: 'erwen', stars: 0, links: [], skin: null, blessings: profile.heroes[1]!.blessings },
+      pets: [{ id: 'red_dragon', stars: 2, active: true }],
+      skins: [{ id: 'raven_apostle_of_death', stars: 2 }],
+      equipped_skins: ['raven_apostle_of_death'],
+      basic_stats: { hp: '9M', atk: '2M', initial_block: 0 },
+    };
+    const p = applySetup(account, old);
+    expect(p.heroes[0]).toMatchObject({ stars: 9, links: ['parting_rose'] });
+    expect(p.heroes[0]!.blessings?.equipped[0]?.id).toBe('erwen_spirit_gain');
+    expect(p.pets[0]!.stars).toBe(2);
+    expect(p.skins).toEqual([{ id: 'raven_apostle_of_death', stars: 2 }]);
+    expect(p.basic_stats.hp).toBe('9M');
+    // Without them, the account's.
+    const now = applySetup(account, { hero: { id: 'erwen', stars: 0, links: [], skin: null }, pets: [{ id: 'red_dragon', active: true }] });
+    expect(now.heroes[0]!.blessings?.equipped[0]?.id).toBe('all_dmg');
+    expect(now.pets[0]!.stars).toBe(1);
   });
 
   it("doesn't add a hero I don't own", () => {

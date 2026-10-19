@@ -4,7 +4,7 @@
  * for a first visit, item edits in the account export.
  */
 import { join } from 'node:path';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { parse } from 'yaml';
 import { readDataDir } from '../../src/engine/loader-node';
@@ -99,7 +99,7 @@ describe('first visit', () => {
     expect(await store.listBuilds()).toEqual([]);
   });
 
-  it("ticking the build's hero in the Profile tab keeps the build's blessings", async () => {
+  it("blessings entered in the Profile tab are the build's hero's, without changing the build", async () => {
     const store = browserStore(localStorage, fromDisk);
     await seedStarter(store);
     render(<App store={store} />);
@@ -107,8 +107,10 @@ describe('first visit', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'Profile' }));
     const erwen = screen.getAllByRole('checkbox').find((c) => c.parentElement?.textContent?.trim() === 'Erwen')!;
     fireEvent.click(erwen);
-    fireEvent.click(screen.getByRole('tab', { name: 'Battle' }));
-    expect(screen.getByText('Blessings').closest('summary')!.textContent).toMatch(/1 \/ 5/);
+    const card = screen.getByLabelText('Own Erwen').closest('details')!;
+    fireEvent.click(within(card as HTMLElement).getByRole('button', { name: 'Add blessing' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Build' }));
+    expect(screen.getAllByText('Blessings')[0]!.closest('summary')!.textContent).toMatch(/1 \/ \d/);
     expect(screen.queryByText(/unsaved/)).toBeNull(); // an account change isn't a build change
   }, 30000);
 });

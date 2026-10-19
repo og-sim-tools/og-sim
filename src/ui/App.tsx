@@ -1,26 +1,29 @@
 /** Overgeared Hero backpack simulator — local web UI (SPEC §8). */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { stringify } from 'yaml';
-import { type Rotation, findFirstFit, footprintOf, isUsable, occupantsAt, placeFootprint } from '../engine/bag';
+import { parse as parseYaml, stringify } from 'yaml';
+import { findFirstFit, footprintOf, isUsable, occupantsAt, placeFootprint } from '../engine/bag';
 import { buildSynergyReport } from '../engine/effects/synergy';
 import { type GameData, type Gear, type Item, loadGameData, loadProfile } from '../engine/loader';
 import { applySetup, setupFromProfile } from '../engine/layoutSetup';
 import { buildLoadout, buildValue, nextGearDef } from '../engine/loadout';
 import type { EnemyBuild, LayoutData, Profile } from '../engine/model';
-import { type SaveNote, accountToProfile, profileToAccount, readAccount, readBuild, writeAccount, writeBuild } from '../engine/saves';
+import { type SaveNote, accountToProfile, adoptLegacy, profileToAccount, readAccount, readBuild, writeAccount, writeBuild } from '../engine/saves';
 import { aggregateStats } from '../engine/stats';
 import { availableSupplies, supplySummary, validateLoadout } from '../engine/validate';
 import { type Snapshot, downloadText } from './api';
 import { Dialog } from './components/Dialog';
-import { type SaveStore, StoreContext, fileStore, lastBuild, readDraft, writeDraft } from './saves';
+import { type SaveStore, StoreContext, TEMP_BUILD, fileStore, lastBuild, readDraft, tempBuild, writeDraft } from './saves';
+import { BagPreview } from './components/BagPreview';
 import { type AccountImport, accountArchive, downloadBytes, looksLikeBuild, readAccountArchive } from './state/accountArchive';
 import { unzipFiles } from './state/zip';
 import { safeBuildName } from '../engine/saves/names';
-import { BagGrid, type Ghost, rarityColor, spriteOf } from './components/BagGrid';
+import { BagGrid, type DragPayload, type DropTarget, rarityColor, spriteOf } from './components/BagGrid';
+import { Bin, STORAGE_SCALE, Storage, type StoredView } from './components/Storage';
+import { bagSizesFor, enhancerOf, sizeOf } from './state/bagSizes';
 import { ItemDrawer } from './components/ItemDrawer';
 import { battleStartStats } from '../engine/combat/battle';
 import { resolveEnemy } from '../engine/combat/montecarlo';
-import { BattlePanel } from './components/BattlePanel';
+import { BattleTab } from './components/BattleTab';
 import { DataPanel } from './components/DataPanel';
 import { EnemyItemEditor } from './components/EnemyItemEditor';
 import { ItemBrowser } from './components/ItemBrowser';
@@ -39,23 +42,21 @@ import {
   type KeyAction,
   type UiLayout,
   addPlacement,
+  addStored,
+  fromStorage,
   moveBy,
+  reachShift,
   removePlacement,
+  removeStored,
   rotateCw,
+  toStorage,
   updatePlacement,
+  updateStored,
   withIds,
 } from './state/layoutOps';
 
-type Tab = 'bag' | 'optimize' | 'profile' | 'editor' | 'data';
+type Tab = 'bag' | 'battle' | 'optimize' | 'profile' | 'editor' | 'data';
 type InlineEnemy = Exclude<NonNullable<NonNullable<LayoutData['battle']>['enemy']>, string>;
-
-interface Pending {
-  item: string;
-  x: number;
-  y: number;
-  rotation: Rotation;
-  supply: boolean;
-}
 
 export const DEFAULT_PROFILE: Profile = {
   basic_stats: { hp: '1M', atk: '100K', initial_block: 0 },
@@ -64,6 +65,7 @@ export const DEFAULT_PROFILE: Profile = {
   active_hero: null,
   gear: { weapon: null, shield: null, rings: [], gloves: [] },
   pets: [],
+  owned_pets: [],
   aura: null,
   auras: [],
   skins: [],
@@ -74,8 +76,13 @@ export const DEFAULT_PROFILE: Profile = {
 const FULL_MASK = () => new Array(48).fill(1) as number[];
 type Raw = Record<string, unknown>;
 
-/** The account-wide part of a profile, normalised (heroes' stars and links, auras). */
+/** The account-wide part of a profile, normalised: HP / ATK / Block, heroes with stars, links and blessings, owned pets and skins with stars, auras. */
 const accountOf = (p: Profile): Profile => accountToProfile(profileToAccount(p));
+/** A profile edited in the Build tab: the stars set on the build's pets are the account's stars for those pets. */
+const withPetStars = (p: Profile): Profile => {
+  const owned = p.owned_pets.filter((o) => !p.pets.some((x) => x.id === o.id));
+  return { ...p, owned_pets: [...owned, ...p.pets.map((x) => ({ id: x.id, stars: x.stars }))] };
+};
 
 export function App({ store: givenStore }: { store?: SaveStore } = {}) {
   const store = useMemo(() => givenStore ?? fileStore(), [givenStore]);
@@ -88,6 +95,9 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
   const [migratedFromV1, setMigratedFromV1] = useState<Raw | null>(null);
   const v1Ref = useRef<Raw | null>(null);
   v1Ref.current = migratedFromV1;
+  /** The account as of now, for loading builds (an older build's own stars and blessings move into it). */
+  const accountRef = useRef<Profile | null>(null);
+  accountRef.current = account ?? accountRef.current;
   /** The account text last saved (or loaded), so only real changes are written. */
   const savedAccount = useRef<string | null>(null);
   const [builds, setBuilds] = useState<string[]>([]);
@@ -101,21 +111,35 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
   /** The item whose side panel is open: only set by clicking it. */
   const [inspected, setInspected] = useState<string | null>(null);
   const [hovered, setHovered] = useState<string | null>(null);
-  const [pending, setPending] = useState<Pending | null>(null);
   const [maskEdit, setMaskEdit] = useState(false);
   const [enhanceEdit, setEnhanceEdit] = useState(false);
   const [editTarget, setEditTarget] = useState<EditTarget | null>(null);
   const [message, setMessage] = useState<{ text: string; error?: boolean; action?: { label: string; run: () => void } } | null>(null);
-  /** Whose build the Bag and Profile tabs edit: mine, or the typed-in enemy's (when it has a build). */
+  /** Whose build the Build and Profile tabs edit: mine, or the typed-in enemy's (when it has a build). */
   const [side, setSide] = useState<'me' | 'enemy'>('me');
   /** Item editor tab: the game's data, or monster items for enemies. */
   const [editorMode, setEditorMode] = useState<'game' | 'enemy'>('game');
-  /** The Data tab opened from the Battle tab's note: only what this build uses. */
+  /** The Data tab opened from the Build tab's note: only what this build uses. */
   const [dataFocus, setDataFocus] = useState(false);
   const [showGuide, setShowGuide] = useState(() => !guideDone.get());
   /** The tutorial: asking whether to start it, then running. */
   const [askTour, setAskTour] = useState(false);
   const [touring, setTouring] = useState(false);
+  /** The account as the tour started: if the profile was filled in during it, the end offers a backup. */
+  const tourStartAccount = useRef<string | null>(null);
+  const [askBackup, setAskBackup] = useState(false);
+  /** Opening a build from the Battle tab while the open one has unsaved changes: asks first. */
+  const [askOpen, setAskOpen] = useState<{ name: string | null } | null>(null);
+  /** The build list shows each build's bag (remembered in this browser). */
+  const [previewOn, setPreviewOn] = useState(() => {
+    try {
+      return localStorage.getItem('og-sim/preview-bags') === '1';
+    } catch {
+      return false;
+    }
+  });
+  /** Saved builds' files, read when the list opens with previews on. */
+  const [previewTexts, setPreviewTexts] = useState<Record<string, string>>({});
 
   const say = (text: string, error = false, action?: { label: string; run: () => void }) => setMessage({ text, error, ...(action ? { action } : {}) });
   /** Show what loading a file had to change; info-only notes are shown too (they explain an upgrade). */
@@ -124,6 +148,30 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
   // ---------------------------------------------------------------- loading
   const loaded = useMemo(() => (snap ? loadGameData(snap.data) : null), [snap]);
   const data: GameData | null = loaded?.data ?? null;
+  const dataRef = useRef<GameData | null>(null);
+  dataRef.current = data;
+
+  /**
+   * A build read from a file, with what an older file saved per build (blessings, pet and skin stars, HP / ATK /
+   * Block) moved into the account where it has none yet (notes say what moved, and what differed).
+   */
+  const adopt = useCallback((layout: LayoutData, what: string): { layout: LayoutData; notes: SaveNote[] } => {
+    const acc = accountRef.current;
+    if (!acc) return { layout, notes: [] };
+    const d = dataRef.current;
+    const a = adoptLegacy(
+      acc,
+      layout,
+      what,
+      (kind, id) => (kind === 'hero' ? d?.heroes.get(id)?.name : kind === 'pet' ? d?.pets.get(id)?.name : d?.skins.get(id)?.name) ?? id,
+      (id) => d?.blessings.get(id)?.name ?? id,
+    );
+    if (a.changed) {
+      accountRef.current = a.account;
+      setAccount(a.account);
+    }
+    return { layout: a.layout, notes: a.notes };
+  }, []);
 
   const refresh = useCallback(async () => {
     try {
@@ -142,11 +190,21 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
     },
     [store],
   );
-
-  const openLayout = useCallback(
+  /** A saved build to edit: read, with its older per-build values moved into the account. */
+  const loadMine = useCallback(
     async (name: string) => {
+      const r = await loadBuild(name);
+      const a = adopt(r.layout, `"${name}"`);
+      return { layout: withIds(a.layout), notes: [...r.notes, ...a.notes] };
+    },
+    [loadBuild, adopt],
+  );
+
+  /** Open a saved build; its notes are shown (or added to `collect`, to show with others). */
+  const openLayout = useCallback(
+    async (name: string, collect?: SaveNote[]) => {
       try {
-        const r = await loadBuild(name);
+        const r = await loadMine(name);
         // Loading a build only changes MY build: the enemy (battle settings) already set up stays, so I can
         // pair any build of mine with any enemy. The first load (nothing set up yet) takes the file's battle too.
         setLayout((cur) => (cur.battle ? { ...r.layout, battle: cur.battle } : r.layout));
@@ -154,14 +212,33 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
         setLayoutDirty(false);
         lastBuild.set(name);
         setSelected(null);
-        setPending(null);
-        showNotes(`Loaded "${name}"`, r.notes);
+        if (collect) collect.push(...r.notes);
+        else showNotes(`Loaded "${name}"`, r.notes);
       } catch (e) {
         say(`Couldn't load "${name}": ${(e as Error).message}`, true);
       }
     },
-    [loadBuild],
+    [loadMine],
   );
+
+  /** Open the temp build (a scratch build that isn't in the list; empty if there's none yet). */
+  const openTemp = useCallback((collect?: SaveNote[]) => {
+    const t = tempBuild.read();
+    const read = t ? readBuild(t.text, { v1Profile: v1Ref.current }, 'The temp build') : null;
+    const a = read ? adopt(read.layout, 'the temp build') : null;
+    const r = read && a ? { layout: a.layout, notes: [...read.notes, ...a.notes] } : null;
+    setLayout((cur) => {
+      const base: UiLayout = r ? withIds(r.layout) : { placements: [], ...(cur.hero ? { hero: cur.hero } : {}), ...(cur.setup ? { setup: cur.setup } : {}) };
+      return cur.battle ? { ...base, battle: cur.battle } : base;
+    });
+    setLayoutName('');
+    setLayoutDirty(false);
+    lastBuild.set(TEMP_BUILD);
+    setSelected(null);
+    setInspected(null);
+    if (r && collect) collect.push(...r.notes);
+    else if (r) showNotes('Opened the temp build', r.notes);
+  }, [adopt]);
 
   useEffect(() => {
     void refresh();
@@ -181,15 +258,22 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
         say(`Couldn't read ${store.where()}: ${(e as Error).message}`, true);
       }
       v1Ref.current = acc.migratedFromV1;
+      accountRef.current = acc.profile;
       setMigratedFromV1(acc.migratedFromV1);
       savedAccount.current = writeAccount(acc.profile, acc.migratedFromV1);
       const names = await store.listBuilds().catch(() => [] as string[]);
       setBuilds(names);
       const notes = [...acc.notes];
-      if (draft) {
+      // Unsaved changes to a new build (before the temp build existed) become the temp build.
+      if (draft && !draft.name) {
+        if (!tempBuild.read()) tempBuild.write(draft.text);
+        writeDraft(null);
+        openTemp(notes);
+      } else if (draft) {
         const r = readBuild(draft.text, { v1Profile: acc.migratedFromV1 }, 'Your unsaved changes');
-        notes.push(...r.notes);
-        setLayout(withIds(r.layout));
+        const a = adopt(r.layout, `your unsaved changes to "${draft.name}"`);
+        notes.push(...r.notes, ...a.notes);
+        setLayout(withIds(a.layout));
         setLayoutName(draft.name);
         setLayoutDirty(true);
         const when = draft.at ? new Date(draft.at).toLocaleString() : 'earlier';
@@ -198,23 +282,21 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
           run: () => {
             writeDraft(null);
             if (draft.name && names.includes(draft.name)) void openLayout(draft.name);
-            else {
-              setLayout({ placements: [], setup: setupFromProfile(DEFAULT_PROFILE) });
-              setLayoutName('');
-              setLayoutDirty(false);
-            }
+            else openTemp();
             setMessage(null);
           },
         });
       } else {
         const last = lastBuild.get();
-        const pick = last && names.includes(last) ? last : names.includes('example') ? 'example' : null;
-        if (pick) await openLayout(pick);
+        const pick = last && names.includes(last) ? last : last !== TEMP_BUILD && names.includes('example') ? 'example' : null;
+        // Its notes (what moved into the account) are shown with the account's.
+        if (pick) await openLayout(pick, notes);
+        else openTemp(notes);
       }
       showNotes('Your saved files were updated to the new format', notes);
-      setAccount(acc.profile);
+      setAccount(accountRef.current ?? acc.profile);
     })();
-  }, [snap, data, store, openLayout]);
+  }, [snap, data, store, openLayout, openTemp, adopt]);
 
   // The account saves itself (it's the same for every build).
   const accountText = useMemo(() => (account ? writeAccount(account, migratedFromV1) : null), [account, migratedFromV1]);
@@ -230,34 +312,42 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
   }, [accountText, store]);
 
   // Unsaved build changes are kept in this browser, so closing the tab doesn't lose them.
+  // The temp build is kept as it's edited.
   useEffect(() => {
     if (!account) return;
+    if (!layoutName) {
+      writeDraft(null);
+      const t = setTimeout(() => tempBuild.write(writeBuild(layout)), 300);
+      return () => clearTimeout(t);
+    }
     if (!layoutDirty) return writeDraft(null);
     const t = setTimeout(() => writeDraft({ name: layoutName, text: writeBuild(layout), at: new Date().toISOString() }), 300);
     return () => clearTimeout(t);
   }, [account, layout, layoutDirty, layoutName]);
+  /** Unsaved changes to a saved build (the temp build is never "unsaved": it's kept as it's edited). */
+  const unsaved = layoutDirty && !!layoutName;
 
   // Closing or reloading the tab with unsaved build changes asks first (the browser's own "Leave site?" box).
   useEffect(() => {
-    if (!layoutDirty) return;
+    if (!unsaved) return;
     const ask = (e: BeforeUnloadEvent) => {
       e.preventDefault();
       e.returnValue = '';
     };
     window.addEventListener('beforeunload', ask);
     return () => window.removeEventListener('beforeunload', ask);
-  }, [layoutDirty]);
+  }, [unsaved]);
 
   /** My profile as the engine uses it: the account with this build's setup put in. */
   const profile = useMemo(() => (account ? applySetup(account, layout.setup) : null), [account, layout.setup]);
 
   // ---------------------------------------------------------------- derived
-  // The enemy's build (when the typed-in enemy has one) is edited with the same Bag / Profile tabs.
+  // The enemy's build (when the typed-in enemy has one) is edited with the same Build / Profile tabs.
   const inlineEnemy: InlineEnemy | null = typeof layout.battle?.enemy === 'object' ? layout.battle.enemy : null;
   const enemyBuild = inlineEnemy?.build ?? null;
   const editingEnemy = side === 'enemy' && !!enemyBuild;
   const bagLayout: UiLayout = useMemo(
-    () => (editingEnemy && enemyBuild ? withIds({ placements: enemyBuild.placements, bag: enemyBuild.bag, enhanced_cells: enemyBuild.enhanced_cells }) : layout),
+    () => (editingEnemy && enemyBuild ? withIds({ placements: enemyBuild.placements, bag: enemyBuild.bag, enhanced_cells: enemyBuild.enhanced_cells, storage: enemyBuild.storage }) : layout),
     [editingEnemy, enemyBuild, layout],
   );
   const bagProfile: Profile | null = editingEnemy && enemyBuild ? enemyBuild.profile : profile;
@@ -288,20 +378,6 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
 
   const defOf = (id: string): Item | Gear | undefined => data?.items.get(id) ?? data?.gear.get(id);
 
-  const ghost: Ghost | null = useMemo(() => {
-    if (!pending || !loadout) return null;
-    // Gear shows the footprint for its equipped rarity (gloves' wider epic+ shape).
-    const def = data?.gear.has(pending.item) ? nextGearDef(loadout, pending.item) : defOf(pending.item);
-    const fp = def ? footprintOf(def) : null;
-    if (!def || !fp) return null;
-    const abs = placeFootprint(fp, pending);
-    const valid = abs.cells.every((c) => isUsable(loadout.bag, c.x, c.y) && occupantsAt(loadout.layout, c.x, c.y).length === 0);
-    const color = rarityColor('rarity' in def ? (def.rarity as string) : null, !('rarity' in def));
-    const sprite = spriteOf(def as Parameters<typeof spriteOf>[0], pending.rotation) ?? undefined;
-    return { name: def.name, color, cells: abs.cells, dots: abs.dots, valid, effects: def.effects, sprite, origin: { x: pending.x, y: pending.y } };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pending, loadout]);
-
   // ---------------------------------------------------------------- layout edits
   const editLayout = (fn: (l: UiLayout) => UiLayout) => {
     setLayout((l) => fn(l));
@@ -315,8 +391,8 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
       const en = l.battle?.enemy;
       if (!en || typeof en !== 'object' || !en.build) return l;
       const b = en.build;
-      const next = fn(withIds({ placements: b.placements, bag: b.bag, enhanced_cells: b.enhanced_cells }));
-      const build: EnemyBuild = { ...b, placements: next.placements, bag: next.bag, enhanced_cells: next.enhanced_cells };
+      const next = fn(withIds({ placements: b.placements, bag: b.bag, enhanced_cells: b.enhanced_cells, storage: b.storage }));
+      const build: EnemyBuild = { ...b, placements: next.placements, bag: next.bag, enhanced_cells: next.enhanced_cells, storage: next.storage };
       return { ...l, battle: { ...l.battle!, enemy: { ...en, build } } };
     });
   };
@@ -327,11 +403,11 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
       return { ...l, battle: { ...l.battle!, enemy: { ...en, build: fn(en.build) } } };
     });
   /**
-   * An edit to my profile (Profile tab, hero picker): the account-wide part goes to the account (saved
-   * automatically), the rest (hero, blessings, gear, pets, skins, HP / ATK / Block) to this build.
+   * An edit to my profile in the Build tab: the account-wide part (stars, blessings, HP / ATK / Block) goes to
+   * the account (saved automatically), the rest (hero, gear, which pets and skins) to this build.
    */
   const editMyProfile = (p: Profile) => {
-    const acc = accountOf(p);
+    const acc = accountOf(withPetStars(p));
     setAccount((cur) => (cur && writeAccount(cur, null) === writeAccount(acc, null) ? cur : acc));
     const heroId = p.active_hero ?? layout.hero ?? null;
     const setup = setupFromProfile(p, heroId);
@@ -372,67 +448,136 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
 
   const focusBag = () => setTimeout(() => document.querySelector<HTMLElement>('.bag')?.focus(), 0);
 
+  /** An item or gear piece as it would be placed now (gear at the rarity it's equipped at). */
+  const placeDef = (itemId: string) => (loadout && data?.gear.has(itemId) ? nextGearDef(loadout, itemId) : defOf(itemId));
+
+  /** Clicked in a list (or Place on a gear piece): it goes straight into the first free spot, unrotated. */
   const startPlacing = (itemId: string, supply = false) => {
-    const def = loadout && data?.gear.has(itemId) ? nextGearDef(loadout, itemId) : defOf(itemId);
+    const def = placeDef(itemId);
     const fp = def ? footprintOf(def) : null;
     if (!fp || !loadout) {
       say(`${def?.name ?? itemId} has no shape yet. Enter it in the item editor.`, true);
       return;
     }
-    const at = findFirstFit(loadout.layout, fp, 0) ?? { x: 0, y: 0 };
-    setPending({ item: itemId, x: at.x, y: at.y, rotation: 0, supply });
-    setSelected(null);
     setMaskEdit(false);
+    setEnhanceEdit(false);
+    const at = findFirstFit(loadout.layout, fp, 0);
+    if (!at) {
+      say(`No room for ${def!.name} in the bag (only spots where it fits unrotated count). Make room, or drag it in or to the storage.`, true);
+      return;
+    }
+    const { layout: next, id } = addPlacement(bagLayout, { item: itemId, x: at.x, y: at.y, rotation: 0, supply });
+    editBag(() => next);
+    setSelected(id);
     focusBag();
   };
 
-  const commitPending = () => {
-    if (!pending) return;
-    const { layout: next, id } = addPlacement(bagLayout, pending);
-    editBag(() => next);
-    setSelected(id);
-    setPending(null);
+  /** The cells an item would cover with its origin at (x, y), shifted so it stays within reach of the bag. */
+  const cellsAt = (itemId: string, rotation: 0 | 90 | 180 | 270, x: number, y: number) => {
+    const def = placeDef(itemId);
+    const fp = def ? footprintOf(def) : null;
+    if (!fp || !loadout) return null;
+    const cells = placeFootprint(fp, { x, y, rotation }).cells;
+    const { dx, dy } = reachShift(cells, loadout.bag);
+    return { x: x + dx, y: y + dy, cells: cells.map((c) => ({ x: c.x + dx, y: c.y + dy })) };
+  };
+  /** What a drag is: its item and rotation. */
+  const dragItem = (drag: DragPayload): { item: string; rotation: 0 | 90 | 180 | 270 } | null => {
+    if (drag.kind === 'item') return { item: drag.id, rotation: 0 };
+    const p = drag.kind === 'placed' ? bagLayout.placements.find((q) => q.id === drag.id) : bagLayout.storage?.find((q) => q.id === drag.id);
+    return p ? { item: p.item, rotation: p.rotation } : null;
+  };
+  /** Where a drag lands in the bag (its grabbed cell over x, y), kept within reach. */
+  const dropTarget = (drag: DragPayload, x: number, y: number): DropTarget | null => {
+    const it = dragItem(drag);
+    const at = it && cellsAt(it.item, it.rotation, x - drag.dx, y - drag.dy);
+    if (!at || !loadout) return null;
+    const ignore = drag.kind === 'placed' ? drag.id : undefined;
+    const valid = at.cells.every((c) => isUsable(loadout.bag, c.x, c.y) && occupantsAt(loadout.layout, c.x, c.y).every((o) => o === ignore));
+    return { ...at, valid };
   };
 
   const onKey = (action: KeyAction) => {
-    const d = moveBy(action);
-    if (pending) {
-      if (d) setPending({ ...pending, x: pending.x + d.dx, y: pending.y + d.dy });
-      else if (action === 'rotate') setPending({ ...pending, rotation: rotateCw(pending.rotation) });
-      else if (action === 'place') commitPending();
-      else setPending(null); // cancel / remove
+    if (!selected) return;
+    const stored = bagLayout.storage?.find((x) => x.id === selected);
+    if (stored) {
+      if (action === 'rotate') editBag((l) => updateStored(l, selected, { rotation: rotateCw(stored.rotation) }));
+      else if (action === 'remove') {
+        editBag((l) => removeStored(l, selected));
+        setSelected(null);
+      } else if (action === 'cancel') setSelected(null);
       return;
     }
-    if (!selected) return;
     const p = bagLayout.placements.find((x) => x.id === selected);
     if (!p) return;
-    if (d) editBag((l) => updatePlacement(l, selected, { x: p.x + d.dx, y: p.y + d.dy }));
-    else if (action === 'rotate') editBag((l) => updatePlacement(l, selected, { rotation: rotateCw(p.rotation) }));
+    const d = moveBy(action);
+    if (d) {
+      // Never further than REACH cells outside the bag.
+      const at = cellsAt(p.item, p.rotation, p.x + d.dx, p.y + d.dy);
+      if (!at || (at.x === p.x && at.y === p.y)) return;
+      editBag((l) => updatePlacement(l, selected, { x: at.x, y: at.y }));
+    } else if (action === 'rotate') editBag((l) => updatePlacement(l, selected, { rotation: rotateCw(p.rotation) }));
     else if (action === 'remove') {
       editBag((l) => removePlacement(l, selected));
       setSelected(null);
     } else if (action === 'cancel') setSelected(null);
   };
 
-  const onDrop = (drop: { itemId?: string; instanceId?: string; pending?: boolean }, x: number, y: number) => {
-    if (drop.pending) {
-      // Moving the not-yet-placed item: it stays unplaced until Enter / Place.
-      if (pending) setPending({ ...pending, x, y });
+  /** Dropped on the bag with its grabbed cell over (x, y). */
+  const onDrop = (drag: DragPayload, x: number, y: number) => {
+    const at = dropTarget(drag, x, y);
+    if (!at) return;
+    if (drag.kind === 'placed') editBag((l) => updatePlacement(l, drag.id, { x: at.x, y: at.y }));
+    else if (drag.kind === 'stored') editBag((l) => fromStorage(l, drag.id, at.x, at.y));
+    else {
+      const { layout: next, id } = addPlacement(bagLayout, { item: drag.id, x: at.x, y: at.y, rotation: 0, supply: false });
+      editBag(() => next);
+      setSelected(id);
       focusBag();
       return;
     }
-    setPending(null);
-    if (drop.instanceId) {
-      editBag((l) => updatePlacement(l, drop.instanceId!, { x, y }));
-      setSelected(drop.instanceId);
-    } else if (drop.itemId) {
-      if (!defOf(drop.itemId) || !footprintOf(defOf(drop.itemId)!)) return;
-      const { layout: next, id } = addPlacement(bagLayout, { item: drop.itemId, x, y, rotation: 0, supply: false });
-      editBag(() => next);
-      setSelected(id);
-    }
+    setSelected(drag.id);
     focusBag();
   };
+  /** Dropped in the storage box with its top-left corner at (fx, fy). */
+  const onStore = (drag: DragPayload, fx: number, fy: number) => {
+    if (drag.kind === 'placed') editBag((l) => toStorage(l, drag.id, fx, fy));
+    else if (drag.kind === 'stored') editBag((l) => updateStored(l, drag.id, { x: fx, y: fy }));
+    else {
+      const def = placeDef(drag.id);
+      if (!def || !footprintOf(def)) return;
+      const { layout: next, id } = addStored(bagLayout, drag.id, fx, fy);
+      editBag(() => next);
+      setSelected(id);
+      return;
+    }
+    setSelected(drag.id);
+  };
+  /** Dropped in the bin. */
+  const onTrash = (drag: DragPayload) => {
+    if (drag.kind === 'placed') editBag((l) => removePlacement(l, drag.id));
+    else if (drag.kind === 'stored') editBag((l) => removeStored(l, drag.id));
+    if (selected === drag.id) setSelected(null);
+  };
+
+  /** The storage box's items, drawn like the bag's. */
+  const storedViews: StoredView[] = (bagLayout.storage ?? []).flatMap((st) => {
+    const def = placeDef(st.item);
+    const fp = def ? footprintOf(def) : null;
+    if (!def || !fp) return [];
+    const isGear = !!data?.gear.has(st.item);
+    return [
+      {
+        id: st.id,
+        name: def.name,
+        cells: placeFootprint(fp, { x: 0, y: 0, rotation: st.rotation }).cells,
+        color: rarityColor('rarity' in def ? (def.rarity as string) : null, isGear),
+        sprite: spriteOf(def as Parameters<typeof spriteOf>[0], st.rotation),
+        x: st.x,
+        y: st.y,
+      },
+    ];
+  });
 
   const mask = bagLayout.bag?.mask ?? FULL_MASK();
   const toggleMask = (x: number, y: number) =>
@@ -473,9 +618,11 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
     try {
       await store.deleteBuild(name);
       setBuilds((b) => b.filter((l) => l !== name));
+      // Deleting the open build leaves its bag open as the temp build.
       if (layoutName === name) {
         setLayoutName('');
-        lastBuild.set('');
+        setLayoutDirty(false);
+        lastBuild.set(TEMP_BUILD);
       }
       say(`Deleted ${store.where(name)}`);
     } catch (e) {
@@ -487,6 +634,8 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
     try {
       const next = { ...layout, name };
       await store.writeBuild(name, writeBuild(next));
+      // Saving the temp build under a name moves it into the list.
+      if (!layoutName) tempBuild.write(null);
       setLayout(next);
       setLayoutName(name);
       setLayoutDirty(false);
@@ -498,6 +647,43 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
     }
   };
 
+  /** Rename a saved build (the file is written under the new name, then the old one is deleted). */
+  const doRename = async (from: string, to: string) => {
+    try {
+      // The file is copied as it is (an older build keeps its own values until it's opened), with the new name.
+      const raw: unknown = parseYaml(await store.readBuild(from));
+      const obj = raw && typeof raw === 'object' && !Array.isArray(raw) ? (raw as Raw) : {};
+      await store.writeBuild(to, stringify({ ...obj, name: to }, { lineWidth: 0 }));
+      await store.deleteBuild(from);
+      setBuilds((b) => [...b.filter((x) => x !== from && x !== to), to].sort());
+      if (layoutName === from) {
+        setLayoutName(to);
+        setLayout((l) => ({ ...l, name: to }));
+        lastBuild.set(to);
+      }
+      setPreviewTexts((t) => {
+        const { [from]: text, ...rest } = t;
+        return text ? { ...rest, [to]: text } : rest;
+      });
+      say(`Renamed "${from}" to "${to}".`);
+    } catch (e) {
+      say(`Couldn't rename "${from}": ${(e as Error).message}`, true);
+    }
+  };
+  const loadPreviews = async () => {
+    if (!previewOn) return;
+    const names = await store.listBuilds().catch(() => [] as string[]);
+    const out: Record<string, string> = {};
+    for (const n of names) {
+      try {
+        out[n] = await store.readBuild(n);
+      } catch {
+        /* no preview for it */
+      }
+    }
+    setPreviewTexts(out);
+  };
+
   /** One file with everything needed to rebuild this build elsewhere. */
   const doExportBuild = () => {
     const name = layoutName || layout.name || 'build';
@@ -505,7 +691,9 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
   };
   const doImportBuild = async (file: File) => {
     try {
-      const r = readBuild(await file.text(), { v1Profile: v1Ref.current }, file.name);
+      const read = readBuild(await file.text(), { v1Profile: v1Ref.current }, file.name);
+      const a = adopt(read.layout, file.name);
+      const r = { layout: a.layout, notes: [...read.notes, ...a.notes] };
       setLayout((cur) => {
         const next = withIds(r.layout);
         return cur.battle ? { ...next, battle: cur.battle } : next;
@@ -513,7 +701,6 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
       setLayoutName(safeBuildName(file.name.replace(/\.ya?ml$/i, '')));
       setLayoutDirty(true);
       setSelected(null);
-      setPending(null);
       showNotes(`Imported ${file.name}`, r.notes);
       say(`Imported ${file.name}. Save it to keep it.`);
     } catch (e) {
@@ -590,14 +777,16 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
         v1 = acc.migratedFromV1;
         v1Ref.current = v1;
         setMigratedFromV1(v1);
+        accountRef.current = acc.profile;
         setAccount(acc.profile);
       }
       // Builds are stored in today's format, completed from the account they were exported with.
       const ctx = imp.accountText ? (readAccount(imp.accountText).migratedFromV1 ?? v1) : v1;
       for (const b of imp.builds) {
         const r = readBuild(b.text, { v1Profile: ctx }, `"${b.name}"`);
-        notes.push(...r.notes);
-        await store.writeBuild(b.name, writeBuild(r.layout));
+        const a = adopt(r.layout, `"${b.name}"`);
+        notes.push(...r.notes, ...a.notes);
+        await store.writeBuild(b.name, writeBuild(a.layout));
       }
       // Item editor edits (exported from the hosted site): kept in the browser; a local project keeps them in data/.
       for (const e of imp.edits) {
@@ -630,6 +819,20 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
   const enemyName = inlineEnemy?.name ?? 'Enemy';
 
   const supply = supplySummary(loadout);
+  const selectedPlacement = selected ? bagLayout.placements.find((x) => x.id === selected) : undefined;
+  const selectedStored = selected ? bagLayout.storage?.find((x) => x.id === selected) : undefined;
+  const selectedName = (() => {
+    const it = selectedPlacement ?? selectedStored;
+    return it ? (defOf(it.item)?.name ?? it.item) : '';
+  })();
+  const bagHeroId = editingEnemy ? bagProfile.active_hero : (layout.hero ?? null);
+  const heroClass = bagHeroId ? (data.heroes.get(bagHeroId)?.class ?? null) : null;
+  const bagSizes = bagSizesFor(data, heroClass);
+  const bagSize = sizeOf(bagLayout.bag?.mask, bagSizes);
+  const enhancer = enhancerOf(data, bagProfile, bagHeroId);
+  // The storage box: as tall as the bag (with its 1-cell border), about a third as wide.
+  const storageH = (loadout.bag.height + 2) * 40;
+  const storageW = Math.round(((loadout.bag.width + 2) * 40) / 3.5);
   const flags = buildFlags(loadout, loaded);
   const pets = petPoints(data, bagProfile);
   /** Edit the profile being shown (mine or the enemy's) with a mutating function. */
@@ -639,16 +842,64 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
     setBagProfile(next);
   };
 
+  /** A build's bag for the list's previews (null = the temp build); the open build is shown as it is now. */
+  const previewOf = (name: string | null) => {
+    if (!data || !account) return null;
+    try {
+      let l: LayoutData;
+      if (!editingEnemy && (name ?? '') === layoutName) l = layout;
+      else if (name === null) {
+        const t = tempBuild.read();
+        l = t ? readBuild(t.text, { v1Profile: v1Ref.current }).layout : { placements: [] };
+      } else {
+        const text = previewTexts[name];
+        if (!text) return <span className="small muted">…</span>;
+        l = readBuild(text, { v1Profile: v1Ref.current }).layout;
+      }
+      return <BagPreview loadout={buildLoadout(data, applySetup(account, l.setup), l)} />;
+    } catch {
+      return <span className="small muted">no preview</span>;
+    }
+  };
+
   const buildPanel = (
-    <Panel id="battle.build" title={editingEnemy ? `${enemyName}'s build` : 'Build'}>
+    <Panel
+      id="battle.build"
+      title={editingEnemy ? `${enemyName}'s build` : 'Build'}
+      aside={
+        <button
+          className={`small toggle${previewOn ? ' on' : ''}`}
+          aria-pressed={previewOn}
+          title="Show each build's bag in the build list"
+          onClick={() => {
+            const next = !previewOn;
+            setPreviewOn(next);
+            try {
+              localStorage.setItem('og-sim/preview-bags', next ? '1' : '0');
+            } catch {
+              /* a convenience only */
+            }
+          }}
+        >
+          Preview bag
+        </button>
+      }
+    >
       <BuildPicker
         builds={builds}
         active={editingEnemy ? (enemyBuild?.source_layout ?? '') : layoutName}
-        dirty={editingEnemy ? false : layoutDirty}
+        dirty={editingEnemy ? false : unsaved}
         saveEnabled={editingEnemy}
+        noTemp={editingEnemy}
+        tempHasItems={!layoutName && layout.placements.length > 0}
         what={editingEnemy ? `${enemyName}'s build` : 'your build'}
+        previews={previewOn}
+        renderPreview={previewOf}
+        onOpenList={() => void loadPreviews()}
         onSave={(n) => void (editingEnemy ? doSaveEnemyBuild(n) : doSaveLayout(n))}
+        onRename={(from, to) => void doRename(from, to)}
         onDelete={(n) => void doDeleteLayout(n)}
+        onOpenTemp={openTemp}
         onLoad={(n) => {
           if (!editingEnemy) return void openLayout(n);
           layoutAsBuild(n)
@@ -669,12 +920,13 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
             setSelected(null);
             return;
           }
-          // A new build starts with this build's hero, blessings, gear, pets and skins, and an empty bag.
+          // A new build starts in the temp build, with this build's hero, blessings, gear, pets and skins, and an empty bag.
           setLayout((l) => ({ placements: [], ...(l.hero ? { hero: l.hero } : {}), ...(l.setup ? { setup: l.setup } : {}), ...(l.battle ? { battle: l.battle } : {}) }));
           setLayoutName('');
           setLayoutDirty(false);
-          lastBuild.set('');
+          lastBuild.set(TEMP_BUILD);
           setSelected(null);
+          setInspected(null);
         }}
       />
     </Panel>
@@ -688,7 +940,8 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
         <div className="tabs" role="tablist" data-tour="topbar.tabs">
           {(
             [
-              ['bag', 'Battle'],
+              ['bag', 'Build'],
+              ['battle', 'Battle'],
               ['optimize', 'Optimize'],
               ['profile', 'Profile'],
               ['editor', 'Item editor'],
@@ -704,7 +957,7 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
           ))}
         </div>
         {enemyBuild && (
-          <div className="tabs" role="radiogroup" aria-label="Whose build" title="Which build the Battle and Profile tabs edit: yours, or the enemy's (it has its own bag, hero, gear and pets)">
+          <div className="tabs" role="radiogroup" aria-label="Whose build" title="Which build the Build and Profile tabs edit: yours, or the enemy's (it has its own bag, hero, gear and pets)">
             <span className="small muted" style={{ alignSelf: 'center' }}>
               Editing
             </span>
@@ -784,12 +1037,13 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
                 // The welcome card makes way: the tour ends on the Tutorial button that replaces it.
                 guideDone.set(true);
                 setShowGuide(false);
+                tourStartAccount.current = accountText;
                 setTouring(true);
               },
             },
           ]}
         >
-          <p className="small">About two minutes. It moves between the tabs and highlights each part with a short explanation. You can skip it at any step.</p>
+          <p className="small">A few minutes. It moves between the tabs, highlights each part with a short explanation, and lets you fill in your profile on the way. You can skip it at any step.</p>
         </Dialog>
       )}
       {touring && (
@@ -802,8 +1056,30 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
             // Done with the tour = done with the welcome card; the Tutorial button stays in the top bar.
             guideDone.set(true);
             setShowGuide(false);
+            if (accountText !== tourStartAccount.current) setAskBackup(true);
           }}
         />
+      )}
+      {askBackup && (
+        <Dialog
+          title="Back up your account?"
+          onCancel={() => setAskBackup(false)}
+          actions={[
+            {
+              label: 'Export account',
+              kind: 'primary',
+              onClick: () => {
+                setAskBackup(false);
+                void doExportAccount();
+              },
+            },
+          ]}
+        >
+          <p className="small">
+            Your profile is saved in {store.kind === 'browser' ? 'this browser' : 'the project folder'} already. Export account also downloads it (with every saved build) as one file, so you can bring
+            it back on another browser or computer with Import account.
+          </p>
+        </Dialog>
       )}
       {notice && (
         <div className={`issue ${notice.notes.some((n) => n.level === 'warning') ? 'warning' : ''} notice`} role="status">
@@ -867,9 +1143,9 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
       )}
 
       {tab === 'bag' && (
-        <div className={`main battle${editingEnemy ? ' editing-enemy' : ''}`}>
+        <div className={`main build${editingEnemy ? ' editing-enemy' : ''}`}>
+          <div className="build-strip">{buildPanel}</div>
           <div className="stack">
-            {buildPanel}
             <Panel id="battle.items" title="Items">
               <ItemBrowser
                 data={data}
@@ -898,95 +1174,163 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
                 <button onClick={() => setSide('me')}>Back to my build</button>
               </div>
             )}
-            <Panel id="battle.bag" title="Bag" aside={`${mask.filter((v) => v).length} cells · ${bagLayout.placements.length} placed`}>
-              <div className="row small bag-status">
-                {pending ? (
+            <div
+              className="bag-box"
+              // A click anywhere in the box that isn't on an item or a control lets go of the selected item.
+              onClick={(e) => {
+                if (!(e.target as HTMLElement).closest('.item-cell, .stored-item, button, input, select, label, a, summary, .cell')) {
+                  setSelected(null);
+                  setInspected(null);
+                }
+              }}
+            >
+            <Panel id="battle.bag" title="Bag" aside={`${mask.filter((v) => v).length} cells · ${bagLayout.placements.length} placed${bagLayout.storage?.length ? ` · ${bagLayout.storage.length} stored` : ''}`}>
+              <div className="bag-status small">
+                {selectedStored || selectedPlacement ? (
                   <>
-                    <span>
-                      Placing <b>{ghost?.name}</b>: drag it or use the arrows, space rotates, enter places.
-                    </span>
-                    <button onClick={commitPending}>Place</button>
-                    <button onClick={() => setPending(null)}>Cancel</button>
-                  </>
-                ) : selected ? (
-                  <>
-                    <span className="muted">Arrows move it, space rotates.</span>
-                    <button onClick={() => onKey('rotate')}>Rotate</button>
-                    <button onClick={() => onKey('remove')}>Remove</button>
-                    {bagLayout.placements.find((p) => p.id === selected)?.supply && <span className="badge">starting equipment</span>}
+                    <div className="muted">
+                      {selectedStored
+                        ? 'In the storage: drag it into the bag. Space or another click rotates it, Delete removes it.'
+                        : 'Arrows move it, space or another click rotates it, Delete removes it (or drag it to the bin).'}
+                    </div>
+                    <div className="row bag-actions">
+                      {selectedPlacement && (
+                        <button className="primary details-button" onClick={() => setInspected(selected)} aria-pressed={inspected === selected}>
+                          Item details
+                        </button>
+                      )}
+                      <button className="small" onClick={() => onKey('rotate')}>
+                        Rotate
+                      </button>
+                      <button className="small" onClick={() => onKey('remove')}>
+                        Remove
+                      </button>
+                      <b className="selected-name">{selectedName}</b>
+                      {selectedPlacement?.supply && <span className="badge">starting equipment</span>}
+                    </div>
                   </>
                 ) : maskEdit ? (
-                  <span>Click cells to open or close them.</span>
+                  <div>Click cells to open or close them.</div>
                 ) : enhanceEdit ? (
-                  <span>Click cells to mark them enhanced (Venom: Poison Coating, Cecilia: Instant Casting).</span>
+                  <div>
+                    Click the {enhancer?.count === 1 ? 'slot' : `${enhancer?.count ?? ''} slots`} {enhancer?.skill ?? 'the hero skill'} enhanced this run
+                    {enhancer ? ` (${enhancer.label})` : ''}: they're random in game.
+                  </div>
                 ) : (
-                  <span className="muted">Pick an item on the left, or click one in the bag for its details.</span>
+                  <div className="muted">Click an item on the left to put it in the bag, or drag it in. Click an item in the bag to select it.</div>
                 )}
               </div>
-              <BagGrid
-                loadout={loadout}
-                issues={issues}
-                selected={selected}
-                hovered={hovered}
-                ghost={ghost}
-                maskEdit={maskEdit}
-                enhanced={bagLayout.enhanced_cells ?? []}
-                enhanceEdit={enhanceEdit}
-                onToggleEnhanced={toggleEnhanced}
-                onSelect={(id) => {
-                  setSelected(id);
-                  if (id === null) setInspected(null);
-                }}
-                onInspect={setInspected}
-                onHover={setHovered}
-                onToggleMask={toggleMask}
-                onDrop={onDrop}
-                onKey={onKey}
-              />
+              <div className="bag-and-storage">
+                <BagGrid
+                  loadout={loadout}
+                  issues={issues}
+                  selected={selected}
+                  hovered={hovered}
+                  maskEdit={maskEdit}
+                  enhanced={bagLayout.enhanced_cells ?? []}
+                  enhancedLook={enhancer}
+                  enhanceEdit={enhanceEdit}
+                  onToggleEnhanced={toggleEnhanced}
+                  onSelect={(id) => {
+                    setSelected(id);
+                    if (id === null) setInspected(null);
+                  }}
+                  onRotate={() => onKey('rotate')}
+                  onHover={setHovered}
+                  onToggleMask={toggleMask}
+                  dropTarget={dropTarget}
+                  onDrop={onDrop}
+                  onKey={onKey}
+                />
+                <div className="storage-column">
+                  <Storage
+                    items={storedViews}
+                    width={storageW}
+                    height={storageH}
+                    selected={selected}
+                    onSelect={setSelected}
+                    onRotate={() => onKey('rotate')}
+                    onDrop={onStore}
+                  />
+                  <Bin onDrop={onTrash} />
+                </div>
+              </div>
               <div className="row small" style={{ justifyContent: 'space-between', marginTop: 6 }}>
                 {value && (
                   <span
                     className="build-value"
-                    title={`Shop value of the ${value.items} bought item(s) in the bag; starting equipment, gear and pet / skin spawns don't count.${value.unknown.length ? `\nValue not known: ${value.unknown.join(', ')}` : ''}`}
+                    title={`Shop value of the ${value.items} bought item(s) in the bag; starting equipment, gear, pet / skin spawns and stored items don't count.${value.unknown.length ? `\nValue not known: ${value.unknown.join(', ')}` : ''}`}
                   >
                     Build value <b>{value.total}</b> coins
                     {value.unknown.length > 0 && <span className="warn"> + ? ({value.unknown.length} unknown)</span>}
                   </span>
                 )}
                 <span className="row">
+                  <label className="muted" title={`The bags ${heroClass ? `a ${heroClass}` : 'this class'} can have: the full 8 × 6 one, or a smaller one`}>
+                    Bag{' '}
+                    <select
+                      aria-label="Bag size"
+                      value={bagSize ?? ''}
+                      onChange={(e) => {
+                        const size = bagSizes.find((b) => b.name === e.target.value);
+                        if (!size) return;
+                        setMaskEdit(false);
+                        editBag((l) => (size.mask ? { ...l, bag: { mask: size.mask } } : { ...l, bag: undefined }));
+                      }}
+                    >
+                      {bagSize === null && <option value="">Custom</option>}
+                      {bagSizes.map((b) => (
+                        <option key={b.name} value={b.name}>
+                          {b.name === 'Full' ? 'Full (48)' : b.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
                   <button
                     className={maskEdit ? 'primary small' : 'small'}
                     onClick={() => {
                       setMaskEdit((m) => !m);
                       setEnhanceEdit(false);
                     }}
-                    title="Open or close bag cells (a smaller bag before every cell is unlocked)"
+                    title="Open or close bag cells one by one"
                   >
                     {maskEdit ? 'Done' : 'Edit cells'}
                   </button>
-                  {mask.some((v) => !v) || mask.length !== 48 ? (
-                    <button className="small" onClick={() => editBag((l) => ({ ...l, bag: undefined }))} title="Back to the full 8 × 6 bag">
-                      Full bag
-                    </button>
-                  ) : null}
                   {maskEdit && (
                     <label className="muted">
                       Rows <input type="number" min={1} max={12} aria-label="Bag rows" value={loadout.bag.height} onChange={(e) => setRows(Math.max(1, Math.min(12, Number(e.target.value) || 1)))} style={{ width: 52 }} />
                     </label>
                   )}
-                  <button
-                    className={enhanceEdit ? 'primary small' : 'small'}
-                    onClick={() => {
-                      setEnhanceEdit((m) => !m);
-                      setMaskEdit(false);
-                    }}
-                    title="Mark the slots a hero skill enhanced this run (Venom: Poison Coating, Cecilia: Instant Casting)"
-                  >
-                    {enhanceEdit ? 'Done' : `Enhanced cells${bagLayout.enhanced_cells?.length ? ` (${bagLayout.enhanced_cells.length})` : ''}`}
-                  </button>
+                  {(enhancer || (bagLayout.enhanced_cells?.length ?? 0) > 0) && (
+                    <button
+                      className={enhanceEdit ? 'primary small' : 'small'}
+                      onClick={() => {
+                        setEnhanceEdit((m) => !m);
+                        setMaskEdit(false);
+                      }}
+                      style={enhancer && !enhanceEdit ? { borderColor: enhancer.color } : undefined}
+                      title={enhancer ? `Mark the ${enhancer.count === 1 ? 'slot' : `${enhancer.count} slots`} ${enhancer.skill} enhanced this run: ${enhancer.label}` : "This hero has no skill that enhances slots: these marks do nothing"}
+                    >
+                      {enhanceEdit ? 'Done' : `${enhancer ? `${enhancer.skill} slots` : 'Enhanced cells'}${bagLayout.enhanced_cells?.length ? ` (${bagLayout.enhanced_cells.length})` : ''}`}
+                    </button>
+                  )}
                 </span>
               </div>
+              {!enhancer && (bagLayout.enhanced_cells?.length ?? 0) > 0 && (
+                <div className="issue warning small">
+                  {bagLayout.enhanced_cells!.length} enhanced cell(s) are marked, but this hero has no skill that enhances slots, so they do nothing.{' '}
+                  <button className="small" onClick={() => editBag((l) => ({ ...l, enhanced_cells: undefined }))}>
+                    Clear them
+                  </button>
+                </div>
+              )}
+              {enhancer && (bagLayout.enhanced_cells?.length ?? 0) > enhancer.count && (
+                <div className="issue warning small">
+                  {enhancer.skill} enhances {enhancer.count} slot{enhancer.count === 1 ? '' : 's'}; {bagLayout.enhanced_cells!.length} are marked.
+                </div>
+              )}
             </Panel>
+            </div>
             <IssuesPanel
               issues={issues}
               onSelect={setSelected}
@@ -1012,35 +1356,22 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
                 )
               }
             />
-            <BattlePanel
-              loadout={playerLoadout}
-              battle={layout.battle}
-              onChange={(b) => editLayout((l) => ({ ...l, battle: b }))}
-              layouts={builds}
-              myBuild={myBuild}
-              layoutAsBuild={layoutAsBuild}
-              onEditEnemy={() => {
-                setSide('enemy');
-                setSelected(null);
-                setPending(null);
-              }}
-            />
           </div>
           <div className="stack">
             <Panel id="battle.hero" title="Hero">
-              <HeroEditor data={data} profile={bagProfile} heroId={editingEnemy ? bagProfile.active_hero : (layout.hero ?? null)} onHero={(id) => (editingEnemy ? setBagProfile({ ...bagProfile, active_hero: id }) : setBuildHero(id))} update={updateBag} />
+              <HeroEditor data={data} profile={bagProfile} heroId={editingEnemy ? bagProfile.active_hero : (layout.hero ?? null)} onHero={(id) => (editingEnemy ? setBagProfile({ ...bagProfile, active_hero: id }) : setBuildHero(id))} update={updateBag} account={!editingEnemy} />
             </Panel>
             <Panel id="battle.gear" title="Gear">
               <GearEditor data={data} profile={bagProfile} update={updateBag} loadout={loadout} onPlace={(g) => startPlacing(g.id)} />
             </Panel>
             <Panel id="battle.pets" title="Pets" aside={`${pets.used} / ${pets.max} points`}>
-              <PetsEditor data={data} profile={bagProfile} update={updateBag} />
+              <PetsEditor data={data} profile={bagProfile} update={updateBag} account={!editingEnemy} />
             </Panel>
             <Panel id="battle.skins" title="Skins" aside={`${(bagProfile.equipped_skins ?? []).length} / 2`}>
-              <SkinsEditor data={data} profile={bagProfile} update={updateBag} />
+              <SkinsEditor data={data} profile={bagProfile} update={updateBag} account={!editingEnemy} />
             </Panel>
             <Panel id="battle.stats" title="Stats">
-              <BuildStats data={data} profile={bagProfile} update={updateBag} />
+              <BuildStats data={data} profile={bagProfile} update={updateBag} account={!editingEnemy} />
               <ItemStats
                 stats={stats}
                 synergy={synergy}
@@ -1066,6 +1397,50 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
         </div>
       )}
 
+      {/* Kept mounted (only hidden) so a battle's results survive switching tabs. */}
+      <div style={tab === 'battle' ? undefined : { display: 'none' }}>
+        <BattleTab
+          data={data}
+          loadout={playerLoadout}
+          layoutName={layoutName}
+          builds={builds}
+          battle={layout.battle}
+          onChange={(b) => editLayout((l) => ({ ...l, battle: b }))}
+          myBuild={myBuild}
+          layoutAsBuild={layoutAsBuild}
+          onEditEnemy={() => {
+            setSide('enemy');
+            setSelected(null);
+            setTab('bag');
+          }}
+          onOpenBuild={(name) => {
+            if ((name ?? '') === layoutName) return;
+            if (unsaved) setAskOpen({ name });
+            else if (name === null) openTemp();
+            else void openLayout(name);
+          }}
+        />
+      </div>
+      {askOpen && (
+        <Dialog
+          title={askOpen.name === null ? 'Open the temp build?' : `Open "${askOpen.name}"?`}
+          onCancel={() => setAskOpen(null)}
+          actions={[
+            {
+              label: 'Open it',
+              kind: 'primary',
+              onClick: () => {
+                if (askOpen.name === null) openTemp();
+                else void openLayout(askOpen.name);
+                setAskOpen(null);
+              },
+            },
+          ]}
+        >
+          <p>Your unsaved changes to "{layoutName}" will be lost.</p>
+        </Dialog>
+      )}
+
       {/* Kept mounted (only hidden) so a run and its results survive switching tabs. */}
       <div style={tab === 'optimize' ? undefined : { display: 'none' }}>
         <OptimizePanel
@@ -1081,7 +1456,7 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
             editLayout((l) => ({ ...l, placements: placements.map((p, i) => ({ ...p, id: p.id ?? `${p.item}#${i + 1}` })) }));
             setSide('me');
             setTab('bag');
-            say('Optimized build put in the Battle tab (not saved yet).');
+            say('Optimized build put in the Build tab (not saved yet).');
           }}
         />
       </div>

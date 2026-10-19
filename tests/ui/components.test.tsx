@@ -1,10 +1,10 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, createEvent, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { buildSynergyReport } from '../../src/engine/effects/synergy';
 import { aggregateStats } from '../../src/engine/stats';
 import { validateLoadout } from '../../src/engine/validate';
-import { BagGrid, marginFor } from '../../src/ui/components/BagGrid';
+import { BagGrid, type DragPayload, dragging, endDrag, marginFor } from '../../src/ui/components/BagGrid';
 import { BattlePanel } from '../../src/ui/components/BattlePanel';
 import { combatData, combatLoadout } from '../combat-fixture';
 import { ItemBrowser } from '../../src/ui/components/ItemBrowser';
@@ -32,7 +32,6 @@ function renderGrid(overrides: Partial<Parameters<typeof BagGrid>[0]> = {}) {
     issues: validateLoadout(loadout),
     selected: null,
     hovered: null,
-    ghost: null,
     maskEdit: false,
     onSelect: vi.fn(),
     onHover: vi.fn(),
@@ -77,9 +76,29 @@ describe('BagGrid', () => {
     expect(props.onSelect).toHaveBeenCalledWith('g1');
   });
 
-  it('draws a ghost while placing, red when it overlaps', () => {
-    const { container } = renderGrid({ ghost: { name: 'Rock', color: 'gray', cells: [{ x: 1, y: 0 }], dots: [], valid: false, origin: { x: 1, y: 0 } } });
-    expect(container.querySelectorAll('.item-cell.ghost.bad')).toHaveLength(1);
+  it('while dragging, shows where the item would land (red when it does not fit)', () => {
+    const dropTarget = vi.fn((_d: DragPayload, x: number, y: number) => ({ x, y, cells: [{ x, y }, { x, y: y + 1 }], valid: x > 0 }));
+    const { container } = renderGrid({ dropTarget });
+    dragging.current = { kind: 'item', id: 'rock', dx: 0, dy: 0, gx: 20, gy: 20 };
+    const bag = container.querySelector('.bag')!;
+    const over = createEvent.dragOver(bag, { dataTransfer: { dropEffect: '' } });
+    // Bag at 0,0 in jsdom with a 1-cell margin: clientX 2.5 cells = bag x 1.
+    Object.defineProperties(over, { clientX: { value: 40 * 2 + 5 }, clientY: { value: 40 + 5 } });
+    fireEvent(bag, over);
+    expect(dropTarget).toHaveBeenCalledWith(dragging.current, 1, 0);
+    expect(container.querySelectorAll('.drop-preview')).toHaveLength(2);
+    expect(container.querySelectorAll('.drop-preview.bad')).toHaveLength(0);
+    endDrag();
+  });
+
+  it('clicking the selected item again rotates it', () => {
+    const onRotate = vi.fn();
+    const { container, props } = renderGrid({ selected: 'sword', onRotate });
+    const sword = [...container.querySelectorAll<HTMLElement>('.item-cell')].find((c) => c.title.startsWith('Sword'))!;
+    fireEvent.click(sword);
+    expect(onRotate).toHaveBeenCalledWith('sword');
+    fireEvent.click(container.querySelector('.item-cell')!); // the glove: selects it
+    expect(props.onSelect).toHaveBeenCalledWith('g1');
   });
 
   it('sizes the margin to fit out-of-bag cells and dots', () => {
@@ -105,14 +124,17 @@ describe('StatsPanel', () => {
 });
 
 describe('ItemBrowser', () => {
-  it('filters as I type and marks items that need a shape', () => {
+  it('filters as I type, leaves gear out (the Gear box places it) and marks items that need a shape', () => {
     const onPick = vi.fn();
     const onEdit = vi.fn();
-    const { container } = render(<ItemBrowser data={data} supplyIds={new Set(['rock'])} onPick={onPick} onEdit={onEdit} />);
+    const noShape = { ...data, items: new Map([...data.items, ['stone', { ...data.items.get('stone')!, shape: null }]]) } as typeof data;
+    const { container } = render(<ItemBrowser data={noShape} supplyIds={new Set(['rock'])} onPick={onPick} onEdit={onEdit} />);
     fireEvent.change(screen.getByLabelText('Search items'), { target: { value: 'ban' } });
+    expect(container.querySelectorAll('.list-row')).toHaveLength(0); // Band is a ring
+    fireEvent.change(screen.getByLabelText('Search items'), { target: { value: 'stone' } });
     const rows = container.querySelectorAll('.list-row');
     expect(rows).toHaveLength(1);
-    expect(rows[0]!.textContent).toMatch(/Band.*needs shape/);
+    expect(rows[0]!.textContent).toMatch(/Stone.*needs shape/);
     fireEvent.click(rows[0]!);
     expect(onEdit).toHaveBeenCalled(); // no shape → open the editor
     fireEvent.change(screen.getByLabelText('Search items'), { target: { value: 'rock' } });

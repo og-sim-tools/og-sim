@@ -11,10 +11,10 @@
 import { parse, stringify } from 'yaml';
 import type { LayoutData, Profile } from '../model';
 import { AccountFileSchema, BuildFileSchema, SAVE_VERSION, accountToProfile, buildFileToLayout, layoutToBuildFile, profileToAccount } from './files';
-import { accountV1toV2, buildV1toV2, versionOf } from './migrate';
+import { accountV1toV2, accountV2toV3, buildV1toV2, buildV2toV3, versionOf } from './migrate';
 import { type SaveNote, parseSalvaging } from './salvage';
 
-export { SAVE_VERSION, DEFAULT_BASIC_STATS, accountToProfile, profileToAccount, buildFileToLayout, layoutToBuildFile } from './files';
+export { SAVE_VERSION, DEFAULT_BASIC_STATS, accountToProfile, profileToAccount, buildFileToLayout, layoutToBuildFile, statsUnset, sameStats } from './files';
 export type { AccountFile, BuildFile } from './files';
 export { versionOf } from './migrate';
 export type { SaveNote } from './salvage';
@@ -52,7 +52,9 @@ export function readAccount(text: string | null | undefined): AccountLoad {
   let raw = readYaml(text, 'The account file', notes);
   const version = versionOf(raw);
   newer(version, 'The account file', notes);
-  if (version === 1 && isObj(raw)) raw = accountV1toV2(raw, notes);
+  // From version 1 straight to 3: version 2's note ("saved with each build") no longer applies.
+  if (version === 1 && isObj(raw)) raw = accountV1toV2(raw, []);
+  if (versionOf(raw) === 2 && isObj(raw)) raw = accountV2toV3(raw, notes);
   const file = parseSalvaging(AccountFileSchema, raw, notes, 'Account');
   return { profile: accountToProfile(file), migratedFromV1: file.migrated_from_v1 ?? null, version, notes };
 }
@@ -77,6 +79,7 @@ export function readBuild(text: string, ctx: { v1Profile?: Raw | null } = {}, wh
   const version = versionOf(raw);
   newer(version, what, notes);
   if (version === 1 && isObj(raw)) raw = buildV1toV2(raw, ctx.v1Profile ?? null, notes);
+  if (versionOf(raw) === 2 && isObj(raw)) raw = buildV2toV3(raw, notes);
   const file = parseSalvaging(BuildFileSchema, raw, notes, what);
   return { layout: buildFileToLayout(file), version, notes };
 }
@@ -84,6 +87,7 @@ export function readBuild(text: string, ctx: { v1Profile?: Raw | null } = {}, wh
 /** YAML for a build file (defaults left out to keep it short). */
 export function writeBuild(layout: LayoutData): string {
   const f = layoutToBuildFile(layout) as Raw & ReturnType<typeof layoutToBuildFile>;
+  // Pets and skins: defaults left out.
   const out: Raw = { ...f };
   out.placements = f.placements.map((p) => {
     const e: Raw = { ...(p.id ? { id: p.id } : {}), item: p.item, x: p.x, y: p.y };
@@ -92,5 +96,14 @@ export function writeBuild(layout: LayoutData): string {
     return e;
   });
   if (!f.enhanced_cells?.length) delete out.enhanced_cells;
+  if (f.storage?.length)
+    out.storage = f.storage.map((p) => {
+      const e: Raw = { ...(p.id ? { id: p.id } : {}), item: p.item, x: Math.round(p.x * 1000) / 1000, y: Math.round(p.y * 1000) / 1000 };
+      if (p.rotation) e.rotation = p.rotation;
+      if (p.supply) e.supply = true;
+      return e;
+    });
   return stringify(out, { lineWidth: 0 });
 }
+export { adoptLegacy, hasLegacy } from './legacy';
+export type { Adopted } from './legacy';

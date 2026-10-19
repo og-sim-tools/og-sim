@@ -1,6 +1,7 @@
 /**
  * A guided tour: dims the page, highlights one area at a time ([data-tour="…"]), says what it's for, and
- * switches tabs as it goes. Next / Back / Skip tour; arrow keys move, Escape skips.
+ * switches tabs as it goes. Next / Back / Skip tour; arrow keys move, Escape skips. On "try it" steps the
+ * highlighted area can be used (filling in the profile during the tour); everything else stays blocked.
  */
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
@@ -11,6 +12,8 @@ export interface TourStep {
   target?: string;
   title: string;
   text: string;
+  /** The highlighted area can be clicked and typed in during this step. */
+  interactive?: boolean;
 }
 
 interface Props {
@@ -89,6 +92,9 @@ export function Tour({ steps, onTab, onClose }: Props) {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // Typing in the highlighted area isn't a tour key.
+      const t = e.target as HTMLElement | null;
+      if (t && /^(INPUT|SELECT|TEXTAREA)$/.test(t.tagName)) return;
       if (e.key === 'Escape') onClose();
       else if (e.key === 'ArrowRight') setI((n) => Math.min(steps.length - 1, n + 1));
       else if (e.key === 'ArrowLeft') setI((n) => Math.max(0, n - 1));
@@ -100,8 +106,17 @@ export function Tour({ steps, onTab, onClose }: Props) {
   const pos = placeCard(box, cardH);
   return (
     <div className="tour" role="dialog" aria-modal="true" aria-label="Tutorial">
-      {/* Catches clicks so the page doesn't change under the tour. */}
-      <div className={`tour-dim${box ? '' : ' full'}`} />
+      {/* Catches clicks so the page doesn't change under the tour (around the area only, on "try it" steps). */}
+      {box && step.interactive ? (
+        <>
+          <div className="tour-block" style={{ top: 0, left: 0, right: 0, height: Math.max(0, box.top - PAD) }} />
+          <div className="tour-block" style={{ top: box.top + box.height + PAD, left: 0, right: 0, bottom: 0 }} />
+          <div className="tour-block" style={{ top: box.top - PAD, left: 0, width: Math.max(0, box.left - PAD), height: box.height + 2 * PAD }} />
+          <div className="tour-block" style={{ top: box.top - PAD, left: box.left + box.width + PAD, right: 0, height: box.height + 2 * PAD }} />
+        </>
+      ) : (
+        <div className={`tour-dim${box ? '' : ' full'}`} />
+      )}
       {box && <div className="tour-spot" style={{ top: box.top - PAD, left: box.left - PAD, width: box.width + 2 * PAD, height: box.height + 2 * PAD }} />}
       <div ref={card} className="tour-card panel" style={{ top: pos.top, left: pos.left, width: CARD_W }}>
         <div className="small muted">
@@ -109,6 +124,7 @@ export function Tour({ steps, onTab, onClose }: Props) {
         </div>
         <h2>{step.title}</h2>
         <p className="small">{step.text}</p>
+        {step.interactive && <p className="small muted">Try it: the highlighted box works while the tour is open.</p>}
         <div className="row" style={{ justifyContent: 'space-between' }}>
           <button className="small" onClick={onClose}>
             Skip tour
@@ -127,20 +143,25 @@ export function Tour({ steps, onTab, onClose }: Props) {
 
 /** The tour of the whole app, tab by tab. */
 export const APP_TOUR: TourStep[] = [
-  { tab: 'bag', title: 'Welcome!', text: "This tour walks you through every part of the simulator, tab by tab. It takes about two minutes, and you can skip it at any time (or press Escape)." },
-  { target: 'topbar.tabs', title: 'The tabs', text: 'Battle is where you build and fight. Optimize improves a build for you. Profile is your account. Item editor and Data are for fixing game data.' },
-  { tab: 'profile', target: 'profile.heroes', title: 'Your heroes', text: 'Start here: tick every hero you own and set their stars. Open a hero to see its skills and choose skill links. This is your account: it counts for every build and saves itself.' },
-  { tab: 'profile', target: 'profile.auras', title: 'Auras', text: 'Set the stars of the auras you own: their bonuses add to every build.' },
-  { tab: 'bag', target: 'battle.build', title: 'Your builds', text: 'Open a saved build from this list. In the list, the green arrow saves what you are editing over that build and the red bin deletes it. Save keeps your changes; New build starts an empty bag; Import / Export share one build as a file.' },
-  { tab: 'bag', target: 'battle.hero', title: 'Hero and blessings', text: "Pick the hero for this build. Open Blessings to enter that hero's Dragon's Blessings as the game shows them." },
+  { tab: 'bag', title: 'Welcome!', text: 'This tour walks you through every part of the simulator, tab by tab, and lets you fill in your profile on the way. It takes a few minutes, and you can skip it at any time (or press Escape).' },
+  { target: 'topbar.tabs', title: 'The tabs', text: 'Build is where you make a bag. Battle fights it against an opponent. Optimize improves a build for you. Profile is your account. Item editor and Data are for fixing game data.' },
+  { tab: 'profile', target: 'profile.stats', interactive: true, title: 'Your stats', text: "Start here: type HP, ATK and Block as the game's Stat Details screen shows them. They're the same in every build; everything else is calculated." },
+  { tab: 'profile', target: 'profile.heroes', interactive: true, title: 'Your heroes', text: "Tick every hero you own and set their stars. Open a hero to enter its Dragon's Blessings and skill links. All of this is your account: it saves itself and counts in every build." },
+  { tab: 'profile', target: 'profile.pets', interactive: true, title: 'Pets', text: 'Set the stars of the pets you own. A build picks which ones it brings.' },
+  { tab: 'profile', target: 'profile.skins', interactive: true, title: 'Skins', text: 'Set the stars of the skins you own. A build brings up to 2 of their skills.' },
+  { tab: 'profile', target: 'profile.auras', interactive: true, title: 'Auras', text: 'Set the stars of the auras you own: their bonuses add to every build.' },
+  { tab: 'bag', target: 'battle.build', title: 'Your builds', text: "The Temp build is a scratch build for trying things: it isn't in your list until you Save it under a name. In the list, the pencil renames a build, the green arrow saves what you're editing over it and the red bin deletes it. Preview bag shows each build's bag. Import / Export share one build as a file." },
+  { tab: 'bag', target: 'battle.hero', title: 'Hero and blessings', text: 'Pick the hero for this build. Its blessings are the ones from your Profile.' },
   { tab: 'bag', target: 'battle.gear', title: 'Gear', text: 'Choose your weapon, shield, rings and gloves with their rarity and tier, then press Place to put each one in the bag.' },
-  { tab: 'bag', target: 'battle.pets', title: 'Pets', text: 'Up to 3 pets with their stars. Tick "active" for the ones whose skill you use; the bar shows the 5 points every run has.' },
-  { tab: 'bag', target: 'battle.skins', title: 'Skins', text: 'The skin skills this hero can use: bring up to 2, set their stars, and tick "quest" once the quest is done in the run.' },
-  { tab: 'bag', target: 'battle.items', title: 'Items', text: 'Find shop items by name, class, rarity or tag. Drag one onto the bag, or click it and move it with the arrow keys (space rotates, enter places). The Starting equipment tab has what your hero can bring.' },
-  { tab: 'bag', target: 'battle.bag', title: 'The bag', text: "Drag items to move them. Click an item to see its numbers, what it gives and gets from its neighbours' dots, and what it's worth. Edit cells for a smaller bag." },
+  { tab: 'bag', target: 'battle.pets', title: 'Pets', text: 'Up to 3 of your pets. Tick "active" for the ones whose skill you use; the bar shows the 5 points every run has.' },
+  { tab: 'bag', target: 'battle.skins', title: 'Skins', text: 'The skin skills this hero can use: bring up to 2, and tick "quest" once the quest is done in the run.' },
+  { tab: 'bag', target: 'battle.items', title: 'Items', text: 'Find items by name, kind, class or tag, and sort them by name, value or rarity (hover Rarity for one rarity only). Click an item to put it straight in the first free spot, or drag it. The Starting equipment tab has what your hero can bring.' },
+  { tab: 'bag', target: 'battle.bag', title: 'The bag', text: "Click an item to select it, click it again (or press space) to rotate it, use the arrows to move it. Item details shows its numbers and what it's worth. Drag items to the storage beside the bag while you rearrange, or to the bin to remove them. Bag picks your class's bag size." },
   { tab: 'bag', target: 'battle.checks', title: 'Checks', text: "Problems with the build show up here (overlaps, too much starting equipment, missing values), plus a note when the game data it uses isn't confirmed in game yet." },
-  { tab: 'bag', target: 'battle.battle', title: 'Battle', text: 'Pick an enemy: one from the list, one you type in, or a full build (copy yours or load a saved one to fight a player). Choose the mode and press Run battle; set Runs above 1 for a win rate.' },
-  { tab: 'bag', target: 'battle.stats', title: 'Stats', text: "Type HP, ATK and Block as the game's Stat Details screen shows them. Everything else is calculated from your gear, blessings and auras; the table lists each attacking item's final numbers." },
+  { tab: 'bag', target: 'battle.stats', title: 'Stats', text: 'Your HP, ATK and Block (from the Profile), every stat calculated from your gear, blessings and auras, and each attacking item\'s final numbers.' },
+  { tab: 'battle', target: 'battle.me', title: 'Battle: you', text: 'Your bag, with its hero, blessings, gear, pets, skins and auras. Pick another of your builds here to fight with it.' },
+  { tab: 'battle', target: 'battle.opponent', title: 'Battle: the opponent', text: 'A monster from the list, one of your saved builds (it fights as a player), or one you type in.' },
+  { tab: 'battle', target: 'battle.fight', title: 'Fight', text: 'Choose the mode and press Run battle; set Runs above 1 for a win rate. The results show what every item did.' },
   { tab: 'optimize', target: 'optimize.settings', title: 'Optimize', text: 'Tick saved builds to test against, then Run: it tries moves, rotations and item swaps within your coin budget and keeps the build that scores best.' },
   { tab: 'editor', target: 'editor.head', title: 'Item editor', text: 'Fix or add game data: item shapes and dots, stats and effects. Monster items are for giving a typed-in enemy a bag.' },
   { tab: 'data', target: 'data.about', title: 'Data', text: "What the simulator loaded: problems, entries not confirmed in game yet, and every correction to the wiki's numbers." },

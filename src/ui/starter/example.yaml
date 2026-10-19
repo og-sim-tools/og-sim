@@ -1,14 +1,8 @@
 # Starter build for a first visit to the hosted site (an empty account gets this one build).
-# Made from layouts/example.yaml; a saved-file of format version 2 (src/engine/saves).
-version: 2
+# Made from layouts/example.yaml; a saved file of format version 3 (src/engine/saves).
+version: 3
 name: example
 hero: erwen
-blessings:
-  level: 9
-  equipped:
-    - id: erwen_spirit_gain
-      rarity: mythic
-      value: 50
 gear:
   weapon:
     id: primal_flame
@@ -40,10 +34,6 @@ gear:
       level: 1
 pets: []
 skins: []
-basic_stats:
-  hp: 5.29M
-  atk: 1.61M
-  initial_block: 1.85M
 placements:
   - id: primal_flame#1
     item: primal_flame
@@ -220,6 +210,7 @@ battle:
               tier: 0
               level: 1
         pets: []
+        owned_pets: []
         aura: judicators_blade
         auras:
           - id: aura_of_vitality

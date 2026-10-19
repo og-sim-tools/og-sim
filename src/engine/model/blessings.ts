@@ -41,6 +41,8 @@ export const BlessingSchema = z
       .optional(),
     /** Something the simulator can't do on its own (shown instead of "not simulated"), e.g. "mark one more enhanced cell". */
     manual_note: z.string().optional(),
+    /** The blessing's value is that many more enhanced bag slots for the skill it buffs (Venom's Poison Coating: +1 / +2). */
+    adds_enhanced_slots: z.boolean().optional(),
     effect_text: z.string().default(''),
     /** The stat-registry stat this blessing raises (shown on Stat Details), e.g. all_dmg_increase. */
     stat: Id.optional(),

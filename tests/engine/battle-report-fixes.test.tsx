@@ -81,38 +81,26 @@ describe('starting equipment', () => {
   });
 });
 
-describe('unplaced item', () => {
-  it('sits above placed items and can be dragged to a new spot', () => {
+describe('dragging an item in the bag', () => {
+  it('hands over which item, which of its cells was grabbed and where it was dropped', () => {
     const loadout = combatLoadout(['blade']);
     const onDrop = vi.fn();
+    const id = [...loadout.layout.items.keys()][0]!;
     const { container } = render(
-      <BagGrid
-        loadout={loadout}
-        issues={[]}
-        selected={null}
-        hovered={null}
-        ghost={{ name: 'Rock', color: 'gray', cells: [{ x: 0, y: 0 }], dots: [], valid: false, origin: { x: 0, y: 0 } }}
-        maskEdit={false}
-        onSelect={vi.fn()}
-        onHover={vi.fn()}
-        onToggleMask={vi.fn()}
-        onDrop={onDrop}
-        onKey={vi.fn()}
-      />,
+      <BagGrid loadout={loadout} issues={[]} selected={null} hovered={null} maskEdit={false} onSelect={vi.fn()} onHover={vi.fn()} onToggleMask={vi.fn()} onDrop={onDrop} onKey={vi.fn()} />,
     );
-    const ghost = container.querySelector<HTMLElement>('.item-cell.ghost')!;
-    expect(ghost.draggable).toBe(true);
-    expect(ghost.style.borderColor).toMatch(/#facc15|rgb\(250, 204, 21\)/);
+    const cells = container.querySelectorAll<HTMLElement>('.item-cell');
+    expect(cells[0]!.draggable).toBe(true);
     const store: Record<string, string> = {};
     const dataTransfer = { setData: (k: string, v: string) => (store[k] = v), getData: (k: string) => store[k] ?? '', effectAllowed: '', dropEffect: '' };
-    fireEvent.dragStart(ghost, { dataTransfer });
+    fireEvent.dragStart(cells[0]!, { dataTransfer });
     // Bag at 0,0 in jsdom; the margin is 1 cell (40px), so clientX 4.5 cells = bag x 3.
     // jsdom drops clientX/Y from drag events, so set them by hand.
     const bag = container.querySelector('.bag')!;
     const drop = createEvent.drop(bag, { dataTransfer });
     Object.defineProperties(drop, { clientX: { value: 40 * 4 + 5 }, clientY: { value: 40 * 2 + 5 } });
     fireEvent(bag, drop);
-    expect(onDrop).toHaveBeenCalledWith({ pending: true }, 3, 1);
+    expect(onDrop).toHaveBeenCalledWith(expect.objectContaining({ kind: "placed", id, dx: 0, dy: 0 }), 3, 1);
   });
 });
 

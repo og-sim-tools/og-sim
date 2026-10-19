@@ -18,7 +18,6 @@ describe('enhanced cells', () => {
         issues={[]}
         selected={null}
         hovered={null}
-        ghost={null}
         maskEdit={false}
         enhanced={[{ x: 3, y: 1 }]}
         enhanceEdit={enhanceEdit}

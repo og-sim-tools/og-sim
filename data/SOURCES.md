@@ -92,3 +92,18 @@ User answers (2026-10-17): Lua's skin is Lua only (the wiki's "Available: Erwen"
 No web fetch. Item values the wiki showed as ?: Fairy Dragon 17, Red Rose Rapier 13, Red Rose 6, Knight's Order Banner 7, Shadow Hunter 32, Spider Fang 4, Black Feather 7, Adrenaline 4, Millennium Dragon 15, Meow Missile 12; every pet-spawned item 0 (`data/items/manual/values_2026-10-17.yaml`). Longsword was already 8. Hero's Longsword (Kai exclusive on the wiki) is still unknown: the user didn't recognise it. Arua Raven's Sunspot Sphere deals 49.64M (30x ATK), then 74.47 / 99.29 / 124.1 / 173.7 / 248.2M at 1★–5★ (`data/skins/manual/wiki_skins.yaml`); the bonus per removed debuff is still unknown. Deep Impact: +165.4K (0.1x ATK) per Burn, as already entered. Gigantization's blessing raises the All DMG at the cap and keeps the HP needed for it (`data/blessings/manual/skill_mods.yaml`). The item readings in `docs/item-readings.md` were checked against the user's screenshots and their warnings removed; True Sight's +80% Crit DMG now lasts once 40 Focus is reached.
 
 User correction (2026-10-18): Flora 2★ + two legendary Forest Keeper's Gloves show 70% Debuff Resist in game, so Flora gives +30% at every star level (`data/pets/manual/battle_effects.yaml`; it was +60% at 2★).
+
+## 2026-10-19 — looking for training and gear-level stats (for calculating HP / ATK / Block)
+
+Read in the browser: `https://overgearedhero.fandom.com/wiki/Special:AllPages`, the wiki search for "training" and "level", `https://overgearedhero.fandom.com/wiki/Gear`, `https://overgearedhero.fandom.com/wiki/Pet_Food`, `https://overgearedhero.fandom.com/wiki/Stats_and_Effects`, `https://overgearedhero.fandom.com/wiki/Gameplay_Overview`.
+
+| Page | What's there |
+|---|---|
+| All pages / search "training" | No page about training or training levels. "Training" only appears in item names (Training Sword, Training Bow) and Sniper's skill text. |
+| Gear | Gear Enhancement: Enhancement Stones raise a **gear slot's** level; Gear Blueprints are needed after every 10 levels; swapping gear keeps the slot's level. A cost table per 10 levels (1–10: 90 / 0 … 91–100: 5,150 / 10,000; total 22,835 / 17,670; the column headers didn't come through, presumably stones / blueprints). **No stats per level.** Gear upgrading costs per grade (Common → Mythic +4). |
+| Pet Food | Pet levels raise HP and ATK. One table (tabs for Legendary / Epic / Rare; only the first tab's numbers came through, so which rarity is unclear): level 1 = 150 HP / 30 ATK, then +30 / +6 a level to 5, +60 / +12 to 10, +90 / +18 to 15, +180 / +36 to 20 (1,920 HP / 384 ATK). Levels 21–80 are empty ("-"). |
+| Stats and Effects, Gameplay Overview | What HP, ATK and Block do; no base values or formula for them, and nothing about "Power". |
+
+Unclear: the Pet Food numbers are tiny next to in-game HP (millions), so a pet's level stats are likely a small flat part, or the table is out of date; which rarity the table is for isn't shown.
+
+Nothing was extracted into the data: no data files changed. Not enough to calculate HP / ATK / Block or Power, so they stay typed in (SPEC §4.8); flagged to the user.

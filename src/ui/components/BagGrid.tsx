@@ -1,8 +1,9 @@
 /**
  * The bag grid (SPEC §8): mask cells, placed items, red overlaps / invalid cells, item dots for
  * the selected or hovered item (out-of-bag dots shown faded), drag and drop, keyboard controls.
+ * Click an item to select it, click it again to rotate it. Dragging shows the whole item and where it lands.
  */
-import { type DragEvent, type KeyboardEvent, useMemo, useRef } from 'react';
+import { type DragEvent, type KeyboardEvent, useMemo, useRef, useState } from 'react';
 import { type Cell, cellKey, footprintOf, isUsable, occupantsAt, resolveDots } from '../../engine/bag';
 import { activeEffects, dotAffects } from '../../engine/effects/resolve';
 import type { ItemEffect } from '../../engine/model';
@@ -11,25 +12,11 @@ import { copyName, copyNumbers } from '../../engine/loadout';
 import { type KeyAction, keyAction } from '../state/layoutOps';
 import { imageUrl } from '../staticData';
 
-/** Most cells drawn around the bag for out-of-bag item cells and dots. */
+/** Most cells drawn around the bag for out-of-bag item cells and dots (items can't go further out: layoutOps REACH). */
 export const MAX_MARGIN = 4;
-const SIZE = 40;
+export const SIZE = 40;
 /** Share of the footprint box a sprite fills. */
 export const SPRITE_FILL = 0.9;
-
-export interface Ghost {
-  name: string;
-  color: string;
-  cells: Cell[];
-  dots: Cell[];
-  valid: boolean;
-  /** The placed item's effects, to tell which touched items its dots affect. */
-  effects?: readonly ItemEffect[];
-  /** The item's sprite, drawn like a placed one. */
-  sprite?: SpriteInfo;
-  /** Placement origin, so a drag can keep the grab offset. */
-  origin: Cell;
-}
 
 /** A sprite and the item's unrotated footprint size in cells, for scaling it into the bag. */
 export interface SpriteInfo {
@@ -60,17 +47,19 @@ export function spriteOf(def: { image?: string; image_size?: { w: number; h: num
   };
 }
 
+/** How big a sprite is drawn in a box of cells of `size` px (90% of the fit, so neighbours don't touch). */
+export const spriteScale = (s: SpriteInfo, size: number) => SPRITE_FILL * Math.min((s.cellsW * size) / s.w, (s.cellsH * size) / s.h);
+
 /**
  * The sprite scaled to fit the item's footprint box (keeping its pixel shape, crisp), centred in
  * the cells the item covers and turned with it.
  */
-function Sprite({ s, cells, px, size, label, z }: { s: SpriteInfo; cells: Cell[]; px: (n: number) => number; size: number; label?: string; z: number }) {
+export function Sprite({ s, cells, px, size, label, z }: { s: SpriteInfo; cells: Cell[]; px: (n: number) => number; size: number; label?: string; z: number }) {
   const xs = cells.map((c) => c.x);
   const ys = cells.map((c) => c.y);
   const minX = Math.min(...xs);
   const minY = Math.min(...ys);
-  // 90% of the fit, so sprites in neighbouring cells don't touch.
-  const scale = SPRITE_FILL * Math.min((s.cellsW * size) / s.w, (s.cellsH * size) / s.h);
+  const scale = spriteScale(s, size);
   return (
     <div
       className="sprite"
@@ -87,29 +76,131 @@ export function GearIcon({ icon }: { icon?: string }) {
   return <span className="gear-icon">{icon ? <img src={imageUrl(icon)} alt="" draggable={false} /> : null}</span>;
 }
 
-export const DRAG_ITEM = 'application/x-og-item';
-export const DRAG_INSTANCE = 'application/x-og-instance';
-export const DRAG_PENDING = 'application/x-og-pending';
+// ------------------------------------------------------------------ dragging
+
+/** What's being dragged: an item from the list, an item in the bag, or one in the storage box. */
+export interface DragPayload {
+  kind: 'item' | 'placed' | 'stored';
+  /** The item id ('item') or the instance id. */
+  id: string;
+  /** The grabbed cell, relative to the item's placement origin. */
+  dx: number;
+  dy: number;
+  /** The grabbed point, in px from the item's top-left corner at bag scale. */
+  gx: number;
+  gy: number;
+}
+
+export const DRAG = 'application/x-og-drag';
+/** The drag in progress (a drag's data can't be read until it's dropped, but the bag shows where it would land). */
+export const dragging: { current: DragPayload | null } = { current: null };
+
+/** What a drag image shows: the item's cells (relative to its origin), its colour and sprite. */
+export interface DragLook {
+  cells: readonly Cell[];
+  color: string;
+  sprite?: SpriteInfo | null;
+}
+
+/** The point to hold an item by when it's dragged from a list: the middle of its origin cell. */
+export function originGrab(cells: readonly Cell[]): Pick<DragPayload, 'dx' | 'dy' | 'gx' | 'gy'> {
+  const minX = Math.min(...cells.map((c) => c.x));
+  const minY = Math.min(...cells.map((c) => c.y));
+  return { dx: 0, dy: 0, gx: (0 - minX) * SIZE + SIZE / 2, gy: (0 - minY) * SIZE + SIZE / 2 };
+}
+
+/** Start dragging: remember what, and show the whole item under the pointer (not just the grabbed cell). */
+export function startDrag(e: DragEvent, payload: DragPayload, look?: DragLook | null) {
+  dragging.current = payload;
+  e.dataTransfer.setData(DRAG, JSON.stringify(payload));
+  e.dataTransfer.effectAllowed = 'move';
+  if (look && look.cells.length && typeof e.dataTransfer.setDragImage === 'function') {
+    const el = dragImage(look);
+    document.body.appendChild(el);
+    e.dataTransfer.setDragImage(el, payload.gx, payload.gy);
+    setTimeout(() => el.remove(), 0);
+  }
+}
+
+export function endDrag() {
+  dragging.current = null;
+}
+
+/** The drag being dropped (its data, or the one remembered when the data can't be read). */
+export function readDrag(e: DragEvent): DragPayload | null {
+  const text = e.dataTransfer?.getData(DRAG);
+  if (text) {
+    try {
+      return JSON.parse(text) as DragPayload;
+    } catch {
+      /* fall through */
+    }
+  }
+  return dragging.current;
+}
+
+/** An off-screen copy of the item at bag scale, for the browser to draw under the pointer. */
+function dragImage({ cells, color, sprite }: DragLook): HTMLElement {
+  const minX = Math.min(...cells.map((c) => c.x));
+  const minY = Math.min(...cells.map((c) => c.y));
+  const w = (Math.max(...cells.map((c) => c.x)) - minX + 1) * SIZE;
+  const h = (Math.max(...cells.map((c) => c.y)) - minY + 1) * SIZE;
+  const el = document.createElement('div');
+  el.className = 'drag-image';
+  el.style.cssText = `position:fixed;left:-10000px;top:-10000px;width:${w}px;height:${h}px;pointer-events:none;`;
+  for (const c of cells) {
+    const d = document.createElement('div');
+    d.style.cssText = `position:absolute;left:${(c.x - minX) * SIZE}px;top:${(c.y - minY) * SIZE}px;width:${SIZE}px;height:${SIZE}px;background:${color};opacity:0.6;border-radius:4px;box-shadow:inset 0 0 0 1px rgba(0,0,0,0.35);`;
+    el.appendChild(d);
+  }
+  if (sprite) {
+    const scale = spriteScale(sprite, SIZE);
+    const img = document.createElement('img');
+    img.src = sprite.src;
+    img.style.cssText = `position:absolute;left:50%;top:50%;width:${sprite.w * scale}px;height:${sprite.h * scale}px;transform:translate(-50%,-50%) rotate(${sprite.rotation}deg);image-rendering:pixelated;`;
+    el.appendChild(img);
+  }
+  return el;
+}
+
+/** Where a drag would land in the bag: the origin (kept within reach of the bag), its cells, and whether they're free. */
+export interface DropTarget {
+  x: number;
+  y: number;
+  cells: Cell[];
+  valid: boolean;
+}
+
+/** How enhanced slots are drawn: the colour of the hero skill that enhanced them, and what it does there. */
+export interface EnhancedLook {
+  skill: string;
+  color: string;
+  label: string;
+}
 
 interface Props {
   loadout: Loadout;
   issues: LoadoutIssue[];
   selected: string | null;
   hovered: string | null;
-  ghost: Ghost | null;
   maskEdit: boolean;
   onSelect: (id: string | null) => void;
-  /** Clicked an item (opens its side panel); placing with Enter or dragging doesn't. */
-  onInspect?: (id: string) => void;
+  /** Clicked the selected item again: turn it. */
+  onRotate?: (id: string) => void;
   onHover: (id: string | null) => void;
   onToggleMask: (x: number, y: number) => void;
   /** Cells enhanced by a hero skill, and whether clicks toggle them. */
   enhanced?: readonly Cell[];
+  enhancedLook?: EnhancedLook | null;
   enhanceEdit?: boolean;
   onToggleEnhanced?: (x: number, y: number) => void;
-  /** A browser item (itemId), a placed instance or the not-yet-placed item (pending) dropped with its origin at x, y. */
-  onDrop: (drop: { itemId?: string; instanceId?: string; pending?: boolean }, x: number, y: number) => void;
+  /** Where a drag would land with its grabbed cell over (x, y) (null = it can't be dropped). */
+  dropTarget?: (drag: DragPayload, x: number, y: number) => DropTarget | null;
+  /** Something dropped with its grabbed cell over (x, y). */
+  onDrop: (drag: DragPayload, x: number, y: number) => void;
   onKey: (action: KeyAction) => void;
+  /** Only to look at (the Battle tab): no dragging or dropping. */
+  readOnly?: boolean;
 }
 
 export function rarityColor(rarity: string | null | undefined, gear = false): string {
@@ -124,13 +215,13 @@ export function marginFor(width: number, height: number, cells: readonly Cell[])
 }
 
 export function BagGrid(p: Props) {
-  const { loadout, issues, selected, hovered, ghost } = p;
+  const { loadout, issues, selected, hovered } = p;
   const { bag, layout } = loadout;
   const ref = useRef<HTMLDivElement>(null);
-  const MARGIN = useMemo(
-    () => marginFor(bag.width, bag.height, [...[...layout.items.values()].flatMap((i) => [...i.cells, ...i.dots]), ...(ghost ? [...ghost.cells, ...ghost.dots] : [])]),
-    [bag, layout, ghost],
-  );
+  /** Where the item being dragged would land. */
+  const [preview, setPreview] = useState<DropTarget | null>(null);
+  const previewKey = useRef('');
+  const MARGIN = useMemo(() => marginFor(bag.width, bag.height, [...layout.items.values()].flatMap((i) => [...i.cells, ...i.dots])), [bag, layout]);
   const px = (n: number) => (n + MARGIN) * SIZE;
 
   const redCells = useMemo(() => {
@@ -138,36 +229,24 @@ export function BagGrid(p: Props) {
     for (const i of issues) if (i.level === 'error' && i.cells) for (const c of i.cells) out.set(cellKey(c), c);
     return [...out.values()];
   }, [issues]);
-  const invalidIds = useMemo(
-    () => new Set(issues.filter((i) => i.level === 'error').flatMap((i) => i.instanceIds ?? [])),
-    [issues],
-  );
+  const invalidIds = useMemo(() => new Set(issues.filter((i) => i.level === 'error').flatMap((i) => i.instanceIds ?? [])), [issues]);
 
-  // Dots of the focused item: the ghost while placing, else hovered, else selected.
-  const focus = ghost ? null : (hovered ?? selected);
-  const dots = useMemo(() => markRepeats(dotsRaw()), [ghost, focus, layout, bag, loadout]);
+  // Dots of the focused item: hovered, else selected.
+  const focus = hovered ?? selected;
+  const dots = useMemo(() => markRepeats(dotsRaw()), [focus, layout, bag, loadout]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  function dotsRaw() {
-    // A dot on an item its effects don't care about (Wind Spirit's dot on a glove) is drawn as "touches-other".
-    const relevance = (effects: readonly ItemEffect[] | undefined, d: { status: string; target?: string }) => {
-      if (d.status !== 'touches' || !effects || !d.target) return d.status;
-      const t = loadout.entries.get(d.target);
-      // Unknown (no structured dot effects, e.g. a text-only item) is not shown as affecting anything.
-      return t && dotAffects(effects, t) !== true ? 'touches-other' : d.status;
-    };
-    if (ghost) {
-      return ghost.dots.map((c) => {
-        const inside = c.x >= 0 && c.y >= 0 && c.x < bag.width && c.y < bag.height;
-        const status = !inside ? 'outside' : !isUsable(bag, c.x, c.y) ? 'masked' : occupantsAt(layout, c.x, c.y).length ? 'touches' : 'empty';
-        const d = { cell: c, status, target: occupantsAt(layout, c.x, c.y)[0] };
-        return { ...d, status: relevance(ghost.effects, d) };
-      });
-    }
+  function dotsRaw(): { cell: Cell; status: string; target?: string }[] {
     if (!focus || !layout.items.has(focus)) return [];
+    // A dot on an item its effects don't care about (Wind Spirit's dot on a glove) is drawn as "touches-other".
     try {
       const src = loadout.entries.get(focus);
-      const effects = src ? activeEffects(src).map((e) => e.effect) : undefined;
-      return resolveDots(layout, focus).dots.map((d) => ({ ...d, status: relevance(effects, d) }));
+      const effects: readonly ItemEffect[] | undefined = src ? activeEffects(src).map((e) => e.effect) : undefined;
+      return resolveDots(layout, focus).dots.map((d) => {
+        if (d.status !== 'touches' || !effects || !d.target) return d;
+        const t = loadout.entries.get(d.target);
+        // Unknown (no structured dot effects, e.g. a text-only item) is not shown as affecting anything.
+        return t && dotAffects(effects, t) !== true ? { ...d, status: 'touches-other' } : d;
+      });
     } catch {
       return [];
     }
@@ -182,23 +261,30 @@ export function BagGrid(p: Props) {
     return { x: Math.floor((e.clientX - r.left) / SIZE) - MARGIN, y: Math.floor((e.clientY - r.top) / SIZE) - MARGIN };
   };
 
+  const clearPreview = () => {
+    previewKey.current = '';
+    setPreview(null);
+  };
+  const onDragOver = (e: DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    const drag = dragging.current;
+    if (!drag || !p.dropTarget) return;
+    const { x, y } = cellAt(e);
+    const key = `${drag.kind}:${drag.id}:${x},${y}`;
+    if (key === previewKey.current) return;
+    previewKey.current = key;
+    setPreview(p.dropTarget(drag, x, y));
+  };
   const onDrop = (e: DragEvent) => {
     e.preventDefault();
+    clearPreview();
+    const drag = readDrag(e);
+    endDrag();
+    if (!drag) return;
     const { x, y } = cellAt(e);
-    const pend = e.dataTransfer.getData(DRAG_PENDING);
-    if (pend) {
-      const { dx, dy } = JSON.parse(pend) as { dx: number; dy: number };
-      p.onDrop({ pending: true }, x - dx, y - dy);
-      return;
-    }
-    const inst = e.dataTransfer.getData(DRAG_INSTANCE);
-    if (inst) {
-      const { id, dx, dy } = JSON.parse(inst) as { id: string; dx: number; dy: number };
-      p.onDrop({ instanceId: id }, x - dx, y - dy);
-      return;
-    }
-    const itemId = e.dataTransfer.getData(DRAG_ITEM);
-    if (itemId) p.onDrop({ itemId }, x, y);
+    p.onDrop(drag, x, y);
+    ref.current?.focus();
   };
 
   const onKeyDown = (e: KeyboardEvent) => {
@@ -208,6 +294,7 @@ export function BagGrid(p: Props) {
     p.onKey(action);
   };
 
+  const look = p.enhancedLook;
   const enhancedSet = new Set((p.enhanced ?? []).map((c) => `${c.x},${c.y}`));
   const bgCells = [];
   for (let y = 0; y < bag.height; y++) {
@@ -219,7 +306,13 @@ export function BagGrid(p: Props) {
           key={`b${x},${y}`}
           className={`cell ${on ? 'on' : 'off'}${p.maskEdit || p.enhanceEdit ? ' edit-mask' : ''}${isEnhanced ? ' enhanced' : ''}`}
           style={{ left: px(x), top: px(y) }}
-          title={p.enhanceEdit ? 'Click to mark / unmark an enhanced slot' : p.maskEdit ? 'Click to toggle this bag cell' : `(${x},${y})${on ? '' : ' not available'}${isEnhanced ? ' · enhanced' : ''}`}
+          title={
+            p.enhanceEdit
+              ? `Click to mark / unmark a slot ${look?.skill ?? 'a hero skill'} enhanced`
+              : p.maskEdit
+                ? 'Click to toggle this bag cell'
+                : `(${x},${y})${on ? '' : ' not available'}${isEnhanced ? ` · enhanced by ${look?.skill ?? 'a hero skill'}${look ? `: ${look.label}` : ''}` : ''}`
+          }
           onClick={() => (p.enhanceEdit ? p.onToggleEnhanced?.(x, y) : p.maskEdit ? p.onToggleMask(x, y) : p.onSelect(null))}
         />,
       );
@@ -243,9 +336,11 @@ export function BagGrid(p: Props) {
         : rarityColor('rarity' in item.def ? (item.def.rarity as string) : null);
     const own = new Set(item.cells.map(cellKey));
     const first = [...item.cells].sort((a, b) => a.y - b.y || a.x - b.x)[0];
+    const minX = Math.min(...item.cells.map((c) => c.x));
+    const minY = Math.min(...item.cells.map((c) => c.y));
     if (copy && first) {
       sprites.push(
-        <span key={`c${id}`} className="copy-badge" style={{ left: px(first.x) + 2, top: px(first.y) + 2, zIndex: 5 }} title={copyName(String(item.def.name ?? ""), copy)}>
+        <span key={`c${id}`} className="copy-badge" style={{ left: px(first.x) + 2, top: px(first.y) + 2, zIndex: 5 }} title={copyName(String(item.def.name ?? ''), copy)}>
           {copy}
         </span>,
       );
@@ -266,20 +361,30 @@ export function BagGrid(p: Props) {
             zIndex: id === selected ? 2 : 1,
             // While marking enhanced cells, clicks go through to the cell underneath.
             pointerEvents: p.enhanceEdit ? 'none' : undefined,
-            outline: enhancedSet.has(`${c.x},${c.y}`) ? '2px dashed #a78bfa' : undefined,
+            outline: enhancedSet.has(`${c.x},${c.y}`) ? `2px dashed ${look?.color ?? '#a78bfa'}` : undefined,
             outlineOffset: -4,
           }}
-          title={`${copyName(String(item.def.name ?? ""), copy)}${p.loadout.entries.get(id)?.supply ? ' (starting equipment)' : ''}`}
-          draggable={!p.maskEdit}
+          title={`${copyName(String(item.def.name ?? ''), copy)}${entry?.supply ? ' (starting equipment)' : ''}${id === selected ? ' · click again to rotate' : ''}`}
+          draggable={!p.maskEdit && !p.readOnly}
           onDragStart={(e) => {
-            e.dataTransfer.setData(DRAG_INSTANCE, JSON.stringify({ id, dx: c.x - item.placement.x, dy: c.y - item.placement.y }));
-            e.dataTransfer.effectAllowed = 'move';
+            const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
+            const inX = e.clientX ? Math.max(0, Math.min(SIZE - 1, e.clientX - r.left)) : SIZE / 2;
+            const inY = e.clientY ? Math.max(0, Math.min(SIZE - 1, e.clientY - r.top)) : SIZE / 2;
+            startDrag(
+              e,
+              { kind: 'placed', id, dx: c.x - item.placement.x, dy: c.y - item.placement.y, gx: (c.x - minX) * SIZE + inX, gy: (c.y - minY) * SIZE + inY },
+              { cells: item.cells, color, sprite },
+            );
             p.onSelect(id);
+          }}
+          onDragEnd={() => {
+            endDrag();
+            clearPreview();
           }}
           onClick={(e) => {
             e.stopPropagation();
-            p.onSelect(id);
-            p.onInspect?.(id);
+            if (id === selected) p.onRotate?.(id);
+            else p.onSelect(id);
             ref.current?.focus();
           }}
           onMouseEnter={() => p.onHover(id)}
@@ -299,48 +404,20 @@ export function BagGrid(p: Props) {
         tabIndex={0}
         role="grid"
         aria-label="Backpack"
-        style={{ width, height, ['--cell-size' as string]: `${SIZE}px` }}
-        onDragOver={(e) => {
-          e.preventDefault();
-          e.dataTransfer.dropEffect = 'move';
+        style={{ width, height, ['--cell-size' as string]: `${SIZE}px`, ...(look ? { ['--enh' as string]: look.color } : {}) }}
+        onDragOver={p.readOnly ? undefined : onDragOver}
+        onDragLeave={(e) => {
+          if (!ref.current?.contains(e.relatedTarget as Node)) clearPreview();
         }}
-        onDrop={onDrop}
+        onDrop={p.readOnly ? undefined : onDrop}
         onKeyDown={onKeyDown}
       >
         {bgCells}
         {itemCells}
         {sprites}
-        {ghost?.sprite && <Sprite s={ghost.sprite} cells={ghost.cells} px={px} size={SIZE} z={6} />}
-        {ghost &&
-          ghost.cells.map((c) => {
-            // Yellow outline on the outer edges only, drawn above every placed item.
-            const own = new Set(ghost.cells.map(cellKey));
-            const edge = (dx: number, dy: number) => (own.has(cellKey({ x: c.x + dx, y: c.y + dy })) ? '0' : '3px');
-            return (
-              <div
-                key={`g${c.x},${c.y}`}
-                className={`item-cell ghost${ghost.valid ? '' : ' bad'}`}
-                style={{
-                  left: px(c.x),
-                  top: px(c.y),
-                  background: ghost.color,
-                  borderStyle: 'solid',
-                  borderColor: '#facc15',
-                  borderWidth: `${edge(0, -1)} ${edge(1, 0)} ${edge(0, 1)} ${edge(-1, 0)}`,
-                }}
-                title={`${ghost.name} (not placed yet: drag it, or press Enter to place)`}
-                draggable
-                onDragStart={(e) => {
-                  e.dataTransfer.setData(DRAG_PENDING, JSON.stringify({ dx: c.x - ghost.origin.x, dy: c.y - ghost.origin.y }));
-                  e.dataTransfer.effectAllowed = 'move';
-                }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  ref.current?.focus();
-                }}
-              />
-            );
-          })}
+        {preview?.cells.map((c) => (
+          <div key={`p${c.x},${c.y}`} className={`drop-preview${preview.valid ? '' : ' bad'}`} style={{ left: px(c.x), top: px(c.y) }} />
+        ))}
         {redCells.map((c) => (
           <div key={`r${c.x},${c.y}`} className="red-cell" style={{ left: px(c.x), top: px(c.y) }} />
         ))}

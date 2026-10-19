@@ -57,6 +57,8 @@
       effects:
         - { text: "Start of Battle: Items in enhanced slots inflict 50% more Poison.", trigger: battle_start, target: all_items, filter: { enhanced: true }, action: add_inflict_pct, status: poison, amount: 50 }
       notes: The 2 enhanced slots are random each run, so mark them on the layout (Enhanced cells). Added to Poison Inflict Increase.
+      # Purple: Venom's slots (user, 2026-10-19). From the skill text: "Randomly enhance 2 slots".
+      enhanced_slots: { count: 2, color: "#a78bfa", label: "items here inflict 50% more Poison" }
     web_weaving:
       status: shop
       effects: []
@@ -257,6 +259,8 @@
       effects:
         - { text: "Every 4s: Activate spells in enhanced slots.", trigger: timer, interval_s: 4, target: all_items, filter: { tags_any: [spell], enhanced: true }, action: activate_item }
       notes: The enhanced slot is random each run, so mark it on the layout (Enhanced cells).
+      # Green: Cecilia's slot (user, 2026-10-19). From the skill text: "Enhance 1 random slot(s)".
+      enhanced_slots: { count: 1, color: "#22c55e", label: "spells here activate every 4s" }
     backmasking:
       status: complete
       effects:

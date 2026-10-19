@@ -1,7 +1,7 @@
 /**
- * What a build is played with (SPEC §4.8, saved with each build): the hero and its blessings, gear, pets,
- * skins, and HP / ATK / Block with the stats calculated from them. Used in the Battle tab, for my build and
- * for an enemy's.
+ * What a build is played with (SPEC §4.8): the hero, gear, pets and skins it brings (saved with the build), and
+ * what's account-wide (the hero's blessings, pets' and skins' stars, HP / ATK / Block: saved in the account and
+ * the same in every build). Used in the Build tab, for my build and for an enemy's (whose are its own).
  */
 import { useEffect, useState } from 'react';
 import { computeAccountStats, weaponBonusValue } from '../../engine/accountStats';
@@ -48,7 +48,7 @@ export function sortPets<T extends { name: string; rarity: string }>(pets: T[]):
 // ------------------------------------------------------------------ hero and blessings
 
 /** The build's hero (from the heroes I own) and its Dragon's Blessings. */
-export function HeroEditor({ data, profile, heroId, onHero, update }: { data: GameData; profile: Profile; heroId: string | null; onHero: (id: string | null) => void; update: Update }) {
+export function HeroEditor({ data, profile, heroId, onHero, update, account = false }: { data: GameData; profile: Profile; heroId: string | null; onHero: (id: string | null) => void; update: Update; account?: boolean }) {
   const cfg = data.config!;
   const owned = new Map(profile.heroes.map((h) => [h.id, h]));
   const hero = heroId ? data.heroes.get(heroId) : undefined;
@@ -78,26 +78,41 @@ export function HeroEditor({ data, profile, heroId, onHero, update }: { data: Ga
       </div>
       {profile.heroes.length === 0 && <div className="small muted">Tick the heroes you own in the Profile tab first.</div>}
       {hero && !mine && <div className="issue warning small">{hero.name} isn't among your heroes (Profile tab), so their stars and blessings don't count.</div>}
-      {hero && mine && <BlessingsEditor hero={hero} owned={mine} data={data} update={update} />}
+      {hero && mine && <BlessingsEditor hero={hero} owned={mine} data={data} update={update} account={account} />}
     </>
   );
 }
 
+/** Whether the simulator uses a blessing in battle (a stat, a battle bonus, a status bonus, tagged items, or a change to its hero's skill). */
+export function blessingSimulated(def: GameData['blessings'] extends Map<string, infer B> ? B : never): boolean {
+  return !!(def.stat || def.combat_bonus || def.item_inflict_statuses || def.target_tags.length || def.skill_mods?.length || def.adds_enhanced_slots);
+}
+
+/** What a blessing does in the simulator, for its tooltip. */
+function blessingHow(def: GameData['blessings'] extends Map<string, infer B> ? B : never, data: GameData): string {
+  if (def.stat) return `Adds to ${data.stats.get(def.stat)?.name ?? def.stat}`;
+  if (def.combat_bonus || def.item_inflict_statuses) return 'Works in battle only';
+  if (def.skill_mods?.length) return `Changes ${data.skills.get(def.buffs_skill ?? '')?.name ?? 'its hero skill'}`;
+  if (def.adds_enhanced_slots) return `${def.manual_note ?? 'More enhanced slots'}`;
+  if (def.target_tags.length) return '';
+  return 'Not simulated';
+}
+
 /** A hero's Dragon's Blessing level and equipped blessings, folded to one line until opened. */
-export function BlessingsEditor({ hero, owned, data, update }: { hero: Hero; owned: OwnedHero; data: GameData; update: Update }) {
+export function BlessingsEditor({ hero, owned, data, update, account = false, open }: { hero: Hero; owned: OwnedHero; data: GameData; update: Update; account?: boolean; open?: boolean }) {
   const cfg = data.config!;
   const edit = (fn: (h: OwnedHero) => void) => update((p) => fn(p.heroes.find((x) => x.id === hero.id)!));
   const level = owned.blessings?.level ?? cfg.blessings.default_level;
   const slots = Math.min(cfg.blessings.slots_by_level[String(level)] ?? cfg.blessings.max_per_hero, cfg.blessings.max_per_hero);
   const equipped = owned.blessings?.equipped ?? [];
   const choices = [...data.blessings.values()].filter((b) => b.kind === 'common' || (b.kind === 'class' && b.class === hero.class) || (b.kind === 'unique' && b.hero === hero.id));
-  const statName = (id: string | undefined) => (id ? data.stats.get(id)?.name : undefined);
   return (
-    <details className="blessings" style={{ marginTop: 6 }}>
+    <details className="blessings" style={{ marginTop: 6 }} open={open}>
       <summary className="small">
         <b>Blessings</b> {equipped.length} / {slots}
         <span className="muted"> {equipped.map((b) => data.blessings.get(b.id)?.name ?? b.id).join(' · ')}</span>
       </summary>
+      {account && <div className="small muted">{hero.name}'s blessings are your account's: the same in every build with {hero.name} (also in the Profile tab).</div>}
       <div className="row small" style={{ marginTop: 4 }}>
         <span className="muted">Dragon's Blessing level</span>
         <select value={level} aria-label="Blessing level" onChange={(e) => edit((h) => void (h.blessings = { level: Number(e.target.value), equipped: h.blessings?.equipped ?? [] }))}>
@@ -136,10 +151,11 @@ export function BlessingsEditor({ hero, owned, data, update }: { hero: Hero; own
               ))}
             </select>
             <input type="number" step="any" value={b.value} aria-label="Blessing value" style={{ width: 64 }} onChange={(e) => setB({ value: Number(e.target.value) })} />
-            <span className={range && !inRange(range, b.value) ? 'field-warn' : 'muted'} title={def?.stat ? `Adds to ${statName(def.stat) ?? def.stat}` : def?.combat_bonus || def?.item_inflict_statuses ? 'Works in battle only' : def?.target_tags.length ? '' : 'Not simulated'}>
+            <span className={range && !inRange(range, b.value) ? 'field-warn' : 'muted'} title={def ? blessingHow(def, data) : ''}>
               {def?.unit === 'pct' ? '%' : def?.unit === 'seconds' ? 's' : ''} ({showRange(range)})
             </span>
-            {!def?.stat && !def?.combat_bonus && !def?.item_inflict_statuses && !def?.target_tags.length && <span className="badge warn">not simulated</span>}
+            {def && !blessingSimulated(def) && <span className="badge warn">not simulated</span>}
+            {def?.manual_note && <span className="badge" title={def.manual_note}>see note</span>}
             <button onClick={() => edit((h) => void h.blessings!.equipped.splice(i, 1))} aria-label="Remove blessing">
               ✕
             </button>
@@ -305,7 +321,7 @@ export function petPoints(data: GameData, profile: Profile): { used: number; max
   return { used: profile.pets.filter((p) => p.active).reduce((a, p) => a + petCost(data, p.id, p.stars), 0), max: data.config!.pets.activation_points };
 }
 
-export function PetsEditor({ data, profile, update }: { data: GameData; profile: Profile; update: Update }) {
+export function PetsEditor({ data, profile, update, account = false }: { data: GameData; profile: Profile; update: Update; account?: boolean }) {
   const cfg = data.config!;
   const { used, max } = petPoints(data, profile);
   const sorted = sortPets([...data.pets.values()]);
@@ -320,7 +336,12 @@ export function PetsEditor({ data, profile, update }: { data: GameData; profile:
         return (
           <div key={i} style={{ marginTop: 4 }}>
             <div className="row small">
-              <select value={pet.id} aria-label={`Pet ${i + 1}`} style={{ flex: 1, minWidth: 0 }} onChange={(e) => update((p) => void (p.pets[i] = { ...pet, id: e.target.value }))}>
+              <select
+                value={pet.id}
+                aria-label={`Pet ${i + 1}`}
+                style={{ flex: 1, minWidth: 0 }}
+                onChange={(e) => update((p) => void (p.pets[i] = { ...pet, id: e.target.value, stars: p.owned_pets.find((o) => o.id === e.target.value)?.stars ?? 0 }))}
+              >
                 {sorted.map((d) => (
                   <option key={d.id} value={d.id}>
                     {d.rarity.toUpperCase()} · {d.name}
@@ -329,7 +350,7 @@ export function PetsEditor({ data, profile, update }: { data: GameData; profile:
                   </option>
                 ))}
               </select>
-              <select value={pet.stars} aria-label="Pet stars" onChange={(e) => update((p) => void (p.pets[i]!.stars = Number(e.target.value)))}>
+              <select value={pet.stars} aria-label="Pet stars" title="Your account's stars for this pet (the same in every build)" onChange={(e) => update((p) => void (p.pets[i]!.stars = Number(e.target.value)))}>
                 {Array.from({ length: cfg.pets.max_stars + 1 }, (_, s) => (
                   <option key={s} value={s}>
                     {s}★
@@ -358,10 +379,20 @@ export function PetsEditor({ data, profile, update }: { data: GameData; profile:
         );
       })}
       {profile.pets.length < cfg.pets.max_equipped && (
-        <button style={{ marginTop: 6 }} onClick={() => update((p) => void p.pets.push({ id: sorted.find((d) => !p.pets.some((x) => x.id === d.id))?.id ?? sorted[0]!.id, stars: 0, active: true }))}>
+        <button
+          style={{ marginTop: 6 }}
+          onClick={() =>
+            update((p) => {
+              // Pets I own first.
+              const pick = [...p.owned_pets.map((o) => o.id), ...sorted.map((d) => d.id)].find((id) => data.pets.has(id) && !p.pets.some((x) => x.id === id)) ?? sorted[0]!.id;
+              p.pets.push({ id: pick, stars: p.owned_pets.find((o) => o.id === pick)?.stars ?? 0, active: true });
+            })
+          }
+        >
           Add pet
         </button>
       )}
+      {account && <div className="small muted" style={{ marginTop: 4 }}>Stars are your account's (also in the Profile tab): the same in every build.</div>}
     </>
   );
 }
@@ -374,7 +405,7 @@ export const skinFor = (skin: Skin, hero: Hero | undefined) => {
 };
 
 /** The skins this build's hero can bring (up to 2), each with its stars and whether its quest is done. */
-export function SkinsEditor({ data, profile, update }: { data: GameData; profile: Profile; update: Update }) {
+export function SkinsEditor({ data, profile, update, account = false }: { data: GameData; profile: Profile; update: Update; account?: boolean }) {
   const hero = profile.active_hero ? data.heroes.get(profile.active_hero) : undefined;
   const equipped = profile.equipped_skins ?? [];
   const all = [...data.skins.values()].filter((s) => s.skill && !s.enemy_only);
@@ -398,13 +429,12 @@ export function SkinsEditor({ data, profile, update }: { data: GameData; profile
                   checked={on}
                   onChange={(e) =>
                     update((p) => {
-                      const rest = (p.skins ?? []).filter((x) => x.id !== s.id);
                       p.equipped_skins = (p.equipped_skins ?? []).filter((x) => x !== s.id);
-                      p.skins = rest;
                       p.skin_quests_done = (p.skin_quests_done ?? []).filter((x) => x !== s.id);
                       if (e.target.checked) {
                         p.equipped_skins = [...p.equipped_skins, s.id].slice(0, 2);
-                        p.skins = [...rest, { id: s.id, stars }];
+                        // Bringing a skin means owning it.
+                        if (!(p.skins ?? []).some((x) => x.id === s.id)) p.skins = [...(p.skins ?? []), { id: s.id, stars }];
                       }
                     })
                   }
@@ -415,7 +445,7 @@ export function SkinsEditor({ data, profile, update }: { data: GameData; profile
                   {s.status === 'needs_values' && <span className="warn"> · not simulated</span>}
                 </span>
               </label>
-              <select aria-label={`${s.name} stars`} disabled={!on} value={String(stars)} onChange={(e) => update((p) => void (p.skins = [...(p.skins ?? []).filter((x) => x.id !== s.id), { id: s.id, stars: Number(e.target.value) }]))}>
+              <select aria-label={`${s.name} stars`} title="Your account's stars for this skin (the same in every build)" value={String(stars)} onChange={(e) => update((p) => void (p.skins = [...(p.skins ?? []).filter((x) => x.id !== s.id), { id: s.id, stars: Number(e.target.value) }]))}>
                 {Array.from({ length: 6 }, (_, k) => (
                   <option key={k} value={k}>
                     {k}★
@@ -442,6 +472,7 @@ export function SkinsEditor({ data, profile, update }: { data: GameData; profile
           </div>
         );
       })}
+      {account && <div className="small muted" style={{ marginTop: 4 }}>Which skins this build brings is saved with it; their stars are your account's (also in the Profile tab).</div>}
     </>
   );
 }
@@ -449,14 +480,15 @@ export function SkinsEditor({ data, profile, update }: { data: GameData; profile
 // ------------------------------------------------------------------ stats
 
 /** HP, ATK and Block as typed in, and every other stat as calculated from gear, blessings and auras. */
-export function BuildStats({ data, profile, update }: { data: GameData; profile: Profile; update: Update }) {
+export function BuildStats({ data, profile, update, account: mine = false }: { data: GameData; profile: Profile; update: Update; account?: boolean }) {
   const account = computeAccountStats(data, profile, profile.active_hero);
   const fmtStat = (n: number) => String(Math.round(n * 100) / 100);
   const stats = [...data.stats.values()];
   const shown = stats.filter((s) => s.group === 'detailed' && s.id !== 'hp_pct' && s.id !== 'atk_pct').filter((s) => (account.detailed[s.id] ?? 0) !== 0);
   return (
     <>
-      <div className="row small" title="As the game's Stat Details screen shows them with this hero and gear">
+      {mine && <div className="small muted">HP, ATK and Block are your account's (Profile tab), as the game's Stat Details screen shows them: the same in every build.</div>}
+      <div className="row small" title="As the game's Stat Details screen shows them">
         {stats
           .filter((s) => s.group === 'basic')
           .map((s) => {

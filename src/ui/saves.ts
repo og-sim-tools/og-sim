@@ -193,3 +193,32 @@ export const lastBuild = {
     }
   },
 };
+
+/** lastBuild's value for the temp build (not a valid build name, so it can't clash with one). */
+export const TEMP_BUILD = ':temp';
+
+const TEMP_KEY = `${PREFIX}temp-build`;
+/**
+ * The temp build: a scratch build that isn't in the saved list, for trying things out. It's kept in this
+ * browser as it's edited (no "unsaved changes"), until it's saved under a name or started over.
+ */
+export const tempBuild = {
+  read: (storage: Storage | undefined = globalThis.localStorage): { text: string; at: string } | null => {
+    try {
+      const raw = storage?.getItem(TEMP_KEY);
+      if (!raw) return null;
+      const t = JSON.parse(raw) as { text?: unknown; at?: unknown };
+      return typeof t.text === 'string' ? { text: t.text, at: typeof t.at === 'string' ? t.at : '' } : null;
+    } catch {
+      return null;
+    }
+  },
+  write: (text: string | null, storage: Storage | undefined = globalThis.localStorage): void => {
+    try {
+      if (text === null) storage?.removeItem(TEMP_KEY);
+      else storage?.setItem(TEMP_KEY, JSON.stringify({ text, at: new Date().toISOString() }));
+    } catch {
+      /* a convenience only */
+    }
+  },
+};

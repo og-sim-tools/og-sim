@@ -5,7 +5,7 @@
  */
 import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import type { LoadoutIssue } from '../../engine/loadout';
-import { type KeyAction, moveBy, rotateCw } from '../state/layoutOps';
+import { type KeyAction, moveBy, reachShift, rotateCw } from '../state/layoutOps';
 import { resolveEnemies } from '../../engine/combat/montecarlo';
 import { buildSynergyReport } from '../../engine/effects/synergy';
 import type { GameData } from '../../engine/loader';
@@ -15,7 +15,7 @@ import { formatShown } from '../../engine/numbers';
 import { type Candidate, type OptimizeOptions, type OptimizeProgress, type OptimizeResult, type Opponent, optimize, optimizeMany, skinQuestGuard, withMyBaseStats } from '../../engine/optimize';
 import { checkSkinQuest } from '../../engine/skinQuests';
 import { aggregateStats } from '../../engine/stats';
-import { BagGrid } from './BagGrid';
+import { BagGrid, type DragPayload } from './BagGrid';
 import { Panel } from './Panel';
 import { StatsPanel } from './StatsPanel';
 
@@ -49,7 +49,7 @@ const fmt = (n: number) => formatShown(n);
 
 interface Props {
   data: GameData;
-  /** My profile with this layout's setup applied (as the Battle tab uses it). */
+  /** My profile with this layout's setup applied (as the Build tab uses it). */
   profile: Profile;
   layout: LayoutData;
   layoutName: string;
@@ -57,7 +57,7 @@ interface Props {
   layouts: string[];
   layoutAsBuild: (name: string) => Promise<EnemyBuild>;
   onApply: (placements: LayoutData['placements']) => void;
-  /** The Battle tab's layout panel (load / save / new), shared so builds are set up the same way. */
+  /** The Build tab's build panel (load / save / new), shared so builds are set up the same way. */
   setup?: ReactNode;
 }
 
@@ -122,13 +122,13 @@ export function OptimizePanel({ data, profile, layout, layoutName, loadout, layo
 
   const set = <K extends keyof typeof opts>(k: K, v: (typeof opts)[K]) => setOpts((o) => ({ ...o, [k]: v }));
 
-  // The Battle tab's enemy build, with any edits made there (stats, bag, hero …). A saved layout of the
-  // same name uses this edited build instead of the file, so changes made in the Battle tab count here.
+  // The opponent's build (Battle tab), with any edits made there (stats, bag, hero …). A saved layout of the
+  // same name uses this edited build instead of the file, so changes made in the Build tab count here.
   const edited = inline?.build ? (inline.build.source_layout ?? inline.name) : null;
   const editedIsSaved = !!edited && layouts.includes(edited);
   const getBuild = async (name: string): Promise<EnemyBuild | undefined> =>
     name === CURRENT_ENEMY || (editedIsSaved && name === edited) ? inline?.build : await layoutAsBuild(name);
-  const labelOf = (name: string) => (name === CURRENT_ENEMY ? `${inline?.name ?? 'Enemy'} (Battle tab)` : name);
+  const labelOf = (name: string) => (name === CURRENT_ENEMY ? `${inline?.name ?? 'Enemy'} (Battle tab's opponent)` : name);
 
   // Stats of me and of every opponent (as calculated, before the PvP HP / Block multiplier).
   const statLine = (lo: Loadout) => {
@@ -244,20 +244,27 @@ export function OptimizePanel({ data, profile, layout, layoutName, loadout, layo
   );
   const editValid = editIssues.length === 0;
   const change = (fn: (ps: Placement[]) => Placement[]) => working && setEdit(fn(working.map((p) => ({ ...p }))));
+  /** Where an item moved to (x, y) ends up: never more than REACH cells outside the bag. */
+  const within = (id: string, x: number, y: number) => {
+    const it = shownLoadout?.layout.items.get(id);
+    if (!it || !shownLoadout) return { x, y };
+    const { dx, dy } = reachShift(it.cells.map((c) => ({ x: c.x - it.placement.x + x, y: c.y - it.placement.y + y })), shownLoadout.bag);
+    return { x: x + dx, y: y + dy };
+  };
   const onBagKey = (action: KeyAction) => {
     if (!picked1) return;
     const d = moveBy(action);
-    if (d) change((ps) => ps.map((p) => (p.id === picked1 ? { ...p, x: p.x + d.dx, y: p.y + d.dy } : p)));
+    if (d) change((ps) => ps.map((p) => (p.id === picked1 ? { ...p, ...within(p.id, p.x + d.dx, p.y + d.dy) } : p)));
     else if (action === 'rotate') change((ps) => ps.map((p) => (p.id === picked1 ? { ...p, rotation: rotateCw(p.rotation) } : p)));
     else if (action === 'remove') {
       change((ps) => ps.filter((p) => p.id !== picked1));
       setPicked1(null);
     } else if (action === 'cancel') setPicked1(null);
   };
-  const onBagDrop = (drop: { itemId?: string; instanceId?: string }, x: number, y: number) => {
-    if (!drop.instanceId) return; // no adding items here: that's the Battle tab
-    change((ps) => ps.map((p) => (p.id === drop.instanceId ? { ...p, x, y } : p)));
-    setPicked1(drop.instanceId);
+  const onBagDrop = (drag: DragPayload, x: number, y: number) => {
+    if (drag.kind !== 'placed') return; // no adding items here: that's the Build tab
+    change((ps) => ps.map((p) => (p.id === drag.id ? { ...p, ...within(p.id, x - drag.dx, y - drag.dy) } : p)));
+    setPicked1(drag.id);
   };
   /** Score my edited build on the same opponents, seeds and options as the run, and add it to the list. */
   const testScore = () => {
@@ -296,7 +303,7 @@ export function OptimizePanel({ data, profile, layout, layoutName, loadout, layo
         <Panel id="optimize.settings" title="Optimize">
           <ol className="small muted how-to">
             <li>
-              Set up <b>{layoutName || 'your build'}</b> in the Battle tab (hero, gear, pets, skins, starting equipment).
+              Set up <b>{layoutName || 'your build'}</b> in the Build tab (hero, gear, pets, skins, starting equipment).
             </li>
             <li>Tick the saved builds to test it against below, one per meta archetype.</li>
             <li>Run: it tries moves, rotations and item swaps within your coin budget, plays each try against every opponent on the same seeds, and keeps the best.</li>
@@ -305,12 +312,12 @@ export function OptimizePanel({ data, profile, layout, layoutName, loadout, layo
           <div className="small">
             Me: <span className="muted">{myStats}</span>
           </div>
-          {optionNames.length === 0 && <div className="small muted">Save some builds first (Battle tab → Save).</div>}
+          {optionNames.length === 0 && <div className="small muted">Save some builds first (Build tab → Save).</div>}
           {optionNames.map((n) => (
             <label key={n} className="small" style={{ display: 'block', marginTop: 3 }}>
               <input type="checkbox" checked={picked.includes(n)} onChange={(e) => setPicked((p) => (e.target.checked ? [...p, n] : p.filter((x) => x !== n)))} />{' '}
               <b>{labelOf(n)}</b>
-              {editedIsSaved && n === edited && <span className="badge">with the Battle tab's edits</span>}
+              {editedIsSaved && n === edited && <span className="badge">with the Build tab's edits</span>}
               <div className="muted" style={{ marginLeft: 22 }}>
                 {oppStats[n] ?? '…'}
               </div>
@@ -504,13 +511,12 @@ export function OptimizePanel({ data, profile, layout, layoutName, loadout, layo
                   issues={editIssues}
                   selected={picked1}
                   hovered={null}
-                  ghost={null}
                   maskEdit={false}
                   onSelect={(id) => {
                     setPicked1(id);
                     if (id) setStatSel(id);
                   }}
-                  onInspect={setStatSel}
+                  onRotate={() => onBagKey('rotate')}
                   onHover={() => {}}
                   onToggleMask={() => {}}
                   onDrop={onBagDrop}
@@ -518,7 +524,7 @@ export function OptimizePanel({ data, profile, layout, layoutName, loadout, layo
                 />
               )}
               <div className="row small" style={{ marginTop: 4, flexWrap: 'wrap', gap: 6 }}>
-                <span className="muted">Click an item for its stats; drag or use the arrow keys to move it, space to rotate, Delete to remove it.</span>
+                <span className="muted">Click an item for its stats (again to rotate it); drag or use the arrow keys to move it, space rotates, Delete removes it.</span>
                 {picked1 && (
                   <>
                     <button onClick={() => onBagKey('rotate')}>Rotate</button>

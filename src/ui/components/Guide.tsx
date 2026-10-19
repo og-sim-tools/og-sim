@@ -40,23 +40,25 @@ export function Guide({ empty, savedIn, onProfile, onTour, onClose }: Props) {
           ✕
         </button>
       </div>
-      <p className="small">It plays your backpack the way the game does, so you can try builds and enemies before you spend coins. New here? The tour shows you every part in about two minutes.</p>
+      <p className="small">It plays your backpack the way the game does, so you can try builds and enemies before you spend coins. New here? The tour shows you every part and lets you fill in your profile on the way.</p>
       <ol className="small">
         <li>
-          <b>Profile tab:</b> tick the heroes you own and set their stars, and your auras. This counts for every build.
+          <b>Profile tab:</b> type HP / ATK / Block as the game's Stat Details screen shows them, tick the heroes you own (stars, blessings), and set your pets', skins' and
+          auras' stars. This counts for every build.
         </li>
         <li>
-          <b>Hero box</b> (right): pick the hero, its blessings, gear, pets and skins, and type HP / ATK / Block as the game's Stat Details screen shows them.
+          <b>Build tab, right:</b> pick the build's hero, gear, pets and skins.
         </li>
         <li>
-          <b>Items</b> (left): drag items into the bag, or click one and move it with the arrow keys (space rotates, enter places). The Starting equipment tab has what
-          your hero can bring. Click an item in the bag to see what it does and what it's worth.
+          <b>Build tab, left:</b> click an item to put it in the bag, or drag it. Click it in the bag to select it, again to rotate it; <b>Item details</b> shows what it does
+          and what it's worth. The Starting equipment tab has what your hero can bring.
         </li>
         <li>
-          <b>Battle</b> (middle): pick an enemy (or type one in, or copy one of your builds as a player) and press <b>Run battle</b>.
+          <b>Battle tab:</b> pick an opponent (a monster, one of your builds, or one you type in) and press <b>Run battle</b>.
         </li>
         <li>
-          <b>Build box:</b> save the build. Saves are kept in {savedIn}; <b>Export account</b> (top right) downloads everything as a backup you can import later.
+          <b>Build box</b> (top): the Temp build is for trying things; Save it under a name to keep it. Saves are kept in {savedIn}; <b>Export account</b> (top right)
+          downloads everything as a backup you can import later.
         </li>
       </ol>
       <div className="row">

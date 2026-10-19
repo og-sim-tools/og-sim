@@ -89,7 +89,7 @@ describe('the app', () => {
     expect(await screen.findByRole('region', { name: 'How to use the simulator' }, { timeout: 10000 })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Start in the Profile tab' }));
     expect(screen.getByRole('tab', { name: 'Profile' }).getAttribute('aria-selected')).toBe('true');
-    fireEvent.click(screen.getByRole('tab', { name: 'Battle' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Build' }));
     fireEvent.click(screen.getByRole('button', { name: 'Got it' }));
     expect(screen.queryByRole('region', { name: 'How to use the simulator' })).toBeNull();
     first.unmount();
@@ -121,12 +121,31 @@ describe('the app', () => {
       tabsSeen.add(document.querySelector('.topbar [role=tab][aria-selected=true]')!.textContent!);
       if (i < APP_TOUR.length - 1) fireEvent.click(tour().getByRole('button', { name: 'Next' }));
     }
-    expect([...tabsSeen]).toEqual(expect.arrayContaining(['Battle', 'Optimize', 'Profile', 'Item editor']));
+    expect([...tabsSeen]).toEqual(expect.arrayContaining(['Build', 'Battle', 'Optimize', 'Profile', 'Item editor']));
     fireEvent.click(tour().getByRole('button', { name: 'Back' }));
     fireEvent.click(tour().getByRole('button', { name: 'Skip tour' }));
     expect(screen.queryByRole('dialog', { name: 'Tutorial' })).toBeNull();
-    expect(screen.getByRole('tab', { name: 'Battle' }).getAttribute('aria-selected')).toBe('true');
+    expect(screen.getByRole('tab', { name: 'Build' }).getAttribute('aria-selected')).toBe('true');
     expect(screen.getByRole('button', { name: 'Tutorial' })).toBeTruthy();
+    // Nothing was changed during the tour: no backup question.
+    expect(screen.queryByRole('dialog', { name: 'Back up your account?' })).toBeNull();
+  }, 30000);
+
+  it('the profile can be filled in during the tour, and the end offers to export the account', async () => {
+    const store = browserStore(localStorage);
+    render(<App store={store} />);
+    await screen.findByRole('region', { name: 'How to use the simulator' }, { timeout: 10000 });
+    fireEvent.click(screen.getByRole('button', { name: 'Take the tour' }));
+    fireEvent.click(within(screen.getByRole('dialog', { name: 'Take the tour?' })).getByRole('button', { name: 'Start the tour' }));
+    const tour = () => within(screen.getByRole('dialog', { name: 'Tutorial' }));
+    while (!tour().queryByText('Your stats')) fireEvent.click(tour().getByRole('button', { name: 'Next' }));
+    expect(tour().getByText(/Try it/)).toBeTruthy();
+    expect(screen.getByRole('tab', { name: 'Profile' }).getAttribute('aria-selected')).toBe('true');
+    fireEvent.change(screen.getByLabelText('HP'), { target: { value: '4.2M' } });
+    fireEvent.click(tour().getByRole('button', { name: 'Skip tour' }));
+    expect(screen.getByRole('dialog', { name: 'Back up your account?' })).toBeTruthy();
+    fireEvent.click(within(screen.getByRole('dialog', { name: 'Back up your account?' })).getByRole('button', { name: 'Cancel' }));
+    expect(screen.queryByRole('dialog', { name: 'Back up your account?' })).toBeNull();
   }, 30000);
 
   it("the Checks box names the build's unconfirmed data and opens the Data tab on it", async () => {

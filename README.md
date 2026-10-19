@@ -2,9 +2,9 @@
 
 **Open it here: https://og-sim-tools.github.io/og-sim/** (nothing to install, it runs in your browser)
 
-A backpack and battle simulator for *Overgeared Hero: Merge RPG*. Place items in the bag, set up your hero,
-blessings, gear, pets and skins, and test the build against monsters or other players' builds before you
-spend coins in the game.
+A backpack and battle simulator for *Overgeared Hero: Merge RPG*. Enter your account once (stats, heroes,
+blessings, pets, skins, auras), build bags in the Build tab, and test them in the Battle tab against monsters or
+your other builds before you spend coins in the game. The Tutorial button walks you through every part.
 
 ## Your saves
 

@@ -1,7 +1,7 @@
 /** MVP enemies (SPEC §4.9). */
 import { z } from 'zod';
 import { Abbrev, Id, provenance } from './common';
-import { BagMaskSchema, EnhancedCellsSchema, LayoutPlacementSchema } from './placement';
+import { BagMaskSchema, EnhancedCellsSchema, LayoutPlacementSchema, StoredItemSchema } from './placement';
 import { ProfileSchema } from './profile';
 
 /**
@@ -15,6 +15,8 @@ export const EnemyBuildSchema = z
     placements: z.array(LayoutPlacementSchema).default([]),
     bag: BagMaskSchema.optional(),
     enhanced_cells: EnhancedCellsSchema.optional(),
+    /** Items set aside beside the bag while editing it (not in battle). */
+    storage: z.array(StoredItemSchema).optional(),
     /** The saved layout this build came from (its name is offered when saving the enemy build). */
     source_layout: z.string().optional(),
   })

@@ -8,6 +8,8 @@
  * Block). A layout's `setup` was put into whatever the profile had when the layout was loaded, so parts a
  * layout didn't save came from the profile.
  * Version 2: the account keeps only heroes' stars and links, and auras; each build keeps the rest.
+ * Version 3 (2026-10-19): blessings, pets' and skins' stars, and HP / ATK / Block are account-wide again; a
+ * build keeps its hero, gear, which pets and skins it brings, the bag (and storage) and the battle.
  */
 import { DEFAULT_BASIC_STATS } from './files';
 import type { SaveNote } from './salvage';
@@ -89,5 +91,62 @@ export function buildV1toV2(raw: Raw, v1Profile: Raw | null, notes: SaveNote[]):
   const basic = fromProfile('basic_stats', 'HP / ATK / Block', `set to ${DEFAULT_BASIC_STATS.hp} / ${DEFAULT_BASIC_STATS.atk} / ${DEFAULT_BASIC_STATS.initial_block}, enter yours`);
   if (basic !== undefined) out.basic_stats = basic;
   if (isObj(detailed) && Object.keys(detailed).length > 0) out.detailed_stats = structuredClone(detailed);
+  return out;
+}
+
+// ------------------------------------------------------------------ v2 → v3
+
+/**
+ * v2 account → v3. A version-2 account had no blessings, pet or skin stars or HP / ATK / Block (each build had
+ * them); if it came from version 1, they're taken from the version-1 profile kept inside it. Otherwise they
+ * start empty and the app fills them from the first build that has them (saves/legacy.ts).
+ */
+export function accountV2toV3(raw: Raw, notes: SaveNote[]): Raw {
+  const v1 = isObj(raw.migrated_from_v1) ? raw.migrated_from_v1 : null;
+  const v1Heroes = list(v1?.heroes).filter(isObj);
+  const heroes = list(raw.heroes).map((h) => {
+    if (!isObj(h)) return h;
+    const b = v1Heroes.find((x) => x.id === h.id)?.blessings;
+    return isObj(b) && list(b.equipped).length > 0 ? { ...h, blessings: structuredClone(b) } : h;
+  });
+  const out: Raw = { ...raw, version: 3, heroes };
+  if (v1) {
+    const pets = list(v1.pets).filter(isObj).map((p) => ({ id: p.id, stars: p.stars }));
+    if (pets.length) out.pets = pets;
+    const skins = list(v1.skins).filter(isObj).map((x) => ({ id: x.id, stars: x.stars }));
+    if (skins.length) out.skins = skins;
+    if (isObj(v1.basic_stats)) out.stats = structuredClone(v1.basic_stats);
+  }
+  notes.push({
+    level: 'info',
+    message: `Account file updated to version 3: Dragon's Blessings, pet and skin stars, and HP / ATK / Block are account-wide now (Profile tab)${v1 ? ', taken from your old profile' : "; they're filled in from your builds as you open them"}.`,
+  });
+  return out;
+}
+
+/** v2 build → v3: what's account-wide now goes to `legacy` (it wins until the app moves it into the account). */
+export function buildV2toV3(raw: Raw, notes: SaveNote[] = []): Raw {
+  const out: Raw = { ...raw, version: 3 };
+  const legacy: Raw = {};
+  const pets = list(raw.pets);
+  const skins = list(raw.skins);
+  // A version-2 build without blessings had none, whatever the hero had elsewhere.
+  if (isObj(raw.blessings)) legacy.blessings = raw.blessings;
+  else if (typeof raw.hero === 'string') legacy.blessings = { level: 1, equipped: [] };
+  const starsOk = (v: unknown) => typeof v === 'number' && Number.isInteger(v) && v >= 0;
+  pets.forEach((p, i) => {
+    if (isObj(p) && p.stars !== undefined && !starsOk(p.stars))
+      notes.push({ level: 'warning', message: `pets[${i}] (${String(p.id)}): ${JSON.stringify(p.stars)} isn't a number of stars, so it plays at your Profile's stars for it.` });
+  });
+  const petStars = pets.filter((p): p is Raw => isObj(p) && starsOk(p.stars)).map((p) => ({ id: p.id, stars: p.stars }));
+  if (petStars.length) legacy.pets = petStars;
+  const skinStars = skins.filter((x): x is Raw => isObj(x) && x.stars !== undefined).map((x) => ({ id: x.id, stars: x.stars }));
+  if (skinStars.length) legacy.skins = skinStars;
+  legacy.basic_stats = isObj(raw.basic_stats) ? raw.basic_stats : structuredClone(DEFAULT_BASIC_STATS);
+  delete out.blessings;
+  delete out.basic_stats;
+  if (raw.pets !== undefined) out.pets = pets.map((p) => (isObj(p) ? Object.fromEntries(Object.entries(p).filter(([k]) => k !== 'stars')) : p));
+  if (raw.skins !== undefined) out.skins = skins.map((x) => (isObj(x) ? Object.fromEntries(Object.entries(x).filter(([k]) => k !== 'stars')) : x));
+  out.legacy = legacy;
   return out;
 }

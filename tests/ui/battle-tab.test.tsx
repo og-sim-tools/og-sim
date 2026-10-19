@@ -33,7 +33,7 @@ describe('build picker', () => {
     const p = picker();
     fireEvent.click(screen.getByRole('button', { name: /raven/ }));
     const rows = screen.getAllByRole('option');
-    expect(rows.map((r) => r.textContent)).toEqual(['raven', 'trixie spike']);
+    expect(rows.map((r) => r.textContent)).toEqual(['Temp build not in your list', 'raven', 'trixie spike']);
     fireEvent.click(screen.getByRole('button', { name: 'Save over trixie spike' }));
     dialog('Save over "trixie spike"?').getByText(/replaced by your build \("raven"\)/);
     fireEvent.click(dialog('Save over "trixie spike"?').getByRole('button', { name: 'Save over it' }));
@@ -73,11 +73,11 @@ describe('build picker', () => {
     expect(p.onLoad).toHaveBeenCalledWith('trixie spike');
   });
 
-  it('a new build asks for a name, refusing unsafe ones and warning before replacing another', () => {
+  it('the temp build asks for a name when saved, refusing unsafe ones and warning before replacing another', () => {
     const p = picker({ active: '', dirty: false });
-    expect(screen.getByRole('button', { name: /New build \(not saved\)/ })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Temp build/ })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
-    const d = dialog('Save as a new build');
+    const d = dialog('Save the temp build');
     fireEvent.change(d.getByLabelText('Build name'), { target: { value: '../x' } });
     expect((d.getByRole('button', { name: 'Save' }) as HTMLButtonElement).disabled).toBe(true);
     fireEvent.change(d.getByLabelText('Build name'), { target: { value: 'Raven' } });
@@ -85,6 +85,55 @@ describe('build picker', () => {
     fireEvent.change(d.getByLabelText('Build name'), { target: { value: 'trixie burn' } });
     fireEvent.keyDown(d.getByLabelText('Build name'), { key: 'Enter' });
     expect(p.onSave).toHaveBeenCalledWith('trixie burn');
+  });
+});
+
+describe('build picker: temp build, rename, search, previews', () => {
+  it('opens the temp build from the list, and starting over asks only when the temp build has items', () => {
+    const onOpenTemp = vi.fn();
+    const p = picker({ dirty: false, onOpenTemp });
+    fireEvent.click(screen.getByRole('button', { name: /raven/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^Temp build/ }));
+    expect(onOpenTemp).toHaveBeenCalled();
+    cleanup();
+    const q = picker({ active: '', dirty: false, tempHasItems: true });
+    fireEvent.click(screen.getByRole('button', { name: 'New build' }));
+    expect(q.onNew).not.toHaveBeenCalled();
+    fireEvent.click(dialog('Start a new build?').getByRole('button', { name: 'New build' }));
+    expect(q.onNew).toHaveBeenCalled();
+    expect(p.onLoad).not.toHaveBeenCalled();
+  });
+
+  it('the white pencil renames a build, refusing a name another build has', () => {
+    const onRename = vi.fn();
+    picker({ onRename });
+    fireEvent.click(screen.getByRole('button', { name: /raven/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Rename trixie spike' }));
+    const d = dialog('Rename "trixie spike"');
+    fireEvent.change(d.getByLabelText('Build name'), { target: { value: 'Raven' } });
+    expect((d.getByRole('button', { name: 'Rename' }) as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.change(d.getByLabelText('Build name'), { target: { value: 'trixie spikes' } });
+    fireEvent.click(d.getByRole('button', { name: 'Rename' }));
+    expect(onRename).toHaveBeenCalledWith('trixie spike', 'trixie spikes');
+  });
+
+  it('searching the list shows the builds whose name matches as I type', () => {
+    picker({ builds: ['raven', 'trixie spike', 'trixie burn'] });
+    fireEvent.click(screen.getByRole('button', { name: /raven/ }));
+    fireEvent.change(screen.getByLabelText('Search builds'), { target: { value: 'TRIX' } });
+    expect(screen.getAllByRole('option').map((r) => r.textContent)).toEqual(['trixie spike', 'trixie burn']);
+  });
+
+  it('with previews on, each build shows its bag under its name', () => {
+    const renderPreview = vi.fn((name: string | null) => <i>bag of {name ?? 'temp'}</i>);
+    picker({ previews: true, renderPreview });
+    fireEvent.click(screen.getByRole('button', { name: /raven/ }));
+    expect(screen.getByText('bag of raven')).toBeTruthy();
+    expect(screen.getByText('bag of trixie spike')).toBeTruthy();
+    expect(screen.getByText('bag of temp')).toBeTruthy();
+    const card = screen.getByText('bag of raven').closest('.picker-card')!;
+    // The name is the caption above the bag.
+    expect(card.querySelector('.picker-caption')!.textContent).toMatch(/^raven/);
   });
 });
 

@@ -25,7 +25,7 @@ interface Props {
   result: LoadResult;
   /** The data the open build uses (for "only this build"). */
   buildRefs?: DataRef[];
-  /** Start with "only this build" ticked (coming from the Battle tab's note). */
+  /** Start with "only this build" ticked (coming from the Build tab's note). */
   focusBuild?: boolean;
 }
 

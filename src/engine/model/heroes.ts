@@ -30,6 +30,11 @@ export const HeroSchema = z
             /** complete / partial (some text isn't simulated) / shop (no battle effect) / needs_values (numbers missing). */
             status: z.enum(['complete', 'partial', 'shop', 'needs_values']),
             notes: z.string().optional(),
+            /**
+             * The skill enhances random bag slots at the start of the game (they're picked on the layout: Enhanced
+             * cells). count: how many; color: how they're drawn; label: what the enhancement does there.
+             */
+            enhanced_slots: z.object({ count: z.number().int().positive(), color: z.string().min(1), label: z.string().min(1) }).strict().optional(),
           })
           .strict(),
       )

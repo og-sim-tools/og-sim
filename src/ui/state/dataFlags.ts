@@ -1,6 +1,6 @@
 /**
  * Game data that isn't confirmed in game yet (verified: false, SPEC §10) or that the loader had problems with,
- * for the Data tab and for the note in the Battle tab about the data a build uses.
+ * for the Data tab and for the note in the Build tab about the data a build uses.
  */
 import type { GameData, Issue, LoadResult } from '../../engine/loader';
 import type { Loadout } from '../../engine/loadout';

@@ -1,13 +1,15 @@
 /**
- * Item browser (SPEC §8): shop items, gear and pet spawns with search and filters, and a tab with the
- * starting equipment the build's hero can bring (against its Supply Ability).
+ * Item browser (SPEC §8): shop items and pet spawns with search, filters and a Sort menu, and a tab with the
+ * starting equipment the build's hero can bring (against its Supply Ability), with the same filters. Gear
+ * isn't listed: it's put in the bag from the Gear box. Click an item to put it in the bag, or drag it.
  */
-import { useMemo, useState } from 'react';
-import type { GameData } from '../../engine/loader';
+import { type DragEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { footprintOf, placeFootprint } from '../../engine/bag';
+import type { GameData, Item } from '../../engine/loader';
 import { CLASSES, RARITIES } from '../../engine/model';
 import type { AvailableSupply } from '../../engine/validate';
-import { type BrowserEntry, type BrowserFilter, EMPTY_FILTER, allTags, browserEntries, filterEntries } from '../state/browser';
-import { DRAG_ITEM, rarityColor } from './BagGrid';
+import { type BrowserEntry, type BrowserFilter, type BrowserSort, EMPTY_FILTER, allTags, browserEntries, filterEntries, sortEntries } from '../state/browser';
+import { endDrag, originGrab, rarityColor, spriteOf, startDrag } from './BagGrid';
 import { imageUrl } from '../staticData';
 
 export interface StartingEquipment {
@@ -32,22 +34,157 @@ interface Props {
   starting?: StartingEquipment;
 }
 
+const ITEM_RARITIES = RARITIES.slice(0, 5);
+
 function Icon({ def, kind }: { def: BrowserEntry['def']; kind: string }) {
   const src = kind === 'gear' && 'icon' in def && def.icon ? def.icon : 'image' in def && def.image ? def.image : null;
   return <span className="icon">{src ? <img src={imageUrl(src)} alt="" draggable={false} /> : null}</span>;
 }
 
+/** Drag an item from a list: the whole item shows under the pointer, held by its origin cell. */
+function dragFromList(ev: DragEvent, item: Item) {
+  const fp = footprintOf(item);
+  if (!fp) return;
+  const cells = placeFootprint(fp, { x: 0, y: 0, rotation: 0 }).cells;
+  startDrag(ev, { kind: 'item', id: item.id, ...originGrab(cells) }, { cells, color: rarityColor(item.rarity), sprite: spriteOf(item as Parameters<typeof spriteOf>[0]) });
+}
+
+/** The list's order and rarity filter (rarity sorts common → legendary; hovering it offers one rarity only). */
+interface Order {
+  sort: BrowserSort;
+  rarity: string;
+}
+
+const orderLabel = (o: Order) =>
+  o.rarity ? `${o.rarity[0]!.toUpperCase()}${o.rarity.slice(1)} only` : o.sort === 'value' ? 'Value (low → high)' : o.sort === 'rarity' ? 'Rarity (common → legendary)' : 'Alphabetical';
+
+/** Sort menu: Alphabetical, Value, Rarity (click: all, common → legendary; hover or ▸: one rarity only). */
+export function SortMenu({ value, onChange }: { value: Order; onChange: (o: Order) => void }) {
+  const [open, setOpen] = useState(false);
+  const [sub, setSub] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: MouseEvent) => !box.current?.contains(e.target as Node) && setOpen(false);
+    const esc = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
+    window.addEventListener('mousedown', close);
+    window.addEventListener('keydown', esc);
+    return () => {
+      window.removeEventListener('mousedown', close);
+      window.removeEventListener('keydown', esc);
+    };
+  }, [open]);
+  const pick = (o: Order) => {
+    onChange(o);
+    setOpen(false);
+    setSub(false);
+  };
+  const isOn = (o: Order) => o.sort === value.sort && o.rarity === value.rarity;
+  return (
+    <div className="sort-menu" ref={box}>
+      <button
+        className="sort-button"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={`Sort: ${orderLabel(value)}`}
+        onClick={() => {
+          setOpen((x) => !x);
+          setSub(false);
+        }}
+      >
+        <span className="muted">Sort:</span> {orderLabel(value)} <span aria-hidden="true">▾</span>
+      </button>
+      {open && (
+        <div className="menu" role="menu" aria-label="Sort">
+          <button role="menuitemradio" aria-checked={isOn({ sort: 'name', rarity: '' })} onMouseEnter={() => setSub(false)} onClick={() => pick({ sort: 'name', rarity: '' })}>
+            Alphabetical
+          </button>
+          <button role="menuitemradio" aria-checked={isOn({ sort: 'value', rarity: '' })} onMouseEnter={() => setSub(false)} onClick={() => pick({ sort: 'value', rarity: '' })}>
+            Value (low → high)
+          </button>
+          <div className="menu-row" onMouseEnter={() => setSub(true)}>
+            <button role="menuitemradio" aria-checked={value.sort === 'rarity'} onClick={() => pick({ sort: 'rarity', rarity: '' })}>
+              Rarity (common → legendary)
+            </button>
+            <button className="sub-arrow" aria-label="One rarity only" aria-haspopup="menu" aria-expanded={sub} onClick={() => setSub((x) => !x)}>
+              ▸
+            </button>
+            {sub && (
+              <div className="menu submenu" role="menu" aria-label="Rarity">
+                <button role="menuitemradio" aria-checked={isOn({ sort: 'rarity', rarity: '' })} onClick={() => pick({ sort: 'rarity', rarity: '' })}>
+                  All, common → legendary
+                </button>
+                {ITEM_RARITIES.map((r) => (
+                  <button key={r} role="menuitemradio" aria-checked={value.rarity === r} onClick={() => pick({ sort: 'rarity', rarity: r })}>
+                    <span className="swatch" style={{ background: rarityColor(r) }} /> {r[0]!.toUpperCase() + r.slice(1)} only
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Search, kind, class, tag and hero filters with the Sort menu (the starting equipment tab leaves some out). */
+function Filters({ f, set, tags, data, kinds = true, heroes = true }: { f: BrowserFilter & Order; set: (patch: Partial<BrowserFilter & Order>) => void; tags: string[]; data: GameData; kinds?: boolean; heroes?: boolean }) {
+  return (
+    <div className="filters">
+      <input placeholder="Search by name…" value={f.text} onChange={(e) => set({ text: e.target.value })} aria-label={kinds ? 'Search items' : 'Search starting equipment'} />
+      {kinds && (
+        <select value={f.kind === 'supply' ? '' : f.kind} onChange={(e) => set({ kind: e.target.value as BrowserFilter['kind'] })} aria-label="Kind">
+          <option value="">All kinds</option>
+          <option value="item">Shop items</option>
+          <option value="pet_spawn">Pet-spawned</option>
+        </select>
+      )}
+      <select value={f.cls} onChange={(e) => set({ cls: e.target.value })} aria-label="Class">
+        <option value="">Any class</option>
+        {CLASSES.map((c) => (
+          <option key={c} value={c}>
+            {c}
+          </option>
+        ))}
+      </select>
+      <select value={f.tag} onChange={(e) => set({ tag: e.target.value })} aria-label="Tag">
+        <option value="">Any tag</option>
+        {tags.map((t) => (
+          <option key={t} value={t}>
+            {t}
+          </option>
+        ))}
+      </select>
+      <SortMenu value={{ sort: f.sort, rarity: f.rarity }} onChange={(o) => set(o)} />
+      {heroes && (
+        <select value={f.hero} onChange={(e) => set({ hero: e.target.value })} aria-label="Hero" style={{ gridColumn: '1 / -1' }}>
+          <option value="">Any hero (exclusive items)</option>
+          {[...data.heroes.values()].map((h) => (
+            <option key={h.id} value={h.id}>
+              {h.name} exclusives
+            </option>
+          ))}
+        </select>
+      )}
+    </div>
+  );
+}
+
+const START: BrowserFilter & Order = { ...EMPTY_FILTER, sort: 'name' };
+
 export function ItemBrowser({ data, supplyIds, onPick, onEdit, showEnemyItems = false, starting }: Props) {
   const [tab, setTab] = useState<'items' | 'starting'>('items');
-  const [f, setF] = useState<BrowserFilter>(EMPTY_FILTER);
-  const [startText, setStartText] = useState('');
+  const [f, setF] = useState<BrowserFilter & Order>(START);
+  const [sf, setSf] = useState<BrowserFilter & Order>(START);
+  // Gear isn't listed: the Gear box puts it in the bag.
   const entries = useMemo(
-    () => browserEntries(data).filter((e) => showEnemyItems || !(e.kind !== 'gear' && data.items.get(e.id)?.enemy_item)),
+    () => browserEntries(data).filter((e) => e.kind !== 'gear' && (showEnemyItems || !data.items.get(e.id)?.enemy_item)),
     [data, showEnemyItems],
   );
   const tags = useMemo(() => allTags(entries), [entries]);
-  const shown = useMemo(() => filterEntries(entries, f, supplyIds), [entries, f, supplyIds]);
-  const set = (patch: Partial<BrowserFilter>) => setF((x) => ({ ...x, ...patch }));
+  const shown = useMemo(() => sortEntries(filterEntries(entries, f, supplyIds), f.sort), [entries, f, supplyIds]);
+  const set = (patch: Partial<BrowserFilter & Order>) => setF((x) => ({ ...x, ...patch }));
   const heroName = (id: string) => data.heroes.get(id)?.name ?? id;
   const onStart = tab === 'starting' && !!starting;
 
@@ -64,52 +201,12 @@ export function ItemBrowser({ data, supplyIds, onPick, onEdit, showEnemyItems = 
         </div>
       )}
       {onStart ? (
-        <StartingList s={starting} text={startText} setText={setStartText} />
+        <StartingList s={starting} f={sf} set={(patch) => setSf((x) => ({ ...x, ...patch }))} data={data} />
       ) : (
         <>
-          <div className="filters">
-            <input placeholder="Search by name…" value={f.text} onChange={(e) => set({ text: e.target.value })} aria-label="Search items" />
-            <select value={f.kind === 'supply' ? '' : f.kind} onChange={(e) => set({ kind: e.target.value as BrowserFilter['kind'] })} aria-label="Kind">
-              <option value="">All kinds</option>
-              <option value="item">Shop items</option>
-              <option value="gear">Gear</option>
-              <option value="pet_spawn">Pet-spawned</option>
-            </select>
-            <select value={f.cls} onChange={(e) => set({ cls: e.target.value })} aria-label="Class">
-              <option value="">Any class</option>
-              {CLASSES.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-            <select value={f.rarity} onChange={(e) => set({ rarity: e.target.value })} aria-label="Rarity">
-              <option value="">Any rarity</option>
-              {RARITIES.slice(0, 5).map((r) => (
-                <option key={r} value={r}>
-                  {r}
-                </option>
-              ))}
-            </select>
-            <select value={f.tag} onChange={(e) => set({ tag: e.target.value })} aria-label="Tag">
-              <option value="">Any tag</option>
-              {tags.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-            <select value={f.hero} onChange={(e) => set({ hero: e.target.value })} aria-label="Hero" style={{ gridColumn: '1 / -1' }}>
-              <option value="">Any hero (exclusive items)</option>
-              {[...data.heroes.values()].map((h) => (
-                <option key={h.id} value={h.id}>
-                  {h.name} exclusives
-                </option>
-              ))}
-            </select>
-          </div>
+          <Filters f={f} set={set} tags={tags} data={data} />
           <div className="small muted">
-            {shown.length} of {entries.length}. Drag one onto the bag, or click it and place it with the arrow keys.
+            {shown.length} of {entries.length}. Click one to put it in the bag, or drag it onto the bag or the storage.
           </div>
           <div className="list">
             {shown.map((e) => (
@@ -117,17 +214,14 @@ export function ItemBrowser({ data, supplyIds, onPick, onEdit, showEnemyItems = 
                 key={`${e.kind}:${e.id}`}
                 className="list-row"
                 draggable={!e.needsShape}
-                onDragStart={(ev) => {
-                  ev.dataTransfer.setData(DRAG_ITEM, e.id);
-                  ev.dataTransfer.effectAllowed = 'copy';
-                }}
+                onDragStart={(ev) => dragFromList(ev, e.def as Item)}
+                onDragEnd={endDrag}
                 onClick={() => (e.needsShape ? onEdit(e) : onPick(e))}
                 title={`${e.name}\n${'effect_text' in e.def ? e.def.effect_text || e.def.flavor : e.def.gear_effect_text}`}
               >
                 <span className="swatch" style={{ background: rarityColor(e.rarity, e.kind === 'gear') }} />
                 <Icon def={e.def} kind={e.kind} />
                 <span className="name">{e.name}</span>
-                {e.kind === 'gear' && <span className="badge">gear{'s_rank' in e.def && e.def.s_rank ? ' ⭐S' : ''}</span>}
                 {e.kind === 'pet_spawn' && <span className="badge">pet</span>}
                 {e.classes.length > 0 && <span className="badge class">{e.classes.join('/')}</span>}
                 {e.hero && <span className="badge class">🔒{heroName(e.hero)}</span>}
@@ -136,6 +230,7 @@ export function ItemBrowser({ data, supplyIds, onPick, onEdit, showEnemyItems = 
                     starting eq.
                   </span>
                 )}
+                {f.sort === 'value' && <span className="small muted">{e.value ?? '?'}</span>}
                 {e.needsShape && <span className="badge err">needs shape</span>}
               </div>
             ))}
@@ -146,11 +241,36 @@ export function ItemBrowser({ data, supplyIds, onPick, onEdit, showEnemyItems = 
   );
 }
 
-/** Starting equipment the hero can bring: one of each, within its Supply Ability. */
-function StartingList({ s, text, setText }: { s: StartingEquipment; text: string; setText: (t: string) => void }) {
+/** Starting equipment the hero can bring: one of each, within its Supply Ability. Same filters as the shop items. */
+function StartingList({ s, f, set, data }: { s: StartingEquipment; f: BrowserFilter & Order; set: (patch: Partial<BrowserFilter & Order>) => void; data: GameData }) {
+  const entries = useMemo(
+    () =>
+      s.available.map((a) => ({
+        a,
+        id: a.item.id,
+        name: a.item.name,
+        kind: 'item' as const,
+        rarity: a.item.rarity,
+        tags: a.item.tags,
+        classes: a.item.class_restriction,
+        hero: a.item.hero_exclusive ?? null,
+        value: a.item.value_unknown ? null : a.item.value,
+      })),
+    [s.available],
+  );
+  const tags = useMemo(() => [...new Set(entries.flatMap((e) => e.tags))].sort(), [entries]);
   if (!s.heroName) return <div className="small muted">Pick the build's hero (Hero box) to see their starting equipment.</div>;
-  const q = text.trim().toLowerCase();
-  const list = s.available.filter((a) => !q || a.item.name.toLowerCase().includes(q));
+  const text = f.text.trim().toLowerCase();
+  const list = sortEntries(
+    entries.filter(
+      (e) =>
+        (!text || e.name.toLowerCase().includes(text) || e.id.includes(text)) &&
+        (!f.cls || e.classes.length === 0 || (e.classes as string[]).includes(f.cls)) &&
+        (!f.rarity || e.rarity === f.rarity) &&
+        (!f.tag || e.tags.includes(f.tag)),
+    ),
+    f.sort,
+  );
   return (
     <>
       <div className="small">
@@ -159,14 +279,17 @@ function StartingList({ s, text, setText }: { s: StartingEquipment; text: string
       <div className={`meter${s.used > s.capacity ? ' over' : ''}`}>
         <div style={{ width: `${Math.min(100, (s.used / Math.max(1, s.capacity)) * 100)}%` }} />
       </div>
-      <input placeholder="Search starting equipment…" value={text} onChange={(e) => setText(e.target.value)} aria-label="Search starting equipment" style={{ width: '100%', margin: '6px 0' }} />
+      <Filters f={f} set={set} tags={tags} data={data} kinds={false} heroes={false} />
+      <div className="small muted">
+        {list.length} of {entries.length}. Click one to put it in the bag.
+      </div>
       <div className="list">
         {s.available.length === 0 && (
           <div className="muted small" style={{ padding: 6 }}>
             Nothing unlocked for this class yet (hero stars unlock starting equipment).
           </div>
         )}
-        {list.map((a) => {
+        {list.map(({ a }) => {
           const inBag = s.inBag.has(a.item.id);
           const over = s.used + a.cost > s.capacity;
           const blocked = inBag ? 'Already in the bag (one of each)' : over ? 'Would go over the Supply Ability' : a.item.shape === null ? 'Needs a shape (Item editor)' : null;

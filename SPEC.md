@@ -112,6 +112,9 @@ bag:
 ```
 
 - Coordinates: `(x, y)`, `(0, 0)` top-left.
+- **Bag sizes by class** (user, 2026-10-19): besides the full bag, every class has three smaller bags named by their cell count, `x26`, `x32` and `x38`, in `data/config.yaml` (`bag.sizes`). The Bag box picks one for the build's hero class; Edit cells is still there for anything else.
+- Items can sit at most **4 cells outside the bag** (they do nothing there); moving or dropping one further stops at that edge, so nothing is lost off the grid.
+- **Storage** (user, 2026-10-19): a box beside the bag where items are set aside while rearranging, anywhere (not on a grid). Stored items don't fight or count towards the build's value; they're saved with the build (`storage`, positions as shares of the box).
 
 ### 4.2 Shapes, rotation, item dots
 
@@ -286,9 +289,10 @@ bag:
   - **Hero-exclusive items** and their recipes (from the hero's page).
   - **Two skills** [LATER effects]. They're scraped now so the GUI can show them.
   - **Skill Links** [LATER effects]: a hero's own link slot 1 unlocks at 4 stars and slot 2 at 8 stars. A slot holds a skill from another hero in the same class. That hero shares one skill at 4 stars and the other at 8 stars; which skill comes at which star is listed per hero (e.g. Rose: Parting Rose at 4, Impale at 8).
-  - **Skins** (built 2026-10-17, user asked): skin skills have quests and star levels (0–5) and say who can use them (all heroes, a class, a hero). Data in `data/skins/`. **Each build brings up to 2 skin skills, each with its own stars and "quest done"** (user, 2026-10-18: per build, not account-wide). A skill works only for heroes it's available to, once its quest is done; star rows add to the 0★ reward.
+  - **Skins** (built 2026-10-17, user asked): skin skills have quests and star levels (0–5) and say who can use them (all heroes, a class, a hero). Data in `data/skins/`. **The skins I own and their stars are account-wide** (user, 2026-10-19); **each build brings up to 2 skin skills and says whether their quest is done**. A skill works only for heroes it's available to, if owned, once its quest is done; star rows add to the 0★ reward.
+  - **Enhanced slots** (Venom's Poison Coating, Cecilia's Instant Casting): random in game, so they're marked on the bag by hand. Each skill says in its data how many slots it enhances, their colour (Instant Casting green, Poison Coating purple; user, 2026-10-19) and what it does there; the Bag box only offers the build's hero's own (or linked) skill. Venom's Poison Coating blessing adds its value in slots.
   - **Ownership effect**: ignored (already in Stat Details).
-- **Blessings** (Dragon's Blessing) are **per hero, and saved with each build** (user, 2026-10-18: "you get one per hero in game"; a build keeps its hero's blessings, edited in the Battle tab):
+- **Blessings** (Dragon's Blessing) are **per hero and account-wide** (user, 2026-10-19: "you get one per hero in game"; saved in the account, edited in the Profile tab or from the Build tab's Hero box, the same in every build with that hero):
   - Each hero has their own set of **up to 5 blessings**. (The wiki ties the slot count to Dragon's Blessing level; I just enter the blessings I have, so the simulator only enforces the maximum of 5.)
   - **At most one of each unique blessing** per hero, at any rarity.
   - **Common blessings**: any hero. Each has a value range per rarity, Common to Mythic (e.g. All DMG: Common 1–2%, Mythic 15–20%). Some start at Uncommon.
@@ -303,6 +307,7 @@ bag:
 - Up to **3 pets** equipped at once.
 - Each pet has an **active skill** with an **activation cost** of 1–3 points. Each hero has **5 points** per run, so the GUI warns if the active pets cost more than 5.
 - Stars: **0–6**. Extra effects unlock at certain stars (listed per pet; e.g. 1, 2, 4, 5 stars), and some reduce the activation cost.
+- **The pets I own and their stars are account-wide** (user, 2026-10-19); a build picks up to 3 of them and which are active.
 - Pet levels only raise HP/ATK, which are already in Stat Details, so they're ignored.
 - Many pet skills only affect the shop or merging (e.g. Geezer's Special Shop, Mimic's auto-merge). Those are [LATER] economy effects.
 - Pets that put items in the bag or act in battle are what the MVP cares about. Implement each as its own effect handler, configured by data (values per star level). This is the one place where per-entity code is acceptable.
@@ -352,6 +357,13 @@ Everything in this file is editable from the GUI (§8.1); the file is just where
 - **Build** (`layouts/<name>.yaml`, Battle tab): the hero, its **blessings**, **gear**, **pets** (with stars), up to 2 **skins** (with stars and quest done), **HP / ATK / Block**, the bag and the battle settings.
 - **Hard rule: a file saved by any version must load in every later version.** Every file has a `version`; older versions migrate step by step (`src/engine/saves/migrate.ts`); anything that still doesn't fit is dropped with a note and the rest loads; unknown ids are kept and reported by the checks. Frozen fixtures of every released version live in `tests/fixtures/saves/<version>/` and must keep loading. A version-1 account keeps the whole old profile under `migrated_from_v1`, so version-1 builds are completed from it exactly as version 1 did.
 - **Account export / import**: one `.zip` with `profile.yaml` and `builds/*.yaml`.
+
+**Version 3 (user, 2026-10-19): everything I own is account-wide again.**
+
+- **Account**: HP / ATK / Block as Stat Details shows them (`stats`; left out until entered), the heroes I own with their stars, skill links and **Dragon's Blessings**, the **pets** and **skins** I own with their stars, and auras.
+- **Build**: the hero, gear (rarity and tier), which pets it brings (and which are active), up to 2 skins (and their quests), the bag, the storage and the battle settings.
+- Migration: a version-2 account that came from version 1 takes these from the old profile kept inside it. A version-2 build keeps its own blessings, stars and HP / ATK / Block (under `legacy` when read, and they win so it plays as it did) until the app opens it: then they move into the account where the account has none yet, and where it already has other values the account's are used and a note says what the build had. Fixtures: `tests/fixtures/saves/v3/`.
+- **Calculating HP / ATK / Block** from training level, gear level, pet and skin stars and gear rarity and tier (user, 2026-10-19) **isn't built**: the wiki has no training page and no stats per gear level (2026-10-19, see `data/SOURCES.md`). Until that data exists they're typed in.
 
 ### 4.9 Enemies
 
@@ -538,10 +550,14 @@ From my observations (not on the wiki):
 ## 8. Web UI
 
 - **Bag grid** rendered from the mask; unavailable cells clearly greyed out.
-- **Searchable item browser:** search by name, filter by class, hero, rarity, tag, and kind (item / gear / starting equipment / pet spawn). Class and hero restrictions visible on each entry. Unverified wiki data and items that still need a shape are marked.
+- **Tabs** (user, 2026-10-19): **Build** (only for building the bag), **Battle** (my bag and the opponent's side by side, each with its hero, blessings, gear rarities, pets, skins and auras under it, then the fight), Optimize, Profile, Item editor, Data.
+- **Build box** across the top: one dropdown of saved builds with a search box; the **temp build** first (a scratch build that isn't in the list, kept as it's edited until it's saved under a name); per build a white pencil (rename), green arrow (save over) and red bin (delete), each asking first; **Preview bag** shows each build's bag under its name, 3 to a row.
+- **Searchable item browser:** search by name, filter by class, hero, tag and kind (shop item / pet spawn); gear isn't listed (the Gear box places it). A **Sort** menu: alphabetical, value (cheapest first), rarity (common → legendary; hovering it offers one rarity only). The starting equipment tab has the same search and filters. Class and hero restrictions visible on each entry; items that still need a shape are marked.
 - **Placement:**
-  - Drag and drop with the mouse.
-  - Keyboard: arrow keys move the selected item, space rotates, enter places, delete/backspace removes.
+  - Clicking an item in a list puts it straight into the first free spot (unrotated); if there's none, a message says so.
+  - Drag and drop with the mouse; the whole item shows under the pointer and where it would land is outlined in the bag. Drop it on the storage box to set it aside, or on the bin to remove it.
+  - Click an item in the bag to select it, click it again to rotate it. A click anywhere else in the Bag box lets go. **Item details** (a button at the top of the box) opens its stats in a compact side panel.
+  - Keyboard: arrow keys move the selected item, space rotates, delete/backspace removes.
 - **Overlaps and invalid placements highlighted in red.**
 - **Item dots shown** on the grid for the selected or hovered item, including which items they touch. Dots outside the bag can be shown faded but must do nothing.
 - **Stats panel:** player stats and per-item final stats with the breakdown from §4.3.
@@ -552,7 +568,8 @@ From my observations (not on the wiki):
 
 All account details are entered in the GUI and saved automatically (§4.8). The whole account (profile and every build) can be exported and imported as one `.zip`.
 
-- **Account stats:** a form laid out like the in-game Stat Details screen (Basic Stats, then Detailed Stats), generated from the stat registry. Basic stats accept `K`/`M`/`B` suffixes.
+- **Account stats** (first in the Profile tab): HP, ATK and Block as Stat Details shows them, with `K`/`M`/`B` suffixes. The other stats are calculated (§4.3).
+- **Pets and skins owned**, with their stars (Profile tab).
 - **Heroes owned:** all my heroes with their stars (0–9). Used to work out unlocked supply items and available skill links.
 - **Active hero:** pick a hero (grouped by class).
   - **Skill links:** only offer slots and skills unlocked by the star rules in §4.6. Saved now; effects are [LATER].
@@ -565,7 +582,7 @@ All account details are entered in the GUI and saved automatically (§4.8). The 
   - Only shows items unlocked by my heroes' stars and allowed for the active hero's class.
   - Shows a running total like `14 / 16 points` and blocks adding an item that would exceed capacity.
   - Chosen items then appear in the bag for placement.
-- **Bag shape:** choose the full 8×6 bag or toggle cells on/off to match a smaller unlocked bag.
+- **Bag shape:** the full 8×6 bag or the class's x26 / x32 / x38, or toggle cells on/off by hand.
 - **Enemy:** pick an enemy from `data/enemies/` or enter stats directly (HP, block, damage reduction, attacks, boss flag, starting statuses, resistances/immunities).
 - **Battle settings:** mode, max duration, RNG seed, number of Monte Carlo runs.
 

@@ -2,7 +2,7 @@
  * Battle panel (SPEC §8, §8.1): enemy (from data/enemies or typed in), mode, time limit, seed,
  * Monte Carlo runs; run a battle and see the summary, per-item results and event log.
  */
-import { useMemo, useState } from 'react';
+import { type ReactNode, useMemo, useState } from 'react';
 import { BattleSetupError, runBattle } from '../../engine/combat/battle';
 import { type MonteCarloResult, resolveEnemies, runMonteCarlo, runSeed } from '../../engine/combat/montecarlo';
 import { IMMUNITIES } from '../../engine/model';
@@ -45,11 +45,22 @@ interface Props {
   layouts?: string[];
   myBuild?: () => EnemyBuild;
   layoutAsBuild?: (name: string) => Promise<EnemyBuild>;
-  /** Switch the Bag / Profile tabs to the enemy's build. */
+  /** Switch the Build / Profile tabs to the enemy's build. */
   onEditEnemy?: () => void;
+  /**
+   * Which part to show: the opponent (enemy picker and editor), the fight (mode, runs, Run, results), or both.
+   * The Battle tab shows the opponent beside my bag and the fight under both.
+   */
+  part?: 'all' | 'opponent' | 'fight';
+  /** Shown under the opponent picker (the opponent's bag and setup). */
+  opponentExtra?: ReactNode;
 }
 
-export function BattlePanel({ loadout, battle, onChange, layouts = [], myBuild, layoutAsBuild, onEditEnemy }: Props) {
+const BUILD_OPTION = '__build:';
+
+export function BattlePanel({ loadout, battle, onChange, layouts = [], myBuild, layoutAsBuild, onEditEnemy, part = 'all', opponentExtra }: Props) {
+  const showOpponent = part !== 'fight';
+  const showFight = part !== 'opponent';
   const b = battle ?? DEFAULT_BATTLE;
   const { data } = loadout;
   const cfg = data.config!;
@@ -111,24 +122,64 @@ export function BattlePanel({ loadout, battle, onChange, layouts = [], myBuild, 
 
   const setInline = (patch: Partial<Inline>) => set({ enemy: { ...(inline ?? NEW_ENEMY), ...patch } });
 
-  return (
-    <Panel id="battle.battle" title="Battle">
+  /** One of my saved builds as the opponent: it fights as a player, with my account. */
+  const pickBuild = async (name: string) => {
+    if (!layoutAsBuild) return;
+    try {
+      setError(null);
+      const build = await layoutAsBuild(name);
+      onChange({ ...b, enemy: { ...structuredClone(NEW_ENEMY), id: 'player_build', name, kind: 'player', attacks: [], build } });
+    } catch (e) {
+      setError(`Couldn't load "${name}": ${(e as Error).message}`);
+    }
+  };
+  const fromBuild = inline?.build?.source_layout && layouts.includes(inline.build.source_layout) && inline.name === inline.build.source_layout ? inline.build.source_layout : null;
+  const enemyValue = fromBuild ? BUILD_OPTION + fromBuild : inline ? '__custom' : typeof b.enemy === 'string' ? b.enemy : '';
+
+  const opponent = (
+    <>
       <div className="form-grid" style={{ gridTemplateColumns: '110px 1fr' }}>
         <label>Enemy</label>
         <select
           aria-label="Enemy"
-          value={inline ? '__custom' : typeof b.enemy === 'string' ? b.enemy : ''}
-          onChange={(e) => set({ enemy: e.target.value === '__custom' ? structuredClone(NEW_ENEMY) : e.target.value || undefined })}
+          value={enemyValue}
+          onChange={(e) => {
+            const v = e.target.value;
+            if (v.startsWith(BUILD_OPTION)) return void pickBuild(v.slice(BUILD_OPTION.length));
+            set({ enemy: v === '__custom' ? structuredClone(NEW_ENEMY) : v || undefined });
+          }}
         >
           <option value="">— choose —</option>
-          {[...data.enemies.values()].map((en) => (
-            <option key={en.id} value={en.id}>
-              {en.name}
-              {en.boss ? ' (boss)' : ''}
-            </option>
-          ))}
-          <option value="__custom">Type one in…</option>
+          <optgroup label="Monsters">
+            {[...data.enemies.values()].map((en) => (
+              <option key={en.id} value={en.id}>
+                {en.name}
+                {en.boss ? ' (boss)' : ''}
+              </option>
+            ))}
+          </optgroup>
+          {layoutAsBuild && layouts.length > 0 && (
+            <optgroup label="My saved builds (as a player)">
+              {layouts.map((n) => (
+                <option key={n} value={BUILD_OPTION + n}>
+                  {n}
+                </option>
+              ))}
+            </optgroup>
+          )}
+          <option value="__custom">{inline && !fromBuild ? `Typed in: ${inline.name}` : 'Type one in…'}</option>
         </select>
+      </div>
+      {opponentExtra}
+    </>
+  );
+
+  return (
+    <Panel id={part === 'opponent' ? 'battle.opponent' : part === 'fight' ? 'battle.fight' : 'battle.battle'} title={part === 'opponent' ? 'Opponent' : part === 'fight' ? 'Fight' : 'Battle'}>
+      {part === 'all' && opponent}
+      {part === 'opponent' && opponent}
+      {showFight && (
+      <div className="form-grid" style={{ gridTemplateColumns: '110px 1fr', marginTop: part === 'all' ? 4 : 0 }}>
         <label>Mode</label>
         <select aria-label="Mode" value={b.mode} onChange={(e) => set({ mode: e.target.value })}>
           {Object.entries(cfg.modes).map(([m, def]) => (
@@ -157,8 +208,9 @@ export function BattlePanel({ loadout, battle, onChange, layouts = [], myBuild, 
           <span className="small muted">{b.runs > 1 ? `seeds ${String(runSeed(b.seed, 0))} … ${String(runSeed(b.seed, b.runs - 1))} (1 battle per seed)` : `seed ${String(b.seed)}`}</span>
         </span>
       </div>
+      )}
 
-      {inline && (
+      {showOpponent && inline && (
         <EnemyEditor
           enemy={inline}
           statuses={[...data.statuses.values()].map((s) => s.id)}
@@ -187,7 +239,7 @@ export function BattlePanel({ loadout, battle, onChange, layouts = [], myBuild, 
           }
         />
       )}
-      {fights > 1 && (
+      {showOpponent && fights > 1 && (
         <div className="hero-card" style={{ marginTop: 8 }}>
           <div className="small muted">Enemies, in order ({b.mode}: {fights} fights{cfg.modes[b.mode]?.boss_fights.length ? `, bosses: ${cfg.modes[b.mode]!.boss_fights.join(', ')}` : ''})</div>
           {Array.from({ length: fights }, (_, i) => {
@@ -220,15 +272,17 @@ export function BattlePanel({ loadout, battle, onChange, layouts = [], myBuild, 
         </div>
       )}
 
+      {showFight && (
       <div className="row" style={{ marginTop: 8 }}>
         <button className="primary" onClick={run} disabled={running || (fights === 1 ? !b.enemy : (b.enemies?.length ?? 0) !== fights)}>
           {running ? 'Running…' : b.runs > 1 ? `Run ${b.runs} battles` : 'Run battle'}
         </button>
-        <span className="small muted">Saved with the build.</span>
+        <span className="small muted">{fights === 1 && !b.enemy ? 'Pick an opponent first.' : 'Saved with the build.'}</span>
       </div>
+      )}
       {error && <div className="issue error" style={{ marginTop: 6 }}>{error}</div>}
 
-      {mc && (
+      {showFight && mc && (
         <div style={{ marginTop: 10 }}>
           <h3>
             Monte Carlo: win rate {(mc.winRate * 100).toFixed(1)}% ({mc.wins}/{mc.runs})
@@ -277,7 +331,7 @@ export function BattlePanel({ loadout, battle, onChange, layouts = [], myBuild, 
         </div>
       )}
 
-      {single && (
+      {showFight && single && (
         <div style={{ marginTop: 10 }}>
           <h3>
             {single.winner === 'player' ? 'Win' : 'Loss'} after {single.duration.toFixed(1)}s{' '}
@@ -389,7 +443,7 @@ interface BuildTools {
   start: () => void;
   /** Give the enemy a build from a saved layout. */
   load: (name: string) => void;
-  /** Edit it in the Bag / Profile tabs. */
+  /** Edit it in the Build / Profile tabs. */
   edit: () => void;
 }
 

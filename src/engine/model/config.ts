@@ -13,7 +13,14 @@ export const ConfigSchema = z
     rarities: z
       .object({ item: rarityList, gear: rarityList, blessing: rarityList, pet: rarityList, hero: rarityList })
       .strict(),
-    bag: z.object({ width: z.literal(8), full_height: int }).strict(),
+    bag: z
+      .object({
+        width: z.literal(8),
+        full_height: int,
+        /** The smaller bags by class ("x26" …): rows top to bottom, `#` = a cell, `.` = none; narrower rows are centred. */
+        sizes: z.record(z.enum(['warrior', 'ranger', 'wizard']), z.record(z.string().min(1), z.array(z.string().regex(/^[#.]+$/)).min(1))).default({}),
+      })
+      .strict(),
     gear: z
       .object({
         slots: z.object({ weapon: int, shield: int, ring: int, glove: int }).strict(),
