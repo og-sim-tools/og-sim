@@ -38,7 +38,8 @@ export const EnemyAttack = z
     hits: z.number().int().positive().default(1),
     crit_chance: z.number().default(0),
     /** Statuses each hit inflicts ("On Hit: inflict 3 Burn"). */
-    on_hit: z.array(z.object({ status: Id, stacks: z.number().positive(), duration_s: z.number().positive().optional() }).strict()).optional(),
+    // self (version 6): the attacker gains it (Spike, Dodge …) instead of inflicting it on me.
+    on_hit: z.array(z.object({ status: Id, stacks: z.number().positive(), duration_s: z.number().positive().optional(), self: z.boolean().optional() }).strict()).optional(),
   })
   .strict();
 

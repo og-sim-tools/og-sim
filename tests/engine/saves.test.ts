@@ -249,6 +249,23 @@ describe('frozen version-5 saves', () => {
   });
 });
 
+describe('frozen version-6 saves', () => {
+  it('every one loads without notes, and version 5 loads the same apart from the number', () => {
+    const acc = readAccount(read('v6', 'profile.yaml'));
+    expect(acc.version).toBe(6);
+    expect(acc.notes).toEqual([]);
+    expect(acc.profile).toEqual(readAccount(read('v5', 'profile.yaml')).profile);
+    for (const f of yamls('v6', 'builds')) {
+      const r = readBuild(read('v6', 'builds', f));
+      expect(r.version, f).toBe(6);
+      expect(r.notes, f).toEqual([]);
+      if (yamls('v5', 'builds').includes(f)) expect(r.layout, f).toEqual(readBuild(read('v5', 'builds', f)).layout);
+    }
+    const e = readBuild(read('v6', 'builds', 'on-hit gains.yaml')).layout.battle!.enemy as { attacks: { on_hit?: { self?: boolean }[] }[] };
+    expect(e.attacks[0]!.on_hit!.at(-1)).toMatchObject({ status: 'spike', self: true });
+  });
+});
+
 describe('older builds\' own values move into the account', () => {
   const base = readAccount(null).profile;
   const v2 = `version: 2

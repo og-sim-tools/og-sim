@@ -504,10 +504,11 @@ export function buildEnemy(enemy: EnemyInput, defaultCritDmg: number, boss = ene
     effects: (a.on_hit ?? []).map((st, index) => ({
       index,
       effect: ItemEffectSchema.parse({
-        text: `On Hit: Inflict ${st.stacks} ${st.status}${st.duration_s ? ` for ${st.duration_s}s` : ''}.`,
+        text: `On Hit: ${st.self ? 'Gain' : 'Inflict'} ${st.stacks} ${st.status}${st.duration_s ? ` for ${st.duration_s}s` : ''}.`,
         trigger: 'on_hit',
         action: 'apply_status',
-        target: 'enemy',
+        // Inflicted on me, or gained by the enemy itself.
+        target: st.self ? 'player' : 'enemy',
         status: st.status,
         stacks: st.stacks,
         ...(st.duration_s ? { duration_s: st.duration_s } : {}),

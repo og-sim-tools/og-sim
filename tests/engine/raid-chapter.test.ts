@@ -53,6 +53,17 @@ describe("a typed-in enemy's attacks", () => {
     expect(r.log.some((e) => e.side === 'enemy' && /burn/i.test(e.detail ?? '') && /3/.test(e.detail ?? ''))).toBe(true);
   });
 
+  it('or have the attacker gain the status (Spike) instead of inflicting it on me', () => {
+    const b = battle({
+      mode: 'stage',
+      seed: 1,
+      enemy: { name: 'Spiky', hp: '900B', attacks: [{ damage: 1, cooldown: 1, accuracy: 100, on_hit: [{ status: 'spike', stacks: 2, self: true }] }] },
+    });
+    const r = runBattle(lo, resolveEnemies(data, b), { mode: 'stage', durationS: 3.05, seed: 1 });
+    expect(r.enemy.statuses.spike ?? 0).toBeGreaterThan(0);
+    expect(r.player.statuses.spike ?? 0).toBe(0);
+  });
+
   it('can deal a % of my max HP', () => {
     const b = battle({ mode: 'stage', seed: 1, enemy: { name: 'Pct', hp: '900B', attacks: [{ pct_max_hp: 10, cooldown: 1, accuracy: 100 }] } });
     const r = runBattle(lo, resolveEnemies(data, b), { mode: 'stage', durationS: 1.05, seed: 1 });

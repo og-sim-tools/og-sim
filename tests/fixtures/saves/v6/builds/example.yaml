@@ -1,0 +1,369 @@
+version: 6
+name: Rose example
+hero: erwen
+gear:
+  weapon:
+    id: primal_flame
+    rarity: mythic
+    tier: 0
+    level: 40
+  shield:
+    id: celestial_shield
+    rarity: legendary
+    tier: 0
+    level: 40
+  rings:
+    - id: archwizards_ring
+      rarity: legendary
+      tier: 0
+      level: 1
+    - id: archwizards_ring
+      rarity: legendary
+      tier: 0
+      level: 1
+  gloves:
+    - id: gloves_of_plague
+      rarity: legendary
+      tier: 0
+      level: 1
+    - id: gloves_of_plague
+      rarity: legendary
+      tier: 0
+      level: 1
+pets: []
+skins:
+  - id: trixie_dream_eater
+    quest_done: true
+placements:
+  - id: primal_flame#1
+    item: primal_flame
+    x: 6
+    y: 3
+  - id: celestial_shield#1
+    item: celestial_shield
+    x: 6
+    y: 2
+    rotation: 90
+  - id: archwizards_ring#1
+    item: archwizards_ring
+    x: 7
+    y: 3
+    rotation: 90
+  - id: archwizards_ring#2
+    item: archwizards_ring
+    x: 7
+    y: 4
+  - id: gloves_of_plague#1
+    item: gloves_of_plague
+    x: 5
+    y: 3
+  - id: gloves_of_plague#2
+    item: gloves_of_plague
+    x: 5
+    y: 4
+  - id: fire_spirit#1
+    item: fire_spirit
+    x: 0
+    y: 4
+    rotation: 270
+  - id: wind_spirit#1
+    item: wind_spirit
+    x: 2
+    y: 2
+  - id: fire_spirit#2
+    item: fire_spirit
+    x: 1
+    y: 3
+    rotation: 270
+  - id: wind_spirit#2
+    item: wind_spirit
+    x: 3
+    y: 3
+  - id: fire_spirit#3
+    item: fire_spirit
+    x: 3
+    y: 2
+    rotation: 90
+  - id: fire_spirit#4
+    item: fire_spirit
+    x: 4
+    y: 1
+    rotation: 90
+  - id: fire_spirit#5
+    item: fire_spirit
+    x: 5
+    y: 0
+    rotation: 90
+  - id: target#1
+    item: target
+    x: 5
+    y: 5
+  - id: target#2
+    item: target
+    x: 7
+    y: 5
+  - id: hunters_bow#1
+    item: hunters_bow
+    x: 0
+    y: 0
+  - id: hunters_bow#2
+    item: hunters_bow
+    x: 1
+    y: 0
+    rotation: 90
+  - id: hunters_bow#3
+    item: hunters_bow
+    x: 2
+    y: 1
+    rotation: 90
+  - id: hunters_bow#4
+    item: hunters_bow
+    x: 3
+    y: 0
+    rotation: 90
+  - id: hunters_bow#5
+    item: hunters_bow
+    x: 7
+    y: 0
+  - id: hunters_bow#6
+    item: hunters_bow
+    x: 0
+    y: 2
+  - id: hunters_bow#7
+    item: hunters_bow
+    x: 4
+    y: 4
+  - id: hunters_bow#8
+    item: hunters_bow
+    x: 2
+    y: 5
+    rotation: 90
+  - id: hunters_bow#9
+    item: hunters_bow
+    x: 1
+    y: 1
+battle:
+  mode: stage
+  seed: 12
+  runs: 5
+  enemy:
+    id: custom_enemy
+    name: Custom enemy
+    hp: 25B
+    atk: 0
+    block: 0
+    damage_reduction: 0
+    attacks: []
+    boss: false
+    starting_statuses: []
+    resistances: {}
+    vulnerabilities: {}
+    immunities: []
+    traits: []
+    kind: player
+    build:
+      profile:
+        basic_stats:
+          hp: 5.29M
+          atk: 1.61M
+          initial_block: 1.85M
+        detailed_stats: {}
+        heroes:
+          - id: erwen
+            stars: 5
+            links: []
+            skin: null
+            blessings:
+              level: 9
+              equipped:
+                - id: erwen_spirit_gain
+                  rarity: mythic
+                  value: 50
+        active_hero: erwen
+        gear:
+          weapon:
+            id: primal_flame
+            rarity: mythic
+            tier: 0
+            level: 40
+          shield:
+            id: celestial_shield
+            rarity: legendary
+            tier: 0
+            level: 40
+          rings:
+            - id: archwizards_ring
+              rarity: legendary
+              tier: 0
+              level: 1
+            - id: archwizards_ring
+              rarity: legendary
+              tier: 0
+              level: 1
+          gloves:
+            - id: gloves_of_plague
+              rarity: legendary
+              tier: 0
+              level: 1
+            - id: gloves_of_plague
+              rarity: legendary
+              tier: 0
+              level: 1
+        pets: []
+        owned_pets: []
+        aura: judicators_blade
+        auras:
+          - id: aura_of_vitality
+            stars: 0
+          - id: aura_of_courage
+            stars: 0
+          - id: judicators_blade
+            stars: 0
+        skins: []
+        equipped_skins: []
+        skin_quests_done: []
+      placements:
+        - id: primal_flame#1
+          item: primal_flame
+          x: 6
+          y: 3
+          rotation: 0
+          supply: false
+        - id: celestial_shield#1
+          item: celestial_shield
+          x: 6
+          y: 2
+          rotation: 90
+          supply: false
+        - id: archwizards_ring#1
+          item: archwizards_ring
+          x: 7
+          y: 3
+          rotation: 90
+          supply: false
+        - id: archwizards_ring#2
+          item: archwizards_ring
+          x: 7
+          y: 4
+          rotation: 0
+          supply: false
+        - id: gloves_of_plague#1
+          item: gloves_of_plague
+          x: 5
+          y: 3
+          rotation: 0
+          supply: false
+        - id: gloves_of_plague#2
+          item: gloves_of_plague
+          x: 5
+          y: 4
+          rotation: 0
+          supply: false
+        - id: fire_spirit#1
+          item: fire_spirit
+          x: 0
+          y: 4
+          rotation: 270
+          supply: false
+        - id: wind_spirit#1
+          item: wind_spirit
+          x: 2
+          y: 2
+          rotation: 0
+          supply: false
+        - id: fire_spirit#2
+          item: fire_spirit
+          x: 1
+          y: 3
+          rotation: 270
+          supply: false
+        - id: wind_spirit#2
+          item: wind_spirit
+          x: 3
+          y: 3
+          rotation: 0
+          supply: false
+        - id: fire_spirit#3
+          item: fire_spirit
+          x: 3
+          y: 2
+          rotation: 90
+          supply: false
+        - id: fire_spirit#4
+          item: fire_spirit
+          x: 4
+          y: 1
+          rotation: 90
+          supply: false
+        - id: fire_spirit#5
+          item: fire_spirit
+          x: 5
+          y: 0
+          rotation: 90
+          supply: false
+        - id: target#1
+          item: target
+          x: 5
+          y: 5
+          rotation: 0
+          supply: false
+        - id: target#2
+          item: target
+          x: 7
+          y: 5
+          rotation: 0
+          supply: false
+        - id: hunters_bow#1
+          item: hunters_bow
+          x: 0
+          y: 0
+          rotation: 0
+          supply: false
+        - id: hunters_bow#2
+          item: hunters_bow
+          x: 1
+          y: 0
+          rotation: 90
+          supply: false
+        - id: hunters_bow#3
+          item: hunters_bow
+          x: 2
+          y: 1
+          rotation: 90
+          supply: false
+        - id: hunters_bow#4
+          item: hunters_bow
+          x: 3
+          y: 0
+          rotation: 90
+          supply: false
+        - id: hunters_bow#5
+          item: hunters_bow
+          x: 7
+          y: 0
+          rotation: 0
+          supply: false
+        - id: hunters_bow#6
+          item: hunters_bow
+          x: 0
+          y: 2
+          rotation: 0
+          supply: false
+        - id: hunters_bow#7
+          item: hunters_bow
+          x: 4
+          y: 4
+          rotation: 0
+          supply: false
+        - id: hunters_bow#8
+          item: hunters_bow
+          x: 2
+          y: 5
+          rotation: 90
+          supply: false
+        - id: hunters_bow#9
+          item: hunters_bow
+          x: 1
+          y: 1
+          rotation: 0
+          supply: false

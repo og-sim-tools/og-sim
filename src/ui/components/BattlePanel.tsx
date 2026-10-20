@@ -670,7 +670,10 @@ function EnemyEditor({
               <span className="muted">On hit:</span>
               {onHit.map((st, k) => (
                 <span key={k} className="on-hit">
-                  inflict
+                  <select aria-label="On-hit who" value={st.self ? 'self' : 'foe'} onChange={(e) => setHit(k, { self: e.target.value === 'self' ? true : undefined })}>
+                    <option value="foe">inflict on me</option>
+                    <option value="self">it gains</option>
+                  </select>
                   <input type="number" min={1} aria-label="On-hit stacks" value={st.stacks} style={{ width: 52 }} onChange={(e) => setHit(k, { stacks: Math.max(1, Number(e.target.value) || 1) })} />
                   <select aria-label="On-hit status" value={st.status} onChange={(e) => setHit(k, { status: e.target.value })}>
                     {statuses.map((x) => (

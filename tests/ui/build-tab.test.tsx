@@ -228,7 +228,8 @@ describe('the Build tab', () => {
     drag(stored(), bag(), 40 * 3 + 5, 40 * 2 + 5, 'stored to bag');
     expect(cellsOf("Hunter's Bow").length).toBeGreaterThan(0);
     expect(document.querySelector('.stored-item')).toBeNull();
-    drag(bow(), screen.getByRole('region', { name: 'Bin' }), 10, 10, 'bow to bin');
+    // Dropped outside the Bag box: removed (no bin any more).
+    drag(bow(), screen.getByRole('region', { name: 'Items' }), 10, 10, 'bow out of the box');
     expect(cellsOf("Hunter's Bow")).toHaveLength(0);
     // Saving keeps what's stored.
     pick('Rock');
@@ -238,12 +239,19 @@ describe('the Build tab', () => {
     await waitFor(async () => expect(parse((await store.readBuild('bows'))!).storage?.[0]?.item).toBe('rock'));
   }, 30000);
 
-  it('the bin is under the bag and the storage box beside both', async () => {
+  it('no bin; the storage box is beside the bag, as tall as it; dropping inside the Bag box off the bag keeps the item', async () => {
     await start();
-    const column = screen.getByRole('grid', { name: 'Backpack' }).closest('.bag-column')!;
-    expect(column.querySelector('[aria-label="Bin"]')).toBeTruthy();
-    expect(column.querySelector('[aria-label="Storage"]')).toBeNull();
-    expect(column.parentElement!.querySelector(':scope > [aria-label="Storage"]')).toBeTruthy();
+    expect(screen.queryByRole('region', { name: 'Bin' })).toBeNull();
+    const grid = screen.getByRole('grid', { name: 'Backpack' });
+    const storage = screen.getByRole('region', { name: 'Storage' });
+    expect(storage.style.height).toBe(grid.style.height);
+    pick("Hunter's Bow");
+    const cell = cellsOf("Hunter's Bow")[0]!;
+    ptr(cell, 'pointerdown', 5, 5);
+    const status = document.querySelector('.bag-status')!;
+    ptr(status, 'pointermove', 10, 10);
+    ptr(status, 'pointerup', 10, 10);
+    expect(cellsOf("Hunter's Bow").length).toBeGreaterThan(0);
   }, 30000);
 
   it('starting equipment in use is listed first, marked, and can be taken out', async () => {

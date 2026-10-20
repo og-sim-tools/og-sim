@@ -18,9 +18,9 @@ import { type AccountImport, accountArchive, downloadBytes, looksLikeBuild, read
 import { unzipFiles } from './state/zip';
 import { safeBuildName } from '../engine/saves/names';
 import { BagGrid, rarityColor, spriteOf } from './components/BagGrid';
-import { type DragItem, DragLayer, useDragLook } from './drag';
+import { type DragItem, DragLayer, useDragLook, useDropElsewhere, useDropTarget } from './drag';
 import { type Landing, dropInBag, dropInBin, keyOnSelected, landing, lookOf, turnedCells } from './state/bagEdit';
-import { Bin, Storage, type StoredView } from './components/Storage';
+import { Storage, type StoredView } from './components/Storage';
 import { bagSizesFor, enhancerOf, sizeOf } from './state/bagSizes';
 import { ItemDrawer } from './components/ItemDrawer';
 import { battleStartStats } from '../engine/combat/battle';
@@ -412,6 +412,11 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
   const supplyIds = useMemo(() => new Set(loadout ? availableSupplies(loadout).map((s) => s.item.id) : []), [loadout]);
   // Held items of the Build tab's bag and lists look like this under the pointer.
   useDragLook('build', (d) => (loadout ? lookOf(loadout, d) : null));
+  // Dropped outside the Bag box: the item is removed (user, 2026-10-20). Inside it, off the bag and the storage: it goes back.
+  const bagBoxRef = useRef<HTMLDivElement>(null);
+  useDropTarget(bagBoxRef, { accepts: (d) => d.kind !== 'item' && d.scope === 'build', drop: () => {} });
+  useDropElsewhere('build', (d) => onTrashRef.current(d));
+  const onTrashRef = useRef<(d: DragItem) => void>(() => {});
   /** An item in the storage box, for its details: on its own (it has no neighbours there). */
   const inspectedStored = inspected ? bagLayout.storage?.find((x) => x.id === inspected) : undefined;
   const storedAlone = useMemo(() => {
@@ -559,7 +564,7 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
     }
     setSelected(drag.id);
   };
-  /** Dropped in the bin. */
+  /** Dropped outside the Bag box: removed. */
   const onTrash = (drag: DragItem) => {
     editBag((l) => dropInBin(l, drag));
     if (selected === drag.id) {
@@ -567,6 +572,7 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
       setInspected(null);
     }
   };
+  onTrashRef.current = onTrash;
   /** How a held item looks (the Build tab's bag and lists; the Battle tab draws its own). */
   const lookBuild = (d: DragItem) => (loadout ? lookOf(loadout, d) : null);
 
@@ -862,8 +868,8 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
   const bagSizes = bagSizesFor(data, heroClass);
   const bagSize = sizeOf(bagLayout.bag?.mask, bagSizes);
   const enhancer = enhancerOf(data, bagProfile, bagHeroId);
-  // The storage box: as tall as the bag (with its 1-cell border) and the bin under it, about a third as wide.
-  const storageH = (loadout.bag.height + 2) * 40 + 8 + 52;
+  // The storage box: as tall as the bag (with its 1-cell border), level with it, about a third as wide.
+  const storageH = (loadout.bag.height + 2) * 40;
   const storageW = Math.round(((loadout.bag.width + 2) * 40) / 3.5);
   const flags = buildFlags(loadout, loaded);
   const pets = petPoints(data, bagProfile);
@@ -1214,6 +1220,7 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
               </div>
             )}
             <div
+              ref={bagBoxRef}
               className="bag-box"
               // A click anywhere in the box that isn't on an item or a control lets go of the selected item.
               onClick={(e) => {
@@ -1246,7 +1253,7 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
                     <div className="muted">
                       {selectedStored
                         ? 'In the storage: drag it into the bag. Space or another click rotates it, Delete removes it.'
-                        : 'Arrows move it, space or another click rotates it (space works while dragging too), Delete removes it (or drag it to the bin).'}
+                        : 'Arrows move it, space or another click rotates it (space works while dragging too), Delete removes it (or drag it out of this box).'}
                     </div>
                     <div className="row bag-actions">
                       <button className="primary details-button" onClick={() => setInspected(selected)} aria-pressed={inspected === selected}>
@@ -1297,7 +1304,6 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
                     onKey={onKey}
                     acceptsNew
                   />
-                  <Bin onDrop={onTrash} />
                 </div>
                 <Storage
                   items={storedViews}

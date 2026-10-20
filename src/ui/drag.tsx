@@ -48,6 +48,8 @@ export interface DragLook {
 
 const THRESHOLD = 5;
 const targets = new Map<HTMLElement, { current: DropTarget }>();
+/** What happens to a bag's item dropped where nothing takes it (the Build tab: it's removed). */
+const elsewhere = new Map<string, { current: (d: DragItem) => void }>();
 /** How held items of each bag look (each bag knows its own items). */
 const looks = new Map<string, { current: (d: DragItem) => DragLook | null }>();
 let state: DragState | null = null;
@@ -88,6 +90,7 @@ function finish(drop: boolean, x: number, y: number, fallback: EventTarget | nul
     const t = targetAt(x, y, fallback);
     const target = t ? targets.get(t)!.current : null;
     if (target && target.accepts(s)) target.drop(s, x, y);
+    else if (s.kind !== 'item') elsewhere.get(s.scope)?.current(s);
   }
   if (current) targets.get(current)?.current.leave?.();
   current = null;
@@ -152,6 +155,7 @@ export function beginDrag(e: ReactPointerEvent, item: DragItem) {
 export function useDropTarget(ref: RefObject<HTMLElement | null>, target: DropTarget) {
   const latest = useRef(target);
   latest.current = target;
+  // Every render: the element may only appear later (after loading, a tab switch).
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -159,7 +163,19 @@ export function useDropTarget(ref: RefObject<HTMLElement | null>, target: DropTa
     return () => {
       if (targets.get(el) === latest) targets.delete(el);
     };
-  }, [ref]);
+  });
+}
+
+/** A bag's item dropped where nothing takes it (outside the bag box): call `fn` (user, 2026-10-20: remove it). */
+export function useDropElsewhere(scope: string, fn: (d: DragItem) => void) {
+  const latest = useRef(fn);
+  latest.current = fn;
+  useEffect(() => {
+    elsewhere.set(scope, latest);
+    return () => {
+      if (elsewhere.get(scope) === latest) elsewhere.delete(scope);
+    };
+  }, [scope]);
 }
 
 /** Tell the drag layer how this bag's held items look. */

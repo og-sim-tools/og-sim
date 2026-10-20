@@ -13,6 +13,7 @@
  * Version 4 (2026-10-20): the battle settings can name a chapter, and a typed-in enemy's attacks can inflict
  * statuses on hit and deal a % of max HP. Nothing older changes meaning.
  * Version 5 (2026-10-20): a build's skin can have its skill forced on (quest_forced). Nothing older changes.
+ * Version 6 (2026-10-20): a typed-in attack's on-hit status can be gained by the attacker (self). Nothing older changes.
  */
 import { DEFAULT_BASIC_STATS } from './files';
 import type { SaveNote } from './salvage';
@@ -166,4 +167,11 @@ export function v3toV4(raw: Raw): Raw {
 /** v4 → v5 (account or build): one new optional setting, so nothing to change but the number. */
 export function v4toV5(raw: Raw): Raw {
   return { ...raw, version: 5 };
+}
+
+// ------------------------------------------------------------------ v5 → v6
+
+/** v5 → v6 (account or build): one new optional setting, so nothing to change but the number. */
+export function v5toV6(raw: Raw): Raw {
+  return { ...raw, version: 6 };
 }

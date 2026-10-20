@@ -566,7 +566,7 @@ type MonsterLike = {
   hp: string | number;
   atk: string | number;
   block: string | number;
-  attacks: { damage: string | number; pct_max_hp?: number; cooldown: number; hits: number; on_hit?: { status: string; stacks: number }[] }[];
+  attacks: { damage: string | number; pct_max_hp?: number; cooldown: number; hits: number; on_hit?: { status: string; stacks: number; self?: boolean }[] }[];
   traits: string[];
   boss: boolean;
 };
@@ -579,7 +579,7 @@ export function MonsterSummary({ enemy }: { enemy: MonsterLike }) {
     ]
       .filter(Boolean)
       .join(' + ') +
-    ` every ${a.cooldown}s${a.hits > 1 ? ` ×${a.hits}` : ''}${a.on_hit?.length ? `, on hit ${a.on_hit.map((h) => `${h.stacks} ${h.status}`).join(', ')}` : ''}`;
+    ` every ${a.cooldown}s${a.hits > 1 ? ` ×${a.hits}` : ''}${a.on_hit?.length ? `, on hit ${a.on_hit.map((h) => `${h.self ? 'gains' : 'inflicts'} ${h.stacks} ${h.status}`).join(', ')}` : ''}`;
   return (
     <table className="stats side-summary" style={{ marginTop: 8 }}>
       <tbody>
