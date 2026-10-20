@@ -2,9 +2,10 @@
  * Beside the bag: a storage box to set items aside while rearranging (anywhere, not on a grid; they don't
  * fight or count). Under the bag: a bin to drop items in to remove them.
  */
-import { useRef, useState } from 'react';
+import { type KeyboardEvent, useLayoutEffect, useRef, useState } from 'react';
 import type { Cell } from '../../engine/bag';
-import { type DragItem, type DragLook, beginDrag, dragJustEnded, useDropTarget } from '../drag';
+import { type DragItem, type DragLook, beginDrag, dragJustEnded, playDrop, useDropTarget } from '../drag';
+import { type KeyAction, keyAction } from '../state/layoutOps';
 import { useSettings } from '../settings';
 import { SIZE, type SpriteInfo, rarityPaint, spriteScale } from './BagGrid';
 import { TrashIcon } from './BuildPicker';
@@ -40,13 +41,15 @@ interface Props {
   look: (d: DragItem) => DragLook | null;
   onSelect: (id: string) => void;
   onRotate: (id: string) => void;
+  /** A key while the box has focus (the selected stored item: space turns it, Delete removes it, Escape lets go). */
+  onKey?: (action: KeyAction) => void;
   /** Dropped with the item's top-left corner at (fx, fy), as shares of the box. */
   onDrop: (drag: DragItem, fx: number, fy: number) => void;
   /** Space above it, to line it up with the bag's own cells. */
   top?: number;
 }
 
-export function Storage({ items, width, height, selected, scope = 'build', look, onSelect, onRotate, onDrop, top: offsetTop = 0 }: Props) {
+export function Storage({ items, width, height, selected, scope = 'build', look, onSelect, onRotate, onKey, onDrop, top: offsetTop = 0 }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const [over, setOver] = useState(false);
   const settings = useSettings();
@@ -67,10 +70,19 @@ export function Storage({ items, width, height, selected, scope = 'build', look,
       const fx = (x - r.left - offX) / Math.max(1, r.width || width);
       const fy = (y - r.top - offY) / Math.max(1, r.height || height);
       onDrop(d, Math.max(0, Math.min(1, fx)), Math.max(0, Math.min(1, fy)));
+      ref.current?.focus();
     },
   });
+  useLayoutEffect(() => playDrop(ref.current, scope, (d) => (d.kind === 'item' ? selected : d.id)));
+  const onKeyDown = (e: KeyboardEvent) => {
+    const action = keyAction(e.key);
+    // Only turning, removing and letting go mean anything here (arrows don't move stored items).
+    if (!action || !onKey || !['rotate', 'remove', 'cancel'].includes(action)) return;
+    e.preventDefault();
+    onKey(action);
+  };
   return (
-    <div ref={ref} className={`storage${over ? ' over' : ''}`} role="region" aria-label="Storage" style={{ width, height, marginTop: offsetTop }}>
+    <div ref={ref} className={`storage${over ? ' over' : ''}`} role="region" aria-label="Storage" tabIndex={-1} onKeyDown={onKeyDown} style={{ width, height, marginTop: offsetTop }}>
       {items.length === 0 && <div className="storage-hint small muted">Storage: drop items here while you rearrange. They don't fight or count.</div>}
       {items.map((it) => {
         const minX = Math.min(...it.cells.map((c) => c.x));
@@ -86,6 +98,7 @@ export function Storage({ items, width, height, selected, scope = 'build', look,
         return (
           <div
             key={it.id}
+            data-item={it.id}
             className={`stored-item${it.id === selected ? ' selected' : ''}`}
             style={{ left, top, width: w, height: h }}
             title={`${it.name} (in storage)${it.id === selected ? ' · click again to rotate' : ''}`}
@@ -109,6 +122,7 @@ export function Storage({ items, width, height, selected, scope = 'build', look,
               if (dragJustEnded()) return;
               if (it.id === selected) onRotate(it.id);
               else onSelect(it.id);
+              ref.current?.focus();
             }}
           >
             {it.cells.map((c) => (

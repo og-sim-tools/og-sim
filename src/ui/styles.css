@@ -133,7 +133,8 @@ button.toggle.on { background: var(--accent); color: white; border-color: var(--
 .picker-card.current { border-color: var(--accent); }
 .picker-caption { display: flex; align-items: center; gap: 2px; }
 .picker-caption .picker-name { padding: 2px 4px; font-weight: 600; }
-.picker-preview { display: flex; justify-content: center; width: 100%; border: none; background: var(--bg); border-radius: 4px; padding: 6px; }
+.picker-preview { display: flex; justify-content: center; width: 100%; border: none; background: var(--bg); border-radius: 4px; padding: 2px; }
+.bag-preview-fit { width: 100%; display: flex; justify-content: center; }
 .bag-preview { position: relative; flex: none; }
 .pv-cell { position: absolute; background: var(--cell); border: 1px solid var(--bg); border-radius: 2px; }
 .pv-cell.off { background: var(--cell-off); }

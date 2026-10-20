@@ -3,7 +3,7 @@
  * the selected or hovered item (out-of-bag dots shown faded), drag and drop, keyboard controls.
  * Click an item to select it, click it again to rotate it. Dragging shows the whole item and where it lands.
  */
-import { type KeyboardEvent, type ReactElement, useMemo, useRef, useState } from 'react';
+import { type KeyboardEvent, type ReactElement, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { type Cell, cellKey, footprintOf, isUsable, occupantsAt, resolveDots } from '../../engine/bag';
 import { activeEffects, dotAffects } from '../../engine/effects/resolve';
 import type { ItemEffect } from '../../engine/model';
@@ -11,7 +11,7 @@ import type { Loadout, LoadoutIssue } from '../../engine/loadout';
 import { copyName, copyNumbers } from '../../engine/loadout';
 import { type KeyAction, keyAction } from '../state/layoutOps';
 import { imageUrl } from '../staticData';
-import { type DragItem, beginDrag, cellUnder, dragJustEnded, heldCellPoint, useDropTarget } from '../drag';
+import { type DragItem, beginDrag, cellUnder, dragJustEnded, heldCellPoint, playDrop, useDropTarget } from '../drag';
 import { type Settings, getSettings, useSettings } from '../settings';
 
 /** Most cells drawn around the bag for out-of-bag item cells and dots (items can't go further out: layoutOps REACH). */
@@ -56,7 +56,7 @@ export const spriteScale = (s: SpriteInfo, size: number) => SPRITE_FILL * Math.m
  * The sprite scaled to fit the item's footprint box (keeping its pixel shape, crisp), centred in
  * the cells the item covers and turned with it.
  */
-export function Sprite({ s, cells, px, size, label, z }: { s: SpriteInfo; cells: Cell[]; px: (n: number) => number; size: number; label?: string; z: number }) {
+export function Sprite({ s, cells, px, size, label, z, item }: { s: SpriteInfo; cells: Cell[]; px: (n: number) => number; size: number; label?: string; z: number; item?: string }) {
   const xs = cells.map((c) => c.x);
   const ys = cells.map((c) => c.y);
   const minX = Math.min(...xs);
@@ -65,6 +65,7 @@ export function Sprite({ s, cells, px, size, label, z }: { s: SpriteInfo; cells:
   return (
     <div
       className="sprite"
+      data-item={item}
       style={{ left: px(minX), top: px(minY), width: (Math.max(...xs) - minX + 1) * size, height: (Math.max(...ys) - minY + 1) * size, zIndex: z }}
     >
       <img src={s.src} alt="" draggable={false} style={{ width: s.w * scale, height: s.h * scale, transform: `translate(-50%, -50%) rotate(${s.rotation}deg)` }} />
@@ -232,6 +233,9 @@ export function BagGrid(p: Props) {
     },
   });
 
+  // A dropped item slides into place: a moved one keeps its id, a new one is selected.
+  useLayoutEffect(() => playDrop(ref.current, scope, (d) => (d.kind === 'item' ? selected : d.id)));
+
   const onKeyDown = (e: KeyboardEvent) => {
     const action = keyAction(e.key);
     if (!action) return;
@@ -272,7 +276,7 @@ export function BagGrid(p: Props) {
     const copy = copies.get(id);
     const base = spriteOf(item.def as Parameters<typeof spriteOf>[0], item.placement.rotation);
     const sprite = base ? { ...base, rotation: turnOf(id, item.placement.rotation) } : null;
-    if (sprite) sprites.push(<Sprite key={`s${id}`} s={sprite} cells={item.cells} px={px} size={SIZE} z={id === selected ? 4 : 3} />);
+    if (sprite) sprites.push(<Sprite key={`s${id}`} s={sprite} cells={item.cells} px={px} size={SIZE} z={id === selected ? 4 : 3} item={id} />);
     // Gear shows the rarity it's equipped at (no rarity known → the plain gear colour).
     const color =
       entry?.kind === 'gear'
@@ -285,7 +289,7 @@ export function BagGrid(p: Props) {
     const first = [...item.cells].sort((a, b) => a.y - b.y || a.x - b.x)[0];
     if (copy && first) {
       sprites.push(
-        <span key={`c${id}`} className="copy-badge" style={{ left: px(first.x) + 2, top: px(first.y) + 2, zIndex: 5 }} title={copyName(String(item.def.name ?? ''), copy)}>
+        <span key={`c${id}`} className="copy-badge" data-item={id} style={{ left: px(first.x) + 2, top: px(first.y) + 2, zIndex: 5 }} title={copyName(String(item.def.name ?? ''), copy)}>
           {copy}
         </span>,
       );
@@ -295,6 +299,7 @@ export function BagGrid(p: Props) {
       itemCells.push(
         <div
           key={`i${id}${c.x},${c.y}`}
+          data-item={id}
           className={`item-cell${id === selected ? ' selected' : ''}${id === hovered ? ' hovered' : ''}${touched.has(id) ? ' touched' : ''}${invalidIds.has(id) ? ' invalid' : ''}${sprite ? ' has-sprite' : ''}`}
           style={{
             left: px(c.x),

@@ -79,6 +79,58 @@ export function HeroEditor({ data, profile, heroId, onHero, update, account = fa
       {profile.heroes.length === 0 && <div className="small muted">Tick the heroes you own in the Profile tab first.</div>}
       {hero && !mine && <div className="issue warning small">{hero.name} isn't among your heroes (Profile tab), so their stars and blessings don't count.</div>}
       {hero && mine && <BlessingsEditor hero={hero} owned={mine} data={data} update={update} account={account} />}
+      {hero && mine && (
+        <details className="blessings" style={{ marginTop: 6 }} open>
+          <summary className="small">
+            <b>Skill links</b> {mine.links.length} / {cfg.heroes.skill_link_stars.filter((s) => s <= mine.stars).length}
+            <span className="muted"> {mine.links.map((l) => data.skills.get(l)?.name ?? l).join(' · ')}</span>
+          </summary>
+          {account && <div className="small muted">{hero.name}'s skill links are your account's: the same in every build with {hero.name} (also in the Profile tab).</div>}
+          <SkillLinksEditor hero={hero} owned={mine} data={data} profile={profile} update={update} />
+        </details>
+      )}
+    </>
+  );
+}
+
+/**
+ * A hero's skill link slots (as many as their stars open): each takes a linkable skill of another hero of the
+ * same class, owned with enough stars. In the Profile tab's hero cards and the Build tab's Hero box.
+ */
+export function SkillLinksEditor({ hero, owned, data, profile, update }: { hero: Hero; owned: OwnedHero; data: GameData; profile: Profile; update: Update }) {
+  const cfg = data.config!;
+  const edit = (fn: (h: OwnedHero) => void) => update((p) => fn(p.heroes.find((x) => x.id === hero.id)!));
+  const linkSlots = cfg.heroes.skill_link_stars.filter((s) => s <= owned.stars).length;
+  const ownedStars = new Map(profile.heroes.map((h) => [h.id, h.stars]));
+  const linkable = [...data.heroes.values()]
+    .filter((h) => h.class === hero.class && h.id !== hero.id)
+    .flatMap((h) => h.skill_links.filter((l) => (ownedStars.get(h.id) ?? -1) >= l.stars).map((l) => ({ id: l.skill, label: `${data.skills.get(l.skill)?.name} (${h.name})` })));
+  return (
+    <>
+      {linkSlots === 0 && <div className="small muted">First link slot opens at {cfg.heroes.skill_link_stars[0]}★.</div>}
+      {Array.from({ length: linkSlots }, (_, i) => (
+        <div key={i} className="row small">
+          <span className="muted">Slot {i + 1}</span>
+          <select
+            value={owned.links[i] ?? ''}
+            aria-label={`Link slot ${i + 1}`}
+            onChange={(e) =>
+              edit((h) => {
+                const l = [...h.links];
+                l[i] = e.target.value;
+                h.links = l.filter(Boolean);
+              })
+            }
+          >
+            <option value="">—</option>
+            {linkable.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      ))}
     </>
   );
 }

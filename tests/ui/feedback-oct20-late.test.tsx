@@ -205,3 +205,75 @@ describe('the optimizer', () => {
     expect(screen.queryByRole('dialog', { name: 'Replace the last results?' })).toBeNull();
   }, 30000);
 });
+
+describe('later still', () => {
+  const start = async () => {
+    const store = browserStore(localStorage);
+    await store.writeAccount('version: 4\nheroes: [{ id: erwen, stars: 9 }]\n');
+    await store.writeBuild('bows', 'version: 4\nhero: erwen\nplacements: []\n');
+    lastBuild.set('bows');
+    render(<App store={store} />);
+    await screen.findByLabelText('Hero for this build', {}, { timeout: 10000 });
+  };
+  const pick = (name: string) => {
+    fireEvent.change(screen.getByLabelText('Search items'), { target: { value: name } });
+    const row = [...document.querySelectorAll('.list-row')].find((r) => r.querySelector('.name')?.textContent === name)!;
+    ptr(row, 'pointerdown', 0, 0);
+    ptr(row, 'pointerup', 0, 0);
+    fireEvent.click(row);
+  };
+  const cellsOf = (name: string) => [...screen.getByRole('grid', { name: 'Backpack' }).querySelectorAll<HTMLElement>('.item-cell')].filter((c) => c.title.startsWith(name));
+  const drag = (from: Element, to: Element, x: number, y: number) => {
+    ptr(from, 'pointerdown', 5, 5);
+    ptr(to, 'pointermove', x, y);
+    ptr(to, 'pointerup', x, y);
+  };
+
+  it('a dropped item slides into place (a setting), and Delete removes a stored item', async () => {
+    const animate = vi.fn();
+    (HTMLElement.prototype as unknown as { animate: unknown }).animate = animate;
+    try {
+      await start();
+      pick("Hunter's Bow");
+      const bag = screen.getByRole('grid', { name: 'Backpack' });
+      drag(cellsOf("Hunter's Bow")[0]!, bag, 40 * 4 + 5, 40 * 3 + 5);
+      expect(animate).toHaveBeenCalled();
+      expect(animate.mock.calls[0]![0][0].transform).toMatch(/^translate\(/);
+      expect(animate.mock.calls[0]![1].duration).toBe(DEFAULT_SETTINGS.placeMs);
+      // Off: it just lands.
+      animate.mockClear();
+      setSettings({ animatePlacing: false });
+      drag(cellsOf("Hunter's Bow")[0]!, bag, 40 * 2 + 5, 40 * 2 + 5);
+      expect(animate).not.toHaveBeenCalled();
+      // Into the storage, selected there: Delete removes it.
+      const storage = screen.getByRole('region', { name: 'Storage' });
+      drag(cellsOf("Hunter's Bow")[0]!, storage, 10, 10);
+      const stored = document.querySelector<HTMLElement>('.stored-item')!;
+      fireEvent.click(stored);
+      expect(stored.className).toMatch(/selected/);
+      fireEvent.keyDown(storage, { key: 'Delete' });
+      expect(document.querySelector('.stored-item')).toBeNull();
+    } finally {
+      delete (HTMLElement.prototype as unknown as { animate?: unknown }).animate;
+    }
+  }, 30000);
+
+  it("the Hero box has the hero's skill links too", async () => {
+    await start();
+    const hero = document.querySelector<HTMLElement>('[data-tour="battle.hero"]')!;
+    expect(within(hero).getByText('Skill links')).toBeTruthy();
+    expect(within(hero).getAllByLabelText(/Link slot \d/).length).toBeGreaterThan(0);
+  }, 30000);
+
+  it('build previews fill the width of their card', async () => {
+    const { FitBagPreview } = await import('../../src/ui/components/BagPreview');
+    const lo = buildLoadout(data, profile, LayoutSchema.parse({ placements: [] }));
+    const spy = vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(240);
+    try {
+      const { container } = render(<FitBagPreview loadout={lo} />);
+      expect((container.querySelector('.bag-preview') as HTMLElement).style.width).toBe(`${Math.floor(240 / lo.bag.width) * lo.bag.width}px`);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+});

@@ -1,7 +1,30 @@
 /** A small picture of a build's bag (for the build list): its cells and items, nothing to click. */
+import { useLayoutEffect, useRef, useState } from 'react';
 import { isUsable } from '../../engine/bag';
 import type { Loadout } from '../../engine/loadout';
 import { Sprite, rarityColor, spriteOf } from './BagGrid';
+
+/** As wide as the space it's in (the build list's cards, user 2026-10-20: no dead space round it), cells of `cell` px until measured. */
+export function FitBagPreview({ loadout, cell = 14 }: { loadout: Loadout; cell?: number }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(0);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const measure = () => setWidth(el.clientWidth);
+    measure();
+    if (typeof ResizeObserver !== 'function') return;
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  const fit = width > 0 ? Math.max(6, Math.floor(width / loadout.bag.width)) : cell;
+  return (
+    <div ref={ref} className="bag-preview-fit">
+      <BagPreview loadout={loadout} cell={fit} />
+    </div>
+  );
+}
 
 export function BagPreview({ loadout, cell = 14 }: { loadout: Loadout; cell?: number }) {
   const { bag, layout } = loadout;

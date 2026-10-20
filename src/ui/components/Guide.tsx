@@ -47,10 +47,10 @@ export function Guide({ empty, savedIn, onProfile, onTour, onClose }: Props) {
           auras' stars. This counts for every build.
         </li>
         <li>
-          <b>Build tab, right:</b> pick the build's hero, gear, pets and skins.
+          <b>Build tab, left:</b> pick the build's hero, gear, pets and skins.
         </li>
         <li>
-          <b>Build tab, left:</b> click an item to put it in the bag, or drag it. Click it in the bag to select it, again to rotate it; <b>Item details</b> shows what it does
+          <b>Build tab, right:</b> click an item to put it in the bag, or drag it. Click it in the bag to select it, again to rotate it; <b>Item details</b> shows what it does
           and what it's worth. The Starting equipment tab has what your hero can bring.
         </li>
         <li>

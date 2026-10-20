@@ -1,6 +1,6 @@
 /**
  * App settings (the gear in the top bar, user 2026-10-20), kept in this browser: whether items visibly turn
- * when rotated (and how long it takes), what an item turns around (in the bag, and while held; square items
+ * when rotated and slide into place when dropped (and how long each takes), what an item turns around (in the bag, and while held; square items
  * and the others each have their own choice), and how the rarity colour shows behind items and gear.
  */
 import { useSyncExternalStore } from 'react';
@@ -19,6 +19,10 @@ export interface Settings {
   animateRotation: boolean;
   /** How long a turn takes (ms). */
   rotationMs: number;
+  /** A dropped item slides from where it was let go into its place, instead of jumping there. */
+  animatePlacing: boolean;
+  /** How long that slide takes (ms). */
+  placeMs: number;
   /** While dragging: what a square item (as wide as it's tall) turns around. */
   squarePivot: Pivot;
   /** While dragging: what any other item turns around. */
@@ -38,7 +42,7 @@ export interface Settings {
 }
 
 // In the bag an item has always kept its top-left corner when turned.
-export const DEFAULT_SETTINGS: Settings = { animateRotation: false, rotationMs: 150, squarePivot: 'cursor', otherPivot: 'cursor', placedSquarePivot: 'top-left', placedOtherPivot: 'top-left',
+export const DEFAULT_SETTINGS: Settings = { animateRotation: false, rotationMs: 150, animatePlacing: true, placeMs: 120, squarePivot: 'cursor', otherPivot: 'cursor', placedSquarePivot: 'top-left', placedOtherPivot: 'top-left',
   // Pictures have always sat on a 55% background, full when selected.
   itemLook: 'full', itemOpacity: 55, itemSelectedOpacity: 100, gearLook: 'full', gearOpacity: 55, gearSelectedOpacity: 100,
 };
@@ -56,6 +60,8 @@ function load(): Settings {
     return {
       animateRotation: raw.animateRotation === true,
       rotationMs: typeof raw.rotationMs === 'number' && raw.rotationMs >= 0 ? Math.min(2000, raw.rotationMs) : DEFAULT_SETTINGS.rotationMs,
+      animatePlacing: raw.animatePlacing !== false,
+      placeMs: typeof raw.placeMs === 'number' && raw.placeMs >= 0 ? Math.min(2000, raw.placeMs) : DEFAULT_SETTINGS.placeMs,
       squarePivot: pivot(raw.squarePivot),
       otherPivot: pivot(raw.otherPivot),
       placedSquarePivot: anchor(raw.placedSquarePivot),

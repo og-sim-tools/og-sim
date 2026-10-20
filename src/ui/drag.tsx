@@ -59,6 +59,16 @@ const elsewhere = new Map<string, { current: (d: DragItem, x: number, y: number,
 const looks = new Map<string, { current: (d: DragItem) => DragLook | null }>();
 let state: DragState | null = null;
 let current: HTMLElement | null = null;
+/** The last item let go over a target: where its cells' top-left corner was on screen, to slide it from there. */
+interface Drop {
+  scope: string;
+  kind: DragItem['kind'];
+  id: string;
+  left: number;
+  top: number;
+  at: number;
+}
+let lastDrop: Drop | null = null;
 /** The element under the pointer while something is held. */
 let under: Element | null = null;
 let justEnded = false;
@@ -122,7 +132,11 @@ function finish(drop: boolean, x: number, y: number, fallback: EventTarget | nul
   if (s && drop) {
     const t = targetAt(x, y, fallback);
     const target = t ? targets.get(t)!.current : null;
-    if (target && target.accepts(s)) target.drop(s, x, y);
+    if (target && target.accepts(s)) {
+      const box = heldBox(s);
+      lastDrop = box ? { scope: s.scope, kind: s.kind, id: s.id, left: box.left, top: box.top, at: Date.now() } : null;
+      target.drop(s, x, y);
+    }
     else if (s.kind !== 'item') elsewhere.get(s.scope)?.current(s, x, y, elementAt(x, y, fallback));
   }
   if (current) targets.get(current)?.current.leave?.();
@@ -232,6 +246,44 @@ export function turned(s: DragState): DragState {
   });
   const c = after.cells[grab]!;
   return { ...next, grab, inCell: { x: px - (c.x - nb.minX), y: py - (c.y - nb.minY) } };
+}
+
+/** Where a held item's cells are on screen: the top-left corner of their box, and its size. */
+function heldBox(d: DragState): { left: number; top: number; w: number; h: number } | null {
+  const l = looks.get(d.scope)?.current(d);
+  if (!l?.cells.length) return null;
+  const b = box(l.cells);
+  const g = l.cells[d.grab] ?? l.cells[0]!;
+  return { left: d.x - (g.x - b.minX + d.inCell.x) * SIZE, top: d.y - (g.y - b.minY + d.inCell.y) * SIZE, w: b.w * SIZE, h: b.h * SIZE };
+}
+
+/**
+ * Right after a drop (call from a layout effect): if the item just dropped is drawn in `root` (its elements
+ * carry data-item = its id; `idOf` says which id the drop gave it), slide them from where it was let go into
+ * place (settings). Its cells (`.item-cell`, or the `.stored-item` box) say where it is now.
+ */
+export function playDrop(root: HTMLElement | null, scope: string, idOf: (d: { kind: DragItem['kind']; id: string }) => string | null) {
+  const d = lastDrop;
+  if (!d || !root || d.scope !== scope) return;
+  if (Date.now() - d.at > 1000) {
+    lastDrop = null;
+    return;
+  }
+  const id = idOf(d);
+  if (!id) return;
+  const els = [...root.querySelectorAll<HTMLElement>('[data-item]')].filter((e) => e.dataset.item === id);
+  const anchors = els.filter((e) => e.classList.contains('item-cell') || e.classList.contains('stored-item'));
+  if (!anchors.length) return;
+  lastDrop = null;
+  const s = getSettings();
+  if (!s.animatePlacing || s.placeMs <= 0 || typeof anchors[0]!.animate !== 'function') return;
+  // No other transition at the same time (turning shown moves cells with one).
+  els.forEach((e) => (e.style.transition = 'none'));
+  const rects = anchors.map((e) => e.getBoundingClientRect());
+  const dx = d.left - Math.min(...rects.map((r) => r.left));
+  const dy = d.top - Math.min(...rects.map((r) => r.top));
+  if (Math.abs(dx) >= 1 || Math.abs(dy) >= 1) els.forEach((e) => e.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'none' }], { duration: s.placeMs, easing: 'ease-out' }));
+  requestAnimationFrame(() => els.forEach((e) => (e.style.transition = '')));
 }
 
 /** The bag cell the held cell is over (the pointer may be off that cell after turning around the centre). */

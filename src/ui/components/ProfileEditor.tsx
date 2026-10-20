@@ -8,7 +8,7 @@ import { formatIssue } from '../../engine/loader';
 import type { LoadoutIssue } from '../../engine/loadout';
 import { CLASSES, type Profile } from '../../engine/model';
 import { IssueLine } from './StatsPanel';
-import { AbbrevInput, BlessingsEditor, sortPets } from './SetupEditors';
+import { AbbrevInput, BlessingsEditor, SkillLinksEditor, sortPets } from './SetupEditors';
 import { rarityColor } from './BagGrid';
 
 export { sortPets } from './SetupEditors';
@@ -219,11 +219,6 @@ function HeroRow({ hero, owned, data, profile, update }: { hero: Hero; owned: Ow
       </div>
     );
   }
-  const linkSlots = cfg.heroes.skill_link_stars.filter((s) => s <= owned.stars).length;
-  const ownedStars = new Map(profile.heroes.map((h) => [h.id, h.stars]));
-  const linkable = [...data.heroes.values()]
-    .filter((h) => h.class === hero.class && h.id !== hero.id)
-    .flatMap((h) => h.skill_links.filter((l) => (ownedStars.get(h.id) ?? -1) >= l.stars).map((l) => ({ id: l.skill, label: `${data.skills.get(l.skill)?.name} (${h.name})` })));
 
   return (
     <details className="hero-card">
@@ -257,30 +252,7 @@ function HeroRow({ hero, owned, data, profile, update }: { hero: Hero; owned: Ow
         );
       })}
       <h3>Skill links</h3>
-      {linkSlots === 0 && <div className="small muted">First link slot opens at {cfg.heroes.skill_link_stars[0]}★.</div>}
-      {Array.from({ length: linkSlots }, (_, i) => (
-        <div key={i} className="row small">
-          <span className="muted">Slot {i + 1}</span>
-          <select
-            value={owned.links[i] ?? ''}
-            aria-label={`Link slot ${i + 1}`}
-            onChange={(e) =>
-              edit((h) => {
-                const l = [...h.links];
-                l[i] = e.target.value;
-                h.links = l.filter(Boolean);
-              })
-            }
-          >
-            <option value="">—</option>
-            {linkable.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.label}
-              </option>
-            ))}
-          </select>
-        </div>
-      ))}
+      <SkillLinksEditor hero={hero} owned={owned} data={data} profile={profile} update={update} />
     </details>
   );
 }

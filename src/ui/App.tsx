@@ -13,7 +13,7 @@ import { availableSupplies, supplySummary, validateLoadout } from '../engine/val
 import { type Snapshot, downloadText } from './api';
 import { Dialog } from './components/Dialog';
 import { type SaveStore, StoreContext, TEMP_BUILD, fileStore, lastBuild, readDraft, tempBuild, writeDraft } from './saves';
-import { BagPreview } from './components/BagPreview';
+import { FitBagPreview } from './components/BagPreview';
 import { type AccountImport, accountArchive, downloadBytes, looksLikeBuild, readAccountArchive } from './state/accountArchive';
 import { unzipFiles } from './state/zip';
 import { safeBuildName } from '../engine/saves/names';
@@ -907,7 +907,7 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
         if (!text) return <span className="small muted">…</span>;
         l = readBuild(text, { v1Profile: v1Ref.current }).layout;
       }
-      return <BagPreview loadout={buildLoadout(data, applySetup(account, l.setup), l)} />;
+      return <FitBagPreview loadout={buildLoadout(data, applySetup(account, l.setup), l)} />;
     } catch {
       return <span className="small muted">no preview</span>;
     }
@@ -1333,6 +1333,7 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
                   look={lookBuild}
                   onSelect={setSelected}
                   onRotate={() => onKey('rotate')}
+                  onKey={onKey}
                   onDrop={onStore}
                   top={bagMargin * 40}
                 />
@@ -1767,6 +1768,28 @@ function SettingsDialog({ settings, onClose }: { settings: Settings; onClose: ()
           onChange={(e) => {
             const v = Number(e.target.value);
             if (e.target.value !== '' && Number.isFinite(v)) setSettings({ rotationMs: Math.max(0, Math.min(2000, Math.round(v))) });
+          }}
+        />
+        ms
+      </label>
+      <h3>Placing</h3>
+      <label className="check-line small">
+        <input type="checkbox" checked={settings.animatePlacing} onChange={(e) => setSettings({ animatePlacing: e.target.checked })} />
+        <span>Dropped items slide into place (instead of jumping there)</span>
+      </label>
+      <label className="row small" style={{ marginTop: 4 }}>
+        <span className="muted">Slide time</span>
+        <input
+          type="number"
+          min={0}
+          max={2000}
+          step={25}
+          aria-label="Slide time (ms)"
+          disabled={!settings.animatePlacing}
+          value={settings.placeMs}
+          onChange={(e) => {
+            const v = Number(e.target.value);
+            if (e.target.value !== '' && Number.isFinite(v)) setSettings({ placeMs: Math.max(0, Math.min(2000, Math.round(v))) });
           }}
         />
         ms
