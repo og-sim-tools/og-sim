@@ -11,7 +11,7 @@
 import { parse, stringify } from 'yaml';
 import type { LayoutData, Profile } from '../model';
 import { AccountFileSchema, BuildFileSchema, SAVE_VERSION, accountToProfile, buildFileToLayout, layoutToBuildFile, profileToAccount } from './files';
-import { accountV1toV2, accountV2toV3, buildV1toV2, buildV2toV3, v3toV4, versionOf } from './migrate';
+import { accountV1toV2, accountV2toV3, buildV1toV2, buildV2toV3, v3toV4, v4toV5, versionOf } from './migrate';
 import { type SaveNote, parseSalvaging } from './salvage';
 
 export { SAVE_VERSION, DEFAULT_BASIC_STATS, accountToProfile, profileToAccount, buildFileToLayout, layoutToBuildFile, statsUnset, sameStats } from './files';
@@ -56,6 +56,8 @@ export function readAccount(text: string | null | undefined): AccountLoad {
   if (version === 1 && isObj(raw)) raw = accountV1toV2(raw, []);
   if (versionOf(raw) === 2 && isObj(raw)) raw = accountV2toV3(raw, notes);
   if (versionOf(raw) === 3 && isObj(raw)) raw = v3toV4(raw);
+  if (versionOf(raw) === 4 && isObj(raw)) raw = v4toV5(raw);
+  if (versionOf(raw) === 4 && isObj(raw)) raw = v4toV5(raw);
   const file = parseSalvaging(AccountFileSchema, raw, notes, 'Account');
   return { profile: accountToProfile(file), migratedFromV1: file.migrated_from_v1 ?? null, version, notes };
 }

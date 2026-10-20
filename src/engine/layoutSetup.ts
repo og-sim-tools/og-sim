@@ -20,6 +20,7 @@ export function setupFromProfile(profile: Profile, heroId?: string | null): Layo
     pets: profile.pets.map((p) => ({ id: p.id, active: p.active })),
     equipped_skins: [...(profile.equipped_skins ?? [])],
     skin_quests_done: [...(profile.skin_quests_done ?? [])],
+    ...(profile.skin_quests_forced?.length ? { skin_quests_forced: [...profile.skin_quests_forced] } : {}),
   };
 }
 
@@ -38,6 +39,7 @@ export function applySetup(profile: Profile, setup: LayoutSetup | undefined): Pr
   if (setup.detailed_stats) next.detailed_stats = structuredClone(setup.detailed_stats);
   if (setup.equipped_skins) next.equipped_skins = [...setup.equipped_skins];
   if (setup.skin_quests_done) next.skin_quests_done = [...setup.skin_quests_done];
+  next.skin_quests_forced = [...(setup.skin_quests_forced ?? [])];
   if (setup.skins?.length) next.skins = [...next.skins.filter((s) => !setup.skins!.some((x) => x.id === s.id)), ...structuredClone(setup.skins)];
   if (setup.hero) {
     const i = next.heroes.findIndex((h) => h.id === setup.hero!.id);

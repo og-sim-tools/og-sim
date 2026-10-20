@@ -422,6 +422,7 @@ export function SkinsEditor({ data, profile, update, account = false }: { data: 
                     update((p) => {
                       p.equipped_skins = (p.equipped_skins ?? []).filter((x) => x !== s.id);
                       p.skin_quests_done = (p.skin_quests_done ?? []).filter((x) => x !== s.id);
+                      p.skin_quests_forced = (p.skin_quests_forced ?? []).filter((x) => x !== s.id);
                       if (e.target.checked) {
                         p.equipped_skins = [...p.equipped_skins, s.id].slice(0, 2);
                         // Bringing a skin means owning it.
@@ -443,7 +444,24 @@ export function SkinsEditor({ data, profile, update, account = false }: { data: 
                   </option>
                 ))}
               </select>
-              <label title="The skill only works once its quest is done in the run (some quests the bag meets by itself)">
+              {s.quest_check && s.quest_check.type !== 'run' ? (
+                <label title="Its quest is checked from the bag. Force it on: the skill works even if this bag doesn't meet the quest now (it was met earlier in the run, e.g. creatures sold since)">
+                  <input
+                    type="checkbox"
+                    aria-label={`${s.name} forced on`}
+                    disabled={!on}
+                    checked={on && (profile.skin_quests_forced ?? []).includes(s.id)}
+                    onChange={(e) =>
+                      update((p) => {
+                        const list = (p.skin_quests_forced ?? []).filter((x) => x !== s.id);
+                        p.skin_quests_forced = e.target.checked ? [...list, s.id] : list;
+                      })
+                    }
+                  />{' '}
+                  force on
+                </label>
+              ) : (
+              <label title="The skill only works once its quest is done in the run">
                 <input
                   type="checkbox"
                   aria-label={`${s.name} quest done`}
@@ -458,6 +476,7 @@ export function SkinsEditor({ data, profile, update, account = false }: { data: 
                 />{' '}
                 quest
               </label>
+              )}
             </div>
             {on && !skinFor(s, hero) && <div className="small warn">Not available to {hero.name}: it does nothing with this hero.</div>}
           </div>

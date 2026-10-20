@@ -12,7 +12,7 @@ import type { GameData } from '../../engine/loader';
 import { type Loadout, buildLoadout, buildValue } from '../../engine/loadout';
 import type { EnemyBuild, LayoutData, Profile } from '../../engine/model';
 import { formatShown } from '../../engine/numbers';
-import { type Candidate, type OptimizeOptions, type OptimizeProgress, type OptimizeResult, type Opponent, optimize, optimizeMany, skinQuestGuard, withMyBaseStats } from '../../engine/optimize';
+import { type Candidate, type OptimizeOptions, type RunPlan, optimizeStaged, type OptimizeProgress, type OptimizeResult, type Opponent, optimize, optimizeMany, skinQuestGuard, withMyBaseStats } from '../../engine/optimize';
 import { checkSkinQuest } from '../../engine/skinQuests';
 import { aggregateStats } from '../../engine/stats';
 import { BagGrid } from './BagGrid';
@@ -93,18 +93,29 @@ export function OptimizePanel({ data, profile, layout, layoutName, loadout, layo
     keepSkinQuests: true,
     matchStats: false,
     balance: true,
-    /** Several search seeds: how many runs, and whether each starts from the previous run's best. */
-    multiSeed: false,
     /** Shake up when stuck: after this many builds without a better best, this many changes at once (kept even if worse). */
     shake: false,
     shakePatience: 15,
     shakeSize: 3,
+    /** Several runs: how many in the first stage. */
     searchRuns: 3,
-    chainRuns: true,
+    /** Several runs: one, parallel, series, or one kind then the other from each run's best (user, 2026-10-20). */
+    runPlan: 'one' as 'one' | 'parallel' | 'series' | 'parallel-series' | 'series-parallel',
+    /** With a combined plan: runs of the second kind from each first run. */
+    secondRuns: 3,
+    /** Weight the opponents: beating a heavier one counts more. */
+    weighted: false,
+    weights: {} as Record<string, number>,
     /** With matchStats: opponents get my base stats × this. */
     statMultiple: 1,
   });
   const budget = opts.valueBudget ?? startValue;
+  /** The runs to make (null = one). */
+  const plan: RunPlan | null =
+    opts.runPlan === 'one'
+      ? null
+      : { first: opts.runPlan.startsWith('series') ? 'series' : 'parallel', a: Math.max(1, opts.searchRuns), b: opts.runPlan.includes('-') ? Math.max(1, opts.secondRuns) : 0 };
+  const runCount = opts.iterations === 0 || !plan ? 1 : plan.a + plan.a * plan.b;
   const [running, setRunning] = useState(false);
   const [progress, setProgress] = useState<OptimizeProgress | null>(null);
   const [result, setResult] = useState<OptimizeResult | null>(null);
@@ -183,7 +194,7 @@ export function OptimizePanel({ data, profile, layout, layoutName, loadout, layo
         // "Same base stats as me": the opponent's HP / ATK / Block (and Stat Details) become mine; its gear, hero and bag stay.
         const b = opts.matchStats ? withMyBaseStats(build, profile, opts.statMultiple) : build;
         const enemy = { ...OPPONENT, ...(fromBattle && inline ? inline : {}), name: label, kind: 'player' as const, build: b };
-        opponents.push({ name: label, enemy: resolveEnemies(data, { mode, enemy } as never) });
+        opponents.push({ name: label, enemy: resolveEnemies(data, { mode, enemy } as never), weight: opts.weighted ? (opts.weights[name] ?? 1) : 1 });
       }
       if (opponents.length === 0) throw new Error('Pick at least one opponent build.');
       // 0 builds to try: only score my build as it is (no clean-up changes either).
@@ -199,7 +210,7 @@ export function OptimizePanel({ data, profile, layout, layoutName, loadout, layo
       };
       const base = startPlacements ? { ...layout, placements: startPlacements } : layout;
       lastRun.current = { opponents, o, base };
-      const gen = !testOnly && opts.multiSeed && opts.searchRuns > 1 ? optimizeMany(data, profile, base, opponents, o, opts.searchRuns, opts.chainRuns) : optimize(data, profile, base, opponents, o);
+      const gen = !testOnly && plan ? optimizeStaged(data, profile, base, opponents, o, plan) : optimize(data, profile, base, opponents, o);
       setRanWith(signature);
       stop.current = false;
       started.current = Date.now();
@@ -327,12 +338,36 @@ export function OptimizePanel({ data, profile, layout, layoutName, loadout, layo
               <input type="checkbox" checked={picked.includes(n)} onChange={(e) => setPicked((p) => (e.target.checked ? [...p, n] : p.filter((x) => x !== n)))} />{' '}
               <b>{labelOf(n)}</b>
               {editedIsSaved && n === edited && <span className="badge">with the Build tab's edits</span>}
+              {opts.weighted && (
+                <span>
+                  {' '}
+                  weight{' '}
+                  <input
+                    type="number"
+                    min={0}
+                    step={0.5}
+                    aria-label={`Weight of ${labelOf(n)}`}
+                    value={opts.weights[n] ?? 1}
+                    onChange={(e) => {
+                      const v = Number(e.target.value);
+                      if (e.target.value !== '' && Number.isFinite(v)) set('weights', { ...opts.weights, [n]: Math.max(0, v) });
+                    }}
+                    style={{ width: 56 }}
+                  />
+                </span>
+              )}
               <div className="muted" style={{ marginLeft: 22 }}>
                 {oppStats[n] ?? '…'}
               </div>
             </label>
           ))}
           <div className="opt-grid small" style={{ marginTop: 6 }}>
+            <label htmlFor="opt-weighted">Weights</label>
+            <label className="check-line">
+              <input id="opt-weighted" type="checkbox" checked={opts.weighted} onChange={(e) => set('weighted', e.target.checked)} />
+              <span>prioritize beating some builds</span>
+            </label>
+            {opts.weighted && <div className="help muted">Each opponent's weight (next to it above): a build with weight 3 counts three times as much as one with 1; 0 leaves it out of the score.</div>}
             <label htmlFor="opt-match">Opponents' stats</label>
             <span className="row" title="Every opponent gets my base HP, ATK, Block and Stat Details; its hero, gear, pets, skins and bag stay its own">
               <label className="check-line">
@@ -403,31 +438,26 @@ export function OptimizePanel({ data, profile, layout, layoutName, loadout, layo
             <input type="number" min={0} value={opts.temperature} onChange={(e) => set('temperature', Math.max(0, Number(e.target.value) || 0))} />
             <label title="Search seed: a different one tries different changes">Search seed</label>
             <input type="number" value={opts.searchSeed} onChange={(e) => set('searchSeed', Number(e.target.value) || 0)} />
-            <label title="Run the search with several seeds (the seed above, +1, +2 …) and keep every build in one list">Several seeds</label>
+            <label htmlFor="opt-plan" title="Run the search several times, with the seed above, +1, +2 …, and keep every build in one list">Several runs</label>
             <span className="row small" style={{ flexWrap: 'wrap', gap: 4 }}>
-              <input type="checkbox" checked={opts.multiSeed} onChange={(e) => set('multiSeed', e.target.checked)} />
-              <input
-                type="number"
-                min={2}
-                aria-label="Number of search seeds"
-                disabled={!opts.multiSeed}
-                value={opts.searchRuns}
-                onChange={(e) => set('searchRuns', Math.max(2, Math.round(Number(e.target.value) || 2)))}
-                style={{ width: 56 }}
-              />
-              runs
-              {opts.multiSeed && (
-                <span style={{ display: 'block', width: '100%' }}>
-                  <label className="check-line">
-                    <input type="radio" name="opt-chain" checked={opts.chainRuns} onChange={() => set('chainRuns', true)} />
-                    <span>chained: seed 1's best build starts seed 2, and so on</span>
-                  </label>
-                  <br />
-                  <label className="check-line">
-                    <input type="radio" name="opt-chain" checked={!opts.chainRuns} onChange={() => set('chainRuns', false)} />
-                    <span>separate: every seed starts from my build</span>
-                  </label>
-                </span>
+              <select id="opt-plan" aria-label="Several runs" value={opts.runPlan} onChange={(e) => set('runPlan', e.target.value as typeof opts.runPlan)}>
+                <option value="one">no, one run</option>
+                <option value="parallel">parallel: every run starts from my build</option>
+                <option value="series">series: each run starts from the one before's best</option>
+                <option value="parallel-series">parallel, then series from each</option>
+                <option value="series-parallel">series, then parallel from each</option>
+              </select>
+              {opts.runPlan !== 'one' && (
+                <>
+                  <input type="number" min={1} aria-label="Runs in the first stage" value={opts.searchRuns} onChange={(e) => set('searchRuns', Math.max(1, Math.round(Number(e.target.value) || 1)))} style={{ width: 52 }} />
+                  {opts.runPlan.includes('-') ? (opts.runPlan.startsWith('parallel') ? 'parallel, each then' : 'in series, each then') : 'runs'}
+                  {opts.runPlan.includes('-') && (
+                    <>
+                      <input type="number" min={1} aria-label="Runs from each first run" value={opts.secondRuns} onChange={(e) => set('secondRuns', Math.max(1, Math.round(Number(e.target.value) || 1)))} style={{ width: 52 }} />
+                      {opts.runPlan.startsWith('parallel') ? 'in series' : 'in parallel'} <span className="muted">= {runCount} runs</span>
+                    </>
+                  )}
+                </>
               )}
             </span>
             <label title="For long runs: when the best build stops improving, try a bigger jump that may score worse for a while, to escape a dead end and reach a higher best">Shake up when stuck</label>
@@ -476,7 +506,7 @@ export function OptimizePanel({ data, profile, layout, layoutName, loadout, layo
           </div>
           </details>
           <div className="small muted" style={{ marginTop: 6 }}>
-            About {opts.seeds * Math.max(1, picked.length) * (opts.iterations + 1) * (opts.multiSeed && opts.iterations > 0 ? opts.searchRuns : 1)} battles per run.
+            About {opts.seeds * Math.max(1, picked.length) * (opts.iterations + 1) * runCount} battles{runCount > 1 ? ` in ${runCount} runs` : ' per run'}.
           </div>
           {questNotes.map((w) => (
             <div key={w} className="issue warning small" style={{ marginTop: 4 }}>
@@ -503,7 +533,7 @@ export function OptimizePanel({ data, profile, layout, layoutName, loadout, layo
                 <div style={{ width: `${(100 * progress.battles) / Math.max(1, progress.totalBattles)}%` }} />
               </div>
               <div className="small muted">
-                Build {progress.candidate + 1} / {(opts.iterations + 1) * (opts.multiSeed && opts.iterations > 0 ? opts.searchRuns : 1)} · {progress.battles} / {progress.totalBattles} battles · about {Math.ceil(eta / 1000)} s left
+                Build {progress.candidate + 1} / {(opts.iterations + 1) * runCount} · {progress.battles} / {progress.totalBattles} battles · about {Math.ceil(eta / 1000)} s left
                 {progress.best && ` · best so far ${num(progress.best.meanScore)} (${pct(progress.best.winRate)} wins)`}
               </div>
             </div>

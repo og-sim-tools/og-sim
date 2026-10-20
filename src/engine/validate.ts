@@ -108,6 +108,8 @@ export function validateLoadout(loadout: Loadout): LoadoutIssue[] {
     if (!owned) warn('skin_not_owned', `${skin.name} (${skin.skill.name}) is equipped but not in my owned skins.`);
     else if (hero && !(a?.all || (a?.classes ?? []).includes(hero.class) || (a?.heroes ?? []).includes(hero.id))) {
       warn('skin_unavailable', `${skin.skill.name} (${skin.name}) isn't available to ${hero.name}, so it does nothing.`);
+    } else if ((profile.skin_quests_forced ?? []).includes(id)) {
+      // Forced on: no quest warning.
     } else if (checkSkinQuest(loadout, skin).status === 'not_met') {
       warn('skin_quest_not_met', `${skin.skill.name} (${skin.name}) is off: this bag doesn't meet its quest (${checkSkinQuest(loadout, skin).detail}).`);
     } else if (checkSkinQuest(loadout, skin).status !== 'met' && !(profile.skin_quests_done ?? []).includes(id)) warn('skin_quest', `${skin.skill.name} (${skin.name}) does nothing until its quest is done.`);

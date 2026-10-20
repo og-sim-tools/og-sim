@@ -8,7 +8,7 @@ import { footprintOf, placeFootprint } from '../../engine/bag';
 import type { GameData, Item } from '../../engine/loader';
 import { CLASSES, RARITIES } from '../../engine/model';
 import type { AvailableSupply } from '../../engine/validate';
-import { type BrowserEntry, type BrowserFilter, type BrowserSort, EMPTY_FILTER, allTags, browserEntries, filterEntries, sortEntries } from '../state/browser';
+import { type BrowserEntry, type BrowserFilter, type BrowserSort, EMPTY_FILTER, allTags, browserEntries, filterEntries, nameMatches, sortEntries } from '../state/browser';
 import { rarityColor } from './BagGrid';
 import { beginDrag, dragJustEnded } from '../drag';
 import { imageUrl } from '../staticData';
@@ -261,7 +261,7 @@ function StartingList({ s, f, set, data }: { s: StartingEquipment; f: BrowserFil
   const sorted = sortEntries(
     entries.filter(
       (e) =>
-        (!text || e.name.toLowerCase().includes(text) || e.id.includes(text)) &&
+        nameMatches(e.name, text, e.id) &&
         (!f.cls || e.classes.length === 0 || (e.classes as string[]).includes(f.cls)) &&
         (!f.rarity || e.rarity === f.rarity) &&
         (!f.tag || e.tags.includes(f.tag)),

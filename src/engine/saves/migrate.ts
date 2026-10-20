@@ -12,6 +12,7 @@
  * build keeps its hero, gear, which pets and skins it brings, the bag (and storage) and the battle.
  * Version 4 (2026-10-20): the battle settings can name a chapter, and a typed-in enemy's attacks can inflict
  * statuses on hit and deal a % of max HP. Nothing older changes meaning.
+ * Version 5 (2026-10-20): a build's skin can have its skill forced on (quest_forced). Nothing older changes.
  */
 import { DEFAULT_BASIC_STATS } from './files';
 import type { SaveNote } from './salvage';
@@ -158,4 +159,11 @@ export function buildV2toV3(raw: Raw, notes: SaveNote[] = []): Raw {
 /** v3 → v4 (account or build): only new optional settings, so nothing to change but the number. */
 export function v3toV4(raw: Raw): Raw {
   return { ...raw, version: 4 };
+}
+
+// ------------------------------------------------------------------ v4 → v5
+
+/** v4 → v5 (account or build): one new optional setting, so nothing to change but the number. */
+export function v4toV5(raw: Raw): Raw {
+  return { ...raw, version: 5 };
 }

@@ -72,6 +72,11 @@ export const ProfileSchema = z
     equipped_skins: z.array(Id).max(2).default([]),
     /** Skins whose quest is done in this run: their skill only works then. Saved per layout (setup). */
     skin_quests_done: z.array(Id).default([]),
+    /**
+     * Skins whose skill is on even though the bag doesn't meet the quest now (user, 2026-10-20: Dream Eater stays
+     * on after the creatures that met it are sold). The optimizer doesn't guard or mention their quest.
+     */
+    skin_quests_forced: z.array(Id).optional(),
   })
   .strict();
 export type Profile = z.infer<typeof ProfileSchema>;

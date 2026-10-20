@@ -67,10 +67,30 @@ export function browserEntries(data: GameData): BrowserEntry[] {
   return [...items, ...gear].sort((a, b) => a.name.localeCompare(b.name));
 }
 
+/**
+ * Search by name, word by word (user, 2026-10-20): "h b" finds Hunter's Bow, every word typed being the start of
+ * a word of the name, in order. Text that appears in the name (or id) as typed matches too.
+ */
+export function nameMatches(name: string, query: string, id = ''): boolean {
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+  const n = name.toLowerCase();
+  if (n.includes(q) || (id && id.includes(q))) return true;
+  const words = n.replace(/['’]/g, '').split(/[^a-z0-9]+/).filter(Boolean);
+  const typed = q.replace(/['’]/g, '').split(/[^a-z0-9]+/).filter(Boolean);
+  let i = 0;
+  for (const t of typed) {
+    while (i < words.length && !words[i]!.startsWith(t)) i++;
+    if (i >= words.length) return false;
+    i++;
+  }
+  return typed.length > 0;
+}
+
 export function filterEntries(entries: BrowserEntry[], f: BrowserFilter, supplyIds: ReadonlySet<string> = new Set()): BrowserEntry[] {
   const text = f.text.trim().toLowerCase();
   return entries.filter((e) => {
-    if (text && !e.name.toLowerCase().includes(text) && !e.id.includes(text)) return false;
+    if (text && !nameMatches(e.name, text, e.id)) return false;
     if (f.kind === 'supply') {
       if (!supplyIds.has(e.id)) return false;
     } else if (f.kind && e.kind !== f.kind) return false;

@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { runBattle } from '../../src/engine/combat/battle';
 import { enemyKind, hasPlayerItems } from '../../src/engine/combat/setup';
 import { LayoutSchema } from '../../src/engine/model';
-import { type OptimizeOptions, activity, balanced, distinctRotations, fixIdle, optimize, optimizeMany, tryLayout, withMyBaseStats } from '../../src/engine/optimize';
+import { type OptimizeOptions, activity, balanced, distinctRotations, fixIdle, optimize, optimizeMany, optimizeStaged, tryLayout, withMyBaseStats } from '../../src/engine/optimize';
 import { buildLoadout } from '../../src/engine/loadout';
 import { DATA_, ENEMY, combatData, combatLoadout, combatProfile } from '../combat-fixture';
 
@@ -208,10 +208,41 @@ describe('idle items: one- or two-move fixes, and several search seeds', () => {
     expect(starts).toHaveLength(2);
     for (const s of starts) {
       const parent = res.candidates.find((c) => c.id === s.parent)!;
-      expect(parent.run!).toBeLessThan(s.run!); // the best build of the runs before
+      expect(Number(parent.run)).toBeLessThan(Number(s.run)); // the best build of the runs before
       expect(s.placements).toEqual(parent.placements);
     }
     expect(res.best.objective).toBe(Math.max(...res.candidates.map((c) => c.objective)));
+  });
+
+  it('parallel then series: 3 and 2 make 3 + 6 runs, each first run feeding a chain of 2', () => {
+    const res = run(optimizeStaged(DATA_, combatProfile(), base, opp, OPTS, { first: 'parallel', a: 3, b: 2 }));
+    const runs = [...new Set(res.candidates.map((c) => String(c.run)))];
+    expect(runs).toEqual(['1', '1.1', '1.2', '2', '2.1', '2.2', '3', '3.1', '3.2']);
+    expect(res.candidates.filter((c) => c.change === 'starting build')).toHaveLength(3);
+    const startOf = (r: string) => res.candidates.find((c) => String(c.run) === r && c.change.startsWith('start of run'))!;
+    // 1.1 starts from run 1's best, 1.2 from 1.1's.
+    expect(String(res.candidates.find((c) => c.id === startOf('1.1').parent)!.run)).toBe('1');
+    expect(String(res.candidates.find((c) => c.id === startOf('1.2').parent)!.run)).toBe('1.1');
+  });
+
+  it('series then parallel: each run of the chain feeds runs of its own', () => {
+    const res = run(optimizeStaged(DATA_, combatProfile(), base, opp, OPTS, { first: 'series', a: 2, b: 2 }));
+    const startOf = (r: string) => res.candidates.find((c) => String(c.run) === r && c.change.startsWith('start of run'))!;
+    expect([...new Set(res.candidates.map((c) => String(c.run)))]).toHaveLength(2 + 4);
+    expect(String(res.candidates.find((c) => c.id === startOf('2').parent)!.run)).toBe('1');
+    for (const r of ['2.1', '2.2']) expect(String(res.candidates.find((c) => c.id === startOf(r).parent)!.run)).toBe('2');
+  });
+
+  it('weighted opponents: beating the heavier one counts more', () => {
+    const two = [
+      { name: 'Easy', enemy: [ENEMY({ hp: '10K', traits: ['short_time_limit'] })], weight: 1 },
+      { name: 'Hard', enemy: [ENEMY({ hp: '900B', traits: ['short_time_limit'] })], weight: 3 },
+    ];
+    const res = run(optimize(DATA_, combatProfile(), base, two, { ...OPTS, iterations: 0 }));
+    const s = res.start;
+    const [easy, hard] = s.opponents;
+    expect(s.meanScore).toBeCloseTo((easy!.meanScore + 3 * hard!.meanScore) / 4, 6);
+    expect(s.winRate).toBeCloseTo((easy!.winRate + 3 * hard!.winRate) / 4, 6);
   });
 
   it('separate: every run starts from my build', () => {

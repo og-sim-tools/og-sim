@@ -7,6 +7,7 @@
  */
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { BUILD_NAME_RE, BUILD_NAME_RULE } from '../../engine/saves/names';
+import { nameMatches } from '../state/browser';
 import { Dialog } from './Dialog';
 
 interface Props {
@@ -129,8 +130,8 @@ export function BuildPicker(p: Props) {
     else p.onLoad(name);
   };
   const q = query.trim().toLowerCase();
-  const shown = builds.filter((b) => !q || b.toLowerCase().includes(q));
-  const showTemp = !p.noTemp && (!q || 'temp build'.includes(q));
+  const shown = builds.filter((b) => nameMatches(b, q));
+  const showTemp = !p.noTemp && nameMatches('Temp build', q);
 
   const icons = (b: string) => (
     <span className="picker-icons">

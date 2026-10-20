@@ -1,0 +1,134 @@
+version: 5
+name: chapter and on-hit
+hero: raven
+gear:
+  weapon:
+    id: primal_flame
+    rarity: mythic
+    tier: 0
+    level: 40
+  shield:
+    id: celestial_shield
+    rarity: legendary
+    tier: 0
+    level: 40
+  rings:
+    - id: archwizards_ring
+      rarity: legendary
+      tier: 0
+      level: 1
+    - id: archwizards_ring
+      rarity: legendary
+      tier: 0
+      level: 1
+  gloves:
+    - id: gloves_of_plague
+      rarity: legendary
+      tier: 0
+      level: 1
+    - id: gloves_of_plague
+      rarity: legendary
+      tier: 0
+      level: 1
+pets:
+  - id: white_wolf_captain
+    active: true
+  - id: ice_reaper
+    active: true
+skins:
+  - id: trixie_dream_eater
+    quest_done: true
+placements:
+  - id: primal_flame#1
+    item: primal_flame
+    x: 4
+    y: 3
+  - id: celestial_shield#1
+    item: celestial_shield
+    x: 6
+    y: 0
+    rotation: 90
+  - id: archwizards_ring#1
+    item: archwizards_ring
+    x: 6
+    y: 5
+    rotation: 90
+  - id: archwizards_ring#2
+    item: archwizards_ring
+    x: 4
+    y: 2
+  - id: gloves_of_plague#1
+    item: gloves_of_plague
+    x: 3
+    y: 3
+  - id: gloves_of_plague#2
+    item: gloves_of_plague
+    x: 3
+    y: 4
+  - id: leather_boots#1
+    item: leather_boots
+    x: 0
+    y: 0
+  - id: leather_boots#2
+    item: leather_boots
+    x: 1
+    y: 0
+  - id: air_walker#1
+    item: air_walker
+    x: 2
+    y: 0
+  - id: black_feather#1
+    item: black_feather
+    x: 4
+    y: 0
+  - id: dragon_slayer#1
+    item: dragon_slayer
+    x: 5
+    y: 3
+    rotation: 270
+  - id: shadow_hunter#1
+    item: shadow_hunter
+    x: 0
+    y: 3
+  - id: black_bow#1
+    item: black_bow
+    x: 2
+    y: 3
+  - id: crow_amulet#1
+    item: crow_amulet
+    x: 6
+    y: 3
+battle:
+  mode: boss_rush
+  seed: 4
+  runs: 1
+  enemy:
+    id: custom_enemy
+    name: Stand-in
+    hp: 80M
+    atk: 1M
+    block: 0
+    damage_reduction: 0
+    attacks:
+      - damage: 300K
+        pct_max_hp: 1
+        cooldown: 2
+        accuracy: 85
+        hits: 1
+        crit_chance: 0
+        on_hit:
+          - status: burn
+            stacks: 3
+          - status: poison
+            stacks: 2
+            duration_s: 6
+    boss: false
+    starting_statuses: []
+    resistances: {}
+    vulnerabilities: {}
+    immunities: []
+    traits: []
+  chapter:
+    number: 35
+    play: sandbox
+    fight: 2

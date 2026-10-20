@@ -36,6 +36,8 @@ export interface Opponent {
   name: string;
   /** One entry per fight (as resolveEnemies returns it). */
   enemy: EnemyInput[];
+  /** How much beating this one counts (default 1): a weighted mean over the opponents (user, 2026-10-20). */
+  weight?: number;
 }
 
 export interface OptimizeOptions {
@@ -69,7 +71,7 @@ export interface OptimizeOptions {
   /** The starting build's parent (a chained run starts from the previous run's best). */
   startParent?: number;
   /** Which search-seed run a build came from (1, 2 …). */
-  runLabel?: number;
+  runLabel?: number | string;
   /**
    * Shake up when stuck: after `patience` builds without a better best, make `size` changes in a row from the
    * best build and keep the result even if it scores worse, then search on from there. Each time it's stuck
@@ -148,7 +150,7 @@ export interface Candidate {
   /** Kept as the new current build. */
   accepted: boolean;
   /** With several search seeds: which run (1, 2 …) it came from. */
-  run?: number;
+  run?: number | string;
 }
 
 export interface OptimizeProgress {
@@ -172,6 +174,11 @@ export interface OptimizeResult {
 }
 
 const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
+/** Mean weighted by each opponent's weight (all 1 = the plain mean). */
+const wmean = (xs: number[], ws: number[]) => {
+  const total = ws.reduce((a, w) => a + w, 0);
+  return total > 0 ? xs.reduce((a, x, i) => a + x * ws[i]!, 0) / total : mean(xs);
+};
 const add = (r: Record<string, number>, k: string, v: number) => {
   if (v > 0) r[k] = (r[k] ?? 0) + v;
 };
@@ -843,6 +850,8 @@ export function skinQuestGuard(data: GameData, profile: Profile, startLo: Loadou
     const hero = startLo.hero;
     const a = skin?.available;
     if (!skin?.skill || !profile.skins?.some((s) => s.id === id) || !hero || !(a?.all || a?.classes?.includes(hero.class) || a?.heroes?.includes(hero.id))) continue;
+    // Forced on: its quest isn't guarded or mentioned (the skill stays on whatever the search changes).
+    if ((profile.skin_quests_forced ?? []).includes(id)) continue;
     const q = checkSkinQuest(startLo, skin);
     const name = `${skin.skill.name} (${skin.name})`;
     if (q.status === 'run') {
@@ -891,6 +900,7 @@ export function* optimize(
   const startLo = buildLoadout(data, profile, base);
   const shop = opts.allowItemChanges ? shopItemsFor(data, startLo) : [];
   const failed = new Map<string, number>();
+  const weights = opponents.map((o) => Math.max(0, o.weight ?? 1));
 
   function* evaluate(lo: Loadout, placements: Placement[], parent: number | null, change: string, reason: string): Generator<OptimizeProgress, Candidate> {
     const id = candidates.length;
@@ -915,9 +925,9 @@ export function* optimize(
       placements,
       value: buildValue(lo).total,
       opponents: sums,
-      meanScore: mean(sums.map((s) => s.meanScore)),
-      objective: opts.balance === false ? mean(sums.map((s) => s.meanScore)) : mean(sums.map((s) => balanced(s.meanScore))),
-      winRate: mean(sums.map((s) => s.winRate)),
+      meanScore: wmean(sums.map((s) => s.meanScore), weights),
+      objective: wmean(sums.map((s) => (opts.balance === false ? s.meanScore : balanced(s.meanScore))), weights),
+      winRate: wmean(sums.map((s) => s.winRate), weights),
       diagnosis: diagnose(data, lo, sums),
       links: totalLinks(lo),
       accepted: false,
@@ -1023,6 +1033,16 @@ export function* optimize(
   return { candidates, start, best: top, warnings };
 }
 
+/** How several search runs are combined (user, 2026-10-20). */
+export interface RunPlan {
+  /** parallel: every run starts from my build; series: each starts from the run before's best. */
+  first: 'parallel' | 'series';
+  /** Runs in the first stage. */
+  a: number;
+  /** Then from each first-stage run's best, this many runs of the other kind (0 = none): 3 and 3 make 3 + 9. */
+  b: number;
+}
+
 /**
  * Several search seeds in one list. `chain`: each run starts from the best build of the run before (seed 1's
  * best feeds seed 2 …); otherwise every run starts from the original build. Seeds are searchSeed, searchSeed + 1 …
@@ -1036,35 +1056,65 @@ export function* optimizeMany(
   runs: number,
   chain: boolean,
 ): Generator<OptimizeProgress, OptimizeResult> {
+  return yield* optimizeStaged(data, profile, base, opponents, opts, { first: chain ? 'series' : 'parallel', a: runs, b: 0 });
+}
+
+/**
+ * Staged runs: `a` runs (parallel or in series), then from each of their bests `b` runs of the other kind.
+ * Parallel then series: each first run's best starts a chain of b runs. Series then parallel: each run of the
+ * chain's best starts b runs of its own. Every build tried is in one list; the best of all wins.
+ */
+export function* optimizeStaged(
+  data: GameData,
+  profile: Profile,
+  base: LayoutData,
+  opponents: Opponent[],
+  opts: OptimizeOptions,
+  plan: RunPlan,
+): Generator<OptimizeProgress, OptimizeResult> {
   const sink: Candidate[] = [];
   const warnings: string[] = [];
   let best: Candidate | null = null;
   let start: Candidate | null = null;
   let done = 0;
+  let index = 0;
+  const totalRuns = plan.a + plan.a * plan.b;
   const perRun = (opts.iterations + 1) * opponents.length * opts.seeds;
   const seed0 = typeof opts.searchSeed === 'number' ? opts.searchSeed : 0;
-  for (let k = 0; k < runs; k++) {
-    const from = chain && best ? best : null;
-    const runBase = from ? { ...base, placements: from.placements } : base;
-    const gen = optimize(data, profile, runBase, opponents, {
+  /** One run from `from` (null = my build). */
+  function* one(from: Candidate | null, label: string | number): Generator<OptimizeProgress, Candidate> {
+    const k = index++;
+    const gen = optimize(data, profile, from ? { ...base, placements: from.placements } : base, opponents, {
       ...opts,
       searchSeed: typeof opts.searchSeed === 'number' ? seed0 + k : `${opts.searchSeed}#${k}`,
       sink,
-      runLabel: k + 1,
+      runLabel: label,
       ...(from ? { startParent: from.id } : {}),
     });
     let r = gen.next();
     let runBattles = 0;
     while (!r.done) {
       runBattles = r.value.battles;
-      yield { ...r.value, battles: done + r.value.battles, totalBattles: perRun * runs, best: best && r.value.best && best.objective >= r.value.best.objective ? best : r.value.best };
+      yield { ...r.value, battles: done + r.value.battles, totalBattles: perRun * totalRuns, best: best && r.value.best && best.objective >= r.value.best.objective ? best : r.value.best };
       r = gen.next();
     }
     done += runBattles;
     start ??= r.value.start;
     if (!best || r.value.best.objective > best.objective) best = r.value.best;
     for (const w of r.value.warnings) if (!warnings.includes(w)) warnings.push(w);
+    return r.value.best;
+  }
+  const series = plan.first === 'series';
+  let prev: Candidate | null = null;
+  for (let i = 0; i < plan.a; i++) {
+    const firstBest: Candidate = yield* one(series ? prev : null, plan.b ? String(i + 1) : i + 1);
+    prev = firstBest;
+    // The other kind, from this run's best: a chain (after parallel), or separate runs (after series).
+    let chainFrom: Candidate = firstBest;
+    for (let j = 0; j < plan.b; j++) {
+      const b2: Candidate = yield* one(series ? firstBest : chainFrom, `${i + 1}.${j + 1}`);
+      chainFrom = b2;
+    }
   }
   return { candidates: sink, start: start!, best: best!, warnings };
 }
-

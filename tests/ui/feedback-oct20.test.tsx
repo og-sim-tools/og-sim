@@ -114,3 +114,49 @@ describe('Optimize with 0 builds to try', () => {
     expect(screen.queryByText(/drop Rock/)).toBeNull();
   }, 30000);
 });
+
+describe('later feedback of 2026-10-20', () => {
+  it('search goes word by word: "h b" finds Hunter\'s Bow', async () => {
+    const { nameMatches } = await import('../../src/ui/state/browser');
+    expect(nameMatches("Hunter's Bow", 'h b')).toBe(true);
+    expect(nameMatches("Hunter's Bow", 'hunt bo')).toBe(true);
+    expect(nameMatches("Hunter's Bow", 'b h')).toBe(false); // in order
+    expect(nameMatches("Hunter's Bow", "hunter's")).toBe(true);
+    expect(nameMatches('Advanced Magic: Crystal Fall', 'a m c f')).toBe(true);
+    expect(nameMatches('Advanced Magic: Crystal Fall', 'stal')).toBe(true); // text inside a word, as typed
+    expect(nameMatches('Rock', 'x')).toBe(false);
+    const { ItemBrowser } = await import('../../src/ui/components/ItemBrowser');
+    const { container } = render(<ItemBrowser data={data} supplyIds={new Set()} onPick={vi.fn()} onEdit={vi.fn()} />);
+    fireEvent.change(screen.getByLabelText('Search items'), { target: { value: 'h b' } });
+    expect([...container.querySelectorAll('.list-row .name')].map((n) => n.textContent)).toContain("Hunter's Bow");
+  });
+
+  it("a skin's skill can be forced on whatever the bag holds now, and the optimizer leaves its quest alone", async () => {
+    const { activeSkins } = await import('../../src/engine/combat/setup');
+    const { skinQuestGuard } = await import('../../src/engine/optimize');
+    const p = loadProfile({ path: 'p.yaml', text: 'basic_stats: { hp: 1M, atk: 100K, initial_block: 0 }\nheroes: [{ id: trixie, stars: 3 }]\nactive_hero: trixie\nskins: [{ id: trixie_dream_eater, stars: 1 }]\nequipped_skins: [trixie_dream_eater]\n' }, data).profile!;
+    const empty = buildLoadout(data, p, LayoutSchema.parse({ placements: [] }));
+    expect(activeSkins(empty).map((x) => x.skin.id)).toEqual([]); // the quest isn't met by an empty bag
+    const forced = buildLoadout(data, { ...p, skin_quests_forced: ['trixie_dream_eater'] }, LayoutSchema.parse({ placements: [] }));
+    expect(activeSkins(forced).map((x) => x.skin.id)).toEqual(['trixie_dream_eater']);
+    expect(validateLoadout(forced).some((i) => i.code.startsWith('skin_quest'))).toBe(false);
+    const g = skinQuestGuard(data, forced.profile, forced, true);
+    expect(g.warnings).toEqual([]);
+    expect(g.guarded).toEqual([]);
+  });
+
+  it('the Optimize tab: opponents can be weighted, and runs combined (3 parallel then 3 in series = 12)', async () => {
+    const { OptimizePanel } = await import('../../src/ui/components/OptimizePanel');
+    const mine = LayoutSchema.parse({ placements: [{ id: 'b1', item: 'hunters_bow', x: 0, y: 0 }] });
+    const foe = { profile, placements: [{ id: 'f1', item: 'hunters_bow', x: 0, y: 0, rotation: 0 as const, supply: false }] };
+    render(<OptimizePanel data={data} profile={profile} layout={mine} layoutName="mine" loadout={buildLoadout(data, profile, mine)} layouts={['foe one', 'foe two']} layoutAsBuild={vi.fn(async () => foe)} onApply={vi.fn()} />);
+    expect(screen.queryByLabelText('Weight of foe one')).toBeNull();
+    fireEvent.click(screen.getByLabelText(/prioritize beating some builds/));
+    fireEvent.change(screen.getByLabelText('Weight of foe one'), { target: { value: '3' } });
+    expect((screen.getByLabelText('Weight of foe one') as HTMLInputElement).value).toBe('3');
+    fireEvent.change(screen.getByLabelText('Several runs'), { target: { value: 'parallel-series' } });
+    fireEvent.change(screen.getByLabelText('Runs in the first stage'), { target: { value: '3' } });
+    fireEvent.change(screen.getByLabelText('Runs from each first run'), { target: { value: '3' } });
+    expect(screen.getByText(/= 12 runs/)).toBeTruthy();
+  });
+});

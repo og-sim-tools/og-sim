@@ -9,6 +9,7 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-li
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { parse, stringify } from 'yaml';
 import { readDataDir } from '../../src/engine/loader-node';
+import { SAVE_VERSION } from '../../src/engine/saves';
 
 const ROOT = join(__dirname, '..', '..');
 vi.mock('../../src/ui/api', () => ({
@@ -59,7 +60,7 @@ describe('the app and my saved files', () => {
     expect(notice.textContent).toMatch(/Moved into your Profile from "raven".*HP 5\.29M \/ ATK 1\.61M \/ Block 1\.85M/);
     await waitFor(() => expect(parse(localStorage.getItem('og-sim/account')!).stats).toEqual({ hp: '5.29M', atk: '1.61M', initial_block: '1.85M' }), { timeout: 3000 });
     const saved = parse(localStorage.getItem('og-sim/account')!);
-    expect(saved.version).toBe(4);
+    expect(saved.version).toBe(SAVE_VERSION);
     expect(saved.pets.map((p: { id: string }) => p.id)).toEqual(expect.arrayContaining(['white_wolf_captain', 'ice_reaper']));
     // The build itself isn't changed until I save it.
     expect(parse((await store.readBuild('raven'))!).version).toBe(2);
@@ -70,7 +71,7 @@ describe('the app and my saved files', () => {
     await heroPicker();
     fireEvent.click(screen.getByRole('tab', { name: 'Profile' }));
     fireEvent.change(screen.getByLabelText('Erwen stars'), { target: { value: '6' } });
-    await waitFor(() => expect(parse(localStorage.getItem('og-sim/account')!).version).toBe(4), { timeout: 3000 });
+    await waitFor(() => expect(parse(localStorage.getItem('og-sim/account')!).version).toBe(SAVE_VERSION), { timeout: 3000 });
     const saved = parse(localStorage.getItem('og-sim/account')!);
     expect(saved.heroes.find((h: { id: string }) => h.id === 'erwen')).toMatchObject({ id: 'erwen', stars: 6, links: [] });
     expect(saved.stats).toEqual({ hp: '5.29M', atk: '1.61M', initial_block: '1.85M' });
@@ -105,7 +106,7 @@ describe('the app and my saved files', () => {
     fireEvent.click(screen.getAllByRole('checkbox', { name: /active/ })[0]!);
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     fireEvent.click(within(screen.getByRole('dialog', { name: 'Save "trixie anti-raven"?' })).getByRole('button', { name: 'Save' }));
-    await waitFor(() => expect(parse(localStorage.getItem('og-sim/build/trixie anti-raven')!).version).toBe(4));
+    await waitFor(() => expect(parse(localStorage.getItem('og-sim/build/trixie anti-raven')!).version).toBe(SAVE_VERSION));
     const saved = parse(localStorage.getItem('og-sim/build/trixie anti-raven')!);
     expect(saved).toMatchObject({ hero: 'trixie', skins: [{ id: 'trixie_dream_eater', quest_done: true }] });
     expect(saved).not.toHaveProperty('blessings');

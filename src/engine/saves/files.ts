@@ -24,7 +24,7 @@ import {
 } from '../model';
 import { BagMaskSchema, EnhancedCellsSchema, StoredItemSchema } from '../model/placement';
 
-export const SAVE_VERSION = 4;
+export const SAVE_VERSION = 5;
 
 /** HP / ATK / Block before they're entered (an account with these hasn't entered its stats yet). */
 export const DEFAULT_BASIC_STATS = { hp: '1M', atk: '100K', initial_block: 0 } as { hp: z.infer<typeof Abbrev>; atk: z.infer<typeof Abbrev>; initial_block: z.infer<typeof Abbrev> };
@@ -68,7 +68,8 @@ export const AccountFileSchema = z
 export type AccountFile = z.infer<typeof AccountFileSchema>;
 
 export const BuildPetSchema = z.object({ id: Id, active: z.boolean().default(true) }).strict();
-export const BuildSkinSchema = z.object({ id: Id, quest_done: z.boolean().default(false) }).strict();
+/** quest_forced (version 5): the skill is on even if the bag doesn't meet its quest now. */
+export const BuildSkinSchema = z.object({ id: Id, quest_done: z.boolean().default(false), quest_forced: z.boolean().optional() }).strict();
 
 /**
  * What a version-2 build saved per build that's account-wide since version 3: kept when it's read (it wins over
@@ -152,6 +153,7 @@ export function buildFileToLayout(f: BuildFile): LayoutData {
       ...(f.detailed_stats && Object.keys(f.detailed_stats).length ? { detailed_stats: f.detailed_stats } : {}),
       equipped_skins: f.skins.map((s) => s.id),
       skin_quests_done: f.skins.filter((s) => s.quest_done).map((s) => s.id),
+      ...(f.skins.some((s) => s.quest_forced) ? { skin_quests_forced: f.skins.filter((s) => s.quest_forced).map((s) => s.id) } : {}),
       ...(skins.length ? { skins } : {}),
     },
     ...(f.battle ? { battle: f.battle } : {}),
@@ -169,7 +171,7 @@ export function layoutToBuildFile(l: LayoutData): BuildFile {
     hero,
     gear: structuredClone(s.gear ?? { weapon: null, shield: null, rings: [], gloves: [] }),
     pets: (s.pets ?? []).map((p) => ({ id: p.id, active: p.active })),
-    skins: equipped.map((id) => ({ id, quest_done: (s.skin_quests_done ?? []).includes(id) })),
+    skins: equipped.map((id) => ({ id, quest_done: (s.skin_quests_done ?? []).includes(id), ...((s.skin_quests_forced ?? []).includes(id) ? { quest_forced: true } : {}) })),
     ...(s.detailed_stats && Object.keys(s.detailed_stats).length ? { detailed_stats: structuredClone(s.detailed_stats) } : {}),
     ...(l.bag ? { bag: structuredClone(l.bag) } : {}),
     ...(l.enhanced_cells ? { enhanced_cells: structuredClone(l.enhanced_cells) } : {}),

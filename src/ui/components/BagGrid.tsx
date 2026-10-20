@@ -125,7 +125,7 @@ export function rarityColor(rarity: string | null | undefined, gear = false): st
   return gear ? 'var(--r-gear)' : `var(--r-${rarity ?? 'common'})`;
 }
 
-/** Cells of margin needed so every item cell and dot outside the bag can still be drawn. */
+/** Cells of margin needed so every item cell outside the bag can still be drawn (dots further out aren't drawn). */
 export function marginFor(width: number, height: number, cells: readonly Cell[]): number {
   let m = 1;
   for (const c of cells) m = Math.max(m, -c.x, -c.y, c.x - (width - 1), c.y - (height - 1));
@@ -140,7 +140,9 @@ export function BagGrid(p: Props) {
   /** Where the held item would land. */
   const [preview, setPreview] = useState<Landing | null>(null);
   const previewKey = useRef('');
-  const MARGIN = useMemo(() => marginFor(bag.width, bag.height, [...layout.items.values()].flatMap((i) => [...i.cells, ...i.dots])), [bag, layout]);
+  // Only item cells outside the bag widen the border around it, not dots (turning an item mustn't shift the bag).
+  const MARGIN = useMemo(() => marginFor(bag.width, bag.height, [...layout.items.values()].flatMap((i) => i.cells)), [bag, layout]);
+  const drawn = (c: Cell) => c.x >= -MARGIN && c.y >= -MARGIN && c.x < bag.width + MARGIN && c.y < bag.height + MARGIN;
   const px = (n: number) => (n + MARGIN) * SIZE;
 
   const redCells = useMemo(() => {
@@ -314,13 +316,13 @@ export function BagGrid(p: Props) {
         {bgCells}
         {itemCells}
         {sprites}
-        {preview?.cells.map((c) => (
+        {preview?.cells.filter(drawn).map((c) => (
           <div key={`p${c.x},${c.y}`} className={`drop-preview${preview.valid ? '' : ' bad'}`} style={{ left: px(c.x), top: px(c.y) }} />
         ))}
         {redCells.map((c) => (
           <div key={`r${c.x},${c.y}`} className="red-cell" style={{ left: px(c.x), top: px(c.y) }} />
         ))}
-        {dots.map((d, i) => (
+        {dots.filter((d) => drawn(d.cell)).map((d, i) => (
           <div
             key={`d${i}`}
             className={`dot ${d.status}`}

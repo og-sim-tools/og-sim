@@ -184,6 +184,11 @@ export function activeSkins(loadout: Loadout, warnings: string[] = []): { skin: 
       warnings.push(`Skin skill "${skin.skill.name}" isn't available to ${hero?.name ?? 'this hero'}, so it does nothing.`);
       continue;
     }
+    // Forced on: whatever the bag holds now (the quest was met earlier in the run).
+    if ((loadout.profile.skin_quests_forced ?? []).includes(id)) {
+      out.push({ skin, stars: owned.stars });
+      continue;
+    }
     // The bag decides quests about what's in it; for the rest, the profile's "quest done" tick does.
     const q = checkSkinQuest(loadout, skin);
     if (q.status === 'not_met') {

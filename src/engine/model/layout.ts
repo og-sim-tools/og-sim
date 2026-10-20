@@ -25,6 +25,8 @@ export const LayoutSetupSchema = z
     equipped_skins: z.array(z.string()).max(2).optional(),
     /** Skins whose quest is done in this run. */
     skin_quests_done: z.array(z.string()).optional(),
+    /** Skins whose skill is on even if the bag doesn't meet the quest now. */
+    skin_quests_forced: z.array(z.string()).optional(),
     /** Older files: this build's skins and their stars (0–5). */
     skins: z.array(z.object({ id: Id, stars: z.number().int().min(0).max(5) }).strict()).max(2).optional(),
   })

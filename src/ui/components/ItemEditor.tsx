@@ -11,6 +11,7 @@ import { resolveRatio } from '../../engine/numbers';
 import { useStore } from '../saves';
 import { imageUrl } from '../staticData';
 import { sortPets } from './ProfileEditor';
+import { nameMatches } from '../state/browser';
 import {
   type Draft,
   type EditCategory,
@@ -304,7 +305,7 @@ export function ItemEditor({ data, target, onTarget, onSaved, onError }: Props) 
   const list = useMemo(() => {
     const m = data[category] as Map<string, { id: string; name: string; rarity?: string; slot?: string }>;
     const q = search.toLowerCase();
-    const found = [...m.values()].filter((e) => !q || e.name.toLowerCase().includes(q));
+    const found = [...m.values()].filter((e) => nameMatches(e.name, q));
     return category === 'pets' ? sortPets(found as { id: string; name: string; rarity: string }[]) : found.sort((a, b) => a.name.localeCompare(b.name));
   }, [data, category, search]);
 

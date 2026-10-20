@@ -233,6 +233,22 @@ describe('frozen version-4 saves', () => {
   });
 });
 
+describe('frozen version-5 saves', () => {
+  it('every one loads without notes, and version 4 loads the same apart from the number', () => {
+    const acc = readAccount(read('v5', 'profile.yaml'));
+    expect(acc.version).toBe(5);
+    expect(acc.notes).toEqual([]);
+    expect(acc.profile).toEqual(readAccount(read('v4', 'profile.yaml')).profile);
+    for (const f of yamls('v5', 'builds')) {
+      const r = readBuild(read('v5', 'builds', f));
+      expect(r.version, f).toBe(5);
+      expect(r.notes, f).toEqual([]);
+      if (yamls('v4', 'builds').includes(f)) expect(r.layout, f).toEqual(readBuild(read('v4', 'builds', f)).layout);
+    }
+    expect(readBuild(read('v5', 'builds', 'trixie forced quest.yaml')).layout.setup?.skin_quests_forced).toEqual(['trixie_dream_eater']);
+  });
+});
+
 describe('older builds\' own values move into the account', () => {
   const base = readAccount(null).profile;
   const v2 = `version: 2
