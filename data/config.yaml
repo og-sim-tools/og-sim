@@ -101,8 +101,8 @@ combat:
   mutual_kill_winner: random                     # [UNVERIFIED] both die in the same tick (not the Spike case): player | enemy | random (seeded coin flip; user, 2026-10-17)
   max_chain_depth: 400                          # NOT a game rule (user, 2026-10-17: chains never stop in game): only a guard so a simulator bug can't hang the app; hitting it is reported as a bug
   recast:                                        # "activate again" (Wizard's / Mage's Hats); user 2026-10-20: each hat rolls on its own (2 hats = 2 separate rolls)
-    chain: true                                  # [UNVERIFIED] a recast is a spell activation too, so the hats roll on it again (false = only the spell's own activation rolls them)
-    weapon_spacing_ticks: 1                      # [UNVERIFIED] weapon spells queue their recasts: each attacks this many ticks after the last (tool spells act again in the same tick)
+    chain: true                                  # confirmed (user, 2026-10-20): a recast is a spell activation too, so the hats roll on it again
+    weapon_spacing_ticks: 1                      # confirmed (user, 2026-10-20): weapon spells queue their recasts one tick apart (tool spells act again in the same tick)
     status_reading_once_per_tick: true           # user 2026-10-20: a spell that reads statuses (Instant Freeze, Charm) acts once per tick; extra activations that tick are wasted (Witch's Mirror still sees them)
     status_reading_actions: [remove_status, steal_status, cleanse, trigger_status, multiply_status]
     max_per_tick: 50                             # NOT a game rule: most recasts of one item in one tick, so hat spam can't hang the app (reported when hit)

@@ -108,9 +108,9 @@ export const ConfigSchema = z
          */
         recast: z
           .object({
-            /** [UNVERIFIED] A recast is a spell activation too, so the hats roll on it again (true), or only the spell's own activation rolls them (false). */
+            /** Confirmed (user, 2026-10-20): a recast is a spell activation too, so the hats roll on it again (true); false = only the spell's own activation rolls them. */
             chain: z.boolean(),
-            /** [UNVERIFIED] A weapon spell's recasts queue: each attacks this many ticks after the previous one (0 = all in the same tick). */
+            /** Confirmed 1 (user, 2026-10-20): a weapon spell's recasts queue, each this many ticks after the previous one (0 = all in the same tick). */
             weapon_spacing_ticks: z.number().int().nonnegative(),
             /** User, 2026-10-20: a spell that reads statuses (Instant Freeze's Freeze, Charm's buffs) acts once per tick; its extra activations that tick are wasted (watchers such as Witch's Mirror still see them). */
             status_reading_once_per_tick: z.boolean(),
