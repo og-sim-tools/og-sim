@@ -58,7 +58,8 @@ export interface EffectApi {
   giveStatuses(to: Combatant, list: { status: string; stacks: number }[]): void;
   refund(item: CombatItem, pct: number, ofRemaining?: boolean): void;
   activate(item: CombatItem, depth: number): void;
-  triggerActivation(item: CombatItem, depth: number): void;
+  /** recast: "activate again" (the activation's own item, from an On Activation effect). */
+  triggerActivation(item: CombatItem, depth: number, recast?: boolean): void;
   attack(item: CombatItem, depth: number): void;
   chargeSkill(item: CombatItem, pct: number, depth: number): void;
   addBonus(item: CombatItem, stat: ItemStatPct, amount: number, durationS?: number, untilHit?: boolean): void;
@@ -95,6 +96,9 @@ const amount = (api: EffectApi, owner: CombatItem, effect: ItemEffect, fn: (n: n
 /** How many stacks / statuses to take: count (or stacks), × the number of `count_per_item` in my bag. */
 const countOf = (api: EffectApi, owner: CombatItem, e: ItemEffect) =>
   (e.count ?? e.stacks ?? 1) * (e.count_per_item ? api.own(owner).items.filter((i) => i.itemId === e.count_per_item).length : 1);
+
+/** "Activate again": an On Activation effect that activates the item that just activated (Wizard's Hat). */
+export const isRecast = (e: ItemEffect) => e.action === 'activate_item' && e.target === 'event_item' && (e.trigger === 'on_activation' || e.trigger === 'on_use');
 
 export const HANDLERS: Partial<Record<ItemEffect['action'], Handler>> = {
   add_stat_pct(api, owner, e, index, _depth, ev) {
@@ -186,7 +190,8 @@ export const HANDLERS: Partial<Record<ItemEffect['action'], Handler>> = {
     for (const t of items(api, owner, e, ev)) api.refund(t, e.pct!, e.pct_of === 'remaining');
   },
   activate_item(api, owner, e, _index, depth, ev) {
-    for (const t of api.pickRandom(api.itemTargets(owner, e, ev), e.pick_random)) api.triggerActivation(t, depth + 1);
+    const recast = isRecast(e);
+    for (const t of api.pickRandom(api.itemTargets(owner, e, ev), e.pick_random)) api.triggerActivation(t, depth + 1, recast);
   },
   attack(api, owner, e, _index, depth, ev) {
     const times = (e.times ?? 1) + (e.times_per_bag ? api.own(owner).items.filter((i) => api.matches(i, e.times_per_bag!)).length : 0);

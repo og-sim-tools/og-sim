@@ -31,8 +31,8 @@ interface Props {
   noTemp?: boolean;
   onLoad: (name: string) => void;
   onOpenTemp?: () => void;
-  /** Save what's being edited as this name (new or over an existing build). */
-  onSave: (name: string) => void;
+  /** Save what's being edited as this name (new or over an existing build); false = it couldn't be saved. */
+  onSave: (name: string) => void | boolean | Promise<void | boolean>;
   onRename?: (from: string, to: string) => void;
   onDelete: (name: string) => void;
   onNew: () => void;
@@ -46,7 +46,8 @@ type Ask =
   | { kind: 'delete'; name: string }
   | { kind: 'rename'; name: string }
   | { kind: 'save' }
-  | { kind: 'name' }
+  /** Save under a new name; `then` runs once it's saved (opening another build after saving this one). */
+  | { kind: 'name'; then?: () => void }
   | { kind: 'new' }
   | { kind: 'import'; file: File };
 
@@ -120,6 +121,29 @@ export function BuildPicker(p: Props) {
   const lost = dirty ? ` Your unsaved changes${active ? ` to "${active}"` : ''} will be lost.` : '';
   const taken = (name: string, except?: string) => builds.some((b) => b !== except && b.toLowerCase() === name.trim().toLowerCase());
   const nameOk = BUILD_NAME_RE.test(newName.trim());
+
+  /**
+   * Save what's being edited first, then go on (user, 2026-10-20: the main choice when changes would be lost):
+   * a saved build is saved over, the temp build asks for a name. Nothing goes on if saving fails.
+   */
+  const saveThen = async (then: () => void) => {
+    if (!active) {
+      setNewName('');
+      setAsk({ kind: 'name', then });
+      return;
+    }
+    done();
+    if ((await p.onSave(active)) !== false) then();
+  };
+  const saveAs = async (name: string, then?: () => void) => {
+    done();
+    if ((await p.onSave(name)) !== false) then?.();
+  };
+  /** The main choice and the one that loses the changes, for a question about going somewhere else. */
+  const leaveActions = (go: () => void, verb: string) => [
+    { label: active ? `Save "${active}" and ${verb}` : `Save and ${verb}…`, kind: 'primary' as const, onClick: () => void saveThen(go) },
+    { label: `${verb[0]!.toUpperCase()}${verb.slice(1)} without saving`, kind: 'danger' as const, onClick: () => (go(), done()) },
+  ];
 
   /** Open a saved build (name) or the temp build (null), asking first if unsaved changes would be lost. */
   const pick = (name: string | null) => {
@@ -270,13 +294,13 @@ export function BuildPicker(p: Props) {
         <Dialog
           title={ask.name === null ? 'Open the temp build?' : `Open "${ask.name}"?`}
           onCancel={done}
-          actions={[{ label: 'Open it', kind: 'primary', onClick: () => (ask.name === null ? p.onOpenTemp?.() : p.onLoad(ask.name), done()) }]}
+          actions={leaveActions(() => (ask.name === null ? p.onOpenTemp?.() : p.onLoad(ask.name)), 'open it')}
         >
           <p>{lost.trim()}</p>
         </Dialog>
       )}
       {ask?.kind === 'new' && (
-        <Dialog title="Start a new build?" onCancel={done} actions={[{ label: 'New build', kind: 'primary', onClick: () => (p.onNew(), done()) }]}>
+        <Dialog title="Start a new build?" onCancel={done} actions={dirty ? leaveActions(() => p.onNew(), 'start one') : [{ label: 'New build', kind: 'primary', onClick: () => (p.onNew(), done()) }]}>
           <p>
             It starts in the temp build with an empty bag (same hero, gear, pets and skins).
             {isTemp && p.tempHasItems ? ' What the temp build has now is replaced.' : ''}
@@ -285,7 +309,11 @@ export function BuildPicker(p: Props) {
         </Dialog>
       )}
       {ask?.kind === 'import' && (
-        <Dialog title={`Import ${ask.file.name}?`} onCancel={done} actions={[{ label: 'Import', kind: 'primary', onClick: () => (p.onImport(ask.file), done()) }]}>
+        <Dialog
+          title={`Import ${ask.file.name}?`}
+          onCancel={done}
+          actions={dirty ? leaveActions(() => p.onImport(ask.file), 'import it') : [{ label: 'Import', kind: 'primary', onClick: () => (p.onImport(ask.file), done()) }]}
+        >
           <p>{lost.trim()}</p>
         </Dialog>
       )}
@@ -328,9 +356,9 @@ export function BuildPicker(p: Props) {
         <Dialog
           title={isTemp ? 'Save the temp build' : 'Save as a new build'}
           onCancel={done}
-          actions={[{ label: taken(newName) ? 'Save over it' : 'Save', kind: 'primary', disabled: !nameOk, onClick: () => (p.onSave(newName.trim()), done()) }]}
+          actions={[{ label: taken(newName) ? 'Save over it' : 'Save', kind: 'primary', disabled: !nameOk, onClick: () => void saveAs(newName.trim(), ask.then) }]}
         >
-          <NameField value={newName} onChange={setNewName} taken={taken(newName)} onEnter={() => (p.onSave(newName.trim()), done())} />
+          <NameField value={newName} onChange={setNewName} taken={taken(newName)} onEnter={() => void saveAs(newName.trim(), ask.then)} />
           {isTemp && <div className="small muted">It joins your saved builds; the temp build starts empty again.</div>}
         </Dialog>
       )}

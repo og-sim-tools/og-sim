@@ -180,13 +180,25 @@ describe('the killing blow, Total ATK, cooldowns, debuff picks', () => {
     expect(run(['savior'], {}, 0.5).lethalSavesLeft).toEqual({ player: 1, enemy: 0 });
   });
 
-  it('an item set off by an activation goes after it: Stun → Rod → Instant Freeze runs out of Freeze on its own', () => {
-    // 100 Freeze: +3, Stun (queues Frosty again), spend 25 → 78 … until under 25. No endless loop, no cut-off.
+  it('an item set off by an activation goes after it; Instant Freeze reads Freeze, so it acts once per tick', () => {
+    // 100 Freeze: +3, Stun (queues Frosty again), spend 25. The Rod's activation in the same tick is wasted
+    // (user, 2026-10-20: a spell that reads statuses acts once per tick).
     const r = run(['frosty', 'stunrod'], { starting_statuses: [{ status: 'freeze', stacks: 100 }] }, 1.05);
-    expect(r.items.frosty0!.activations).toBe(5);
-    expect(r.log.filter((e) => e.detail?.includes('loses 25 freeze'))).toHaveLength(4);
-    expect(r.statusMoves.player).toMatchObject({ spent: { freeze: 100 }, removed: 0, stolen: 0 }); // a cost, not a removal
-    expect(r.warnings.filter((w) => /endless loop/.test(w))).toEqual([]);
+    expect(r.items.frosty0!.activations).toBe(2);
+    expect(r.log.filter((e) => e.detail?.includes('loses 25 freeze'))).toHaveLength(1);
+    expect(r.log.some((e) => e.detail?.includes('wasted'))).toBe(true);
+    expect(r.statusMoves.player).toMatchObject({ spent: { freeze: 25 }, removed: 0, stolen: 0 }); // a cost, not a removal
+    // With the rule off (config), it runs out of Freeze on its own in that tick: no endless loop, no cut-off.
+    const rc = data.config!.combat.recast;
+    rc.status_reading_once_per_tick = false;
+    try {
+      const r2 = run(['frosty', 'stunrod'], { starting_statuses: [{ status: 'freeze', stacks: 100 }] }, 1.05);
+      expect(r2.items.frosty0!.activations).toBe(5);
+      expect(r2.log.filter((e) => e.detail?.includes('loses 25 freeze'))).toHaveLength(4);
+      expect(r2.warnings.filter((w) => /endless loop/.test(w))).toEqual([]);
+    } finally {
+      rc.status_reading_once_per_tick = true;
+    }
   });
 
   it('add_atk_pct raises weapon damage from then on', () => {

@@ -100,6 +100,12 @@ combat:
   death_timing: immediate                        # user, 2026-10-17: whoever lands the killing blow first wins; the dead fighter doesn't act for the rest of the tick (end_of_tick = both finish the tick)
   mutual_kill_winner: random                     # [UNVERIFIED] both die in the same tick (not the Spike case): player | enemy | random (seeded coin flip; user, 2026-10-17)
   max_chain_depth: 400                          # NOT a game rule (user, 2026-10-17: chains never stop in game): only a guard so a simulator bug can't hang the app; hitting it is reported as a bug
+  recast:                                        # "activate again" (Wizard's / Mage's Hats); user 2026-10-20: each hat rolls on its own (2 hats = 2 separate rolls)
+    chain: true                                  # [UNVERIFIED] a recast is a spell activation too, so the hats roll on it again (false = only the spell's own activation rolls them)
+    weapon_spacing_ticks: 1                      # [UNVERIFIED] weapon spells queue their recasts: each attacks this many ticks after the last (tool spells act again in the same tick)
+    status_reading_once_per_tick: true           # user 2026-10-20: a spell that reads statuses (Instant Freeze, Charm) acts once per tick; extra activations that tick are wasted (Witch's Mirror still sees them)
+    status_reading_actions: [remove_status, steal_status, cleanse, trigger_status, multiply_status]
+    max_per_tick: 50                             # NOT a game rule: most recasts of one item in one tick, so hat spam can't hang the app (reported when hit)
   stun_resistance_mode: multiply                 # confirmed: 80% Stun Resistance = only 20% of stun attempts stun
   stun_reapply: longest                          # confirmed: stunned while stunned refreshes to the longer duration
   stun_pauses_gear_skills: false                 # confirmed: Stun doesn't pause gear skill timers

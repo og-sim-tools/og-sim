@@ -630,16 +630,18 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
   const addBuildName = (name: string) => setBuilds((b) => (b.includes(name) ? b : [...b, name].sort()));
 
   /** Save the enemy's build as its own build (so it can be loaded for either side later). */
-  const doSaveEnemyBuild = async (name: string) => {
-    if (!enemyBuild) return;
+  const doSaveEnemyBuild = async (name: string): Promise<boolean> => {
+    if (!enemyBuild) return false;
     try {
       const file: LayoutData = { name, placements: enemyBuild.placements, bag: enemyBuild.bag, enhanced_cells: enemyBuild.enhanced_cells, setup: setupFromProfile(enemyBuild.profile) };
       await store.writeBuild(name, writeBuild(file));
       setEnemyBuild((b) => ({ ...b, source_layout: name }));
       addBuildName(name);
       say(`Saved ${enemyName}'s build to ${store.where(name)}`);
+      return true;
     } catch (e) {
       say(`Couldn't save: ${(e as Error).message}`, true);
+      return false;
     }
   };
   const doDeleteLayout = async (name: string) => {
@@ -658,7 +660,7 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
     }
   };
 
-  const doSaveLayout = async (name: string) => {
+  const doSaveLayout = async (name: string): Promise<boolean> => {
     try {
       const next = { ...layout, name };
       await store.writeBuild(name, writeBuild(next));
@@ -670,8 +672,10 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
       lastBuild.set(name);
       addBuildName(name);
       say(`Saved ${store.where(name)}`);
+      return true;
     } catch (e) {
       say(`Couldn't save: ${(e as Error).message}`, true);
+      return false;
     }
   };
 
@@ -947,7 +951,7 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
         previews={previewOn}
         renderPreview={previewOf}
         onOpenList={() => void loadPreviews()}
-        onSave={(n) => void (editingEnemy ? doSaveEnemyBuild(n) : doSaveLayout(n))}
+        onSave={(n) => (editingEnemy ? doSaveEnemyBuild(n) : doSaveLayout(n))}
         onRename={(from, to) => void doRename(from, to)}
         onDelete={(n) => void doDeleteLayout(n)}
         onOpenTemp={openTemp}

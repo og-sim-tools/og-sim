@@ -8,7 +8,7 @@
  * Deterministic: all randomness comes from one seeded Rng.
  */
 import type { Cell } from '../bag';
-import { type EffectApi, HANDLERS } from '../effects/handlers';
+import { type EffectApi, HANDLERS, isRecast } from '../effects/handlers';
 import { isStaticStatEffect } from '../effects/resolve';
 import type { Item } from '../loader';
 import type { Loadout } from '../loadout';
@@ -135,6 +135,14 @@ class Battle implements EffectApi {
   private readonly bumps = new Map<string, number>();
   private rateCounts = new Map<string, number>();
   private readonly hpArmed = new Map<string, boolean>();
+  /** Recasts ("activate again"): the tick each weapon spell's next queued recast goes, and recasts per item this tick. */
+  private readonly recastAt = new Map<string, number>();
+  private recastCounts = { tick: -1, counts: new Map<string, number>() };
+  /** The tick each status-reading spell last acted (it acts once per tick). */
+  private readonly actedAt = new Map<string, number>();
+  private readonly readsCache = new Map<string, boolean>();
+  /** The activation being emitted: a recast (hats may not roll on it), or a wasted one (the item's own effects don't run). */
+  private actMode: { recast: boolean; muted: CombatItem | null } = { recast: false, muted: null };
   /** Work queued for a later tick: the next hit of a multi-hit, the next activation of "Activates Burn 9 times", a crit repeat. */
   private scheduled: { tick: number; run: () => void }[] = [];
   private readonly timedBonuses: { item: CombatItem; stat: ItemStatPct; amount: number; until: number }[] = [];
@@ -164,7 +172,7 @@ class Battle implements EffectApi {
   /** Stacks each side removed or stole from the other, by status (amount_from.removed). */
   private readonly removedFromFoe: Record<Side, Record<string, number>> = { player: {}, enemy: {} };
   /** Activations waiting for the activation that set them off to finish (see activate). */
-  private readonly activationFrames: [CombatItem, number][][] = [];
+  private readonly activationFrames: [CombatItem, number, boolean][][] = [];
   /** Item bonuses that follow a live value (Forbidden Power: up to +25% as HP goes missing). */
   private scaledBonuses: { target: CombatItem; owner: CombatItem; effect: ItemEffect }[] = [];
   /** One chance roll per (item, roll_group) while an event is handled. */
@@ -719,26 +727,34 @@ class Battle implements EffectApi {
 
   // ---------------------------------------------------------------- activations, attacks, skills
 
-  activate(it: CombatItem, depth: number, own = false, extra = false) {
+  activate(it: CombatItem, depth: number, own = false, extra = false, recast = false) {
     if (this.fightOver || this.sealed(it) || this.dead(it.side)) return;
     if (depth > this.cfg.combat.max_chain_depth) {
       this.warnOnce(`Simulator bug: an endless loop of activations (${it.name}) was cut off after ${this.cfg.combat.max_chain_depth} steps. This isn't a game rule; please report the build.`);
       return;
     }
     if (it.maxAttacks !== null && it.attacks >= it.maxAttacks) return;
+    // A spell that reads statuses acts once per tick (user, 2026-10-20): another activation in the same tick is
+    // wasted. It still counts as an activation for what watches it (Witch's Mirror, the hats).
+    const once = this.cfg.combat.recast.status_reading_once_per_tick && this.readsStatuses(it);
+    const wasted = once && this.actedAt.get(it.id) === this.tick;
+    if (once) this.actedAt.set(it.id, this.tick);
     this.reports[it.id]!.activations++;
-    if (!own) this.emitLog({ type: 'activation', side: it.side, source: it.id, detail: `${it.name} activated` });
+    if (!own) this.emitLog({ type: 'activation', side: it.side, source: it.id, detail: `${it.name} activated${recast ? ' again' : ''}${wasted ? ' (wasted: it already acted this tick)' : ''}` });
     // Items this activation sets off (Lightning Rod on the Stun it causes) go after it finishes its own
     // effects, in the same tick: Instant Freeze spends its 25 Freeze before it can be activated again.
-    const queued: [CombatItem, number][] = [];
+    const queued: [CombatItem, number, boolean][] = [];
     this.activationFrames.push(queued);
+    const prevMode = this.actMode;
+    this.actMode = { recast, muted: wasted ? it : null };
     try {
       this.emit('on_activation', it.side, it, depth);
     } finally {
       this.activationFrames.pop();
+      this.actMode = prevMode;
     }
-    if (!this.fightOver && it.damage) this.attack(it, depth);
-    for (const [t, d] of queued) this.activate(t, d);
+    if (!this.fightOver && it.damage && !wasted) this.attack(it, depth);
+    for (const [t, d, r] of queued) this.activate(t, d, false, false, r);
     // "Attack 0 ~ N more time(s)": each extra attack is an activation of its own, one spacing after the last
     // (user, 2026-10-17), so On Activation effects and dot watchers (Witch's Mirror, Wizard's Hat) see it again.
     if (!extra && it.randomExtraHits && !this.fightOver) {
@@ -755,11 +771,46 @@ class Battle implements EffectApi {
     }
   }
 
-  /** "Activate [dot] Spell" from an effect: right away, or after the activation that caused it. */
-  triggerActivation(it: CombatItem, depth: number) {
+  /**
+   * "Activate [dot] Spell" from an effect: right away, or after the activation that caused it. A recast
+   * ("activate again", one per hat that rolls it) of a tool spell acts again in the same tick; a weapon spell's
+   * recasts queue, each config combat.recast.weapon_spacing_ticks after the last.
+   */
+  triggerActivation(it: CombatItem, depth: number, recast = false) {
+    if (recast) {
+      const rc = this.cfg.combat.recast;
+      if (this.recastCounts.tick !== this.tick) this.recastCounts = { tick: this.tick, counts: new Map() };
+      const n = (this.recastCounts.counts.get(it.id) ?? 0) + 1;
+      this.recastCounts.counts.set(it.id, n);
+      if (n > rc.max_per_tick) {
+        this.warnOnce(`${it.name} was activated again more than ${rc.max_per_tick} times in one tick; the rest were cut off (a simulator guard, not a game rule).`);
+        return;
+      }
+      if (it.damage && rc.weapon_spacing_ticks > 0) {
+        const at = Math.max(this.tick + rc.weapon_spacing_ticks, (this.recastAt.get(it.id) ?? -Infinity) + rc.weapon_spacing_ticks);
+        this.recastAt.set(it.id, at);
+        // A new tick: the chain starts over (it isn't a loop inside one tick).
+        this.later(at - this.tick, () => this.activate(it, 0, false, false, true));
+        return;
+      }
+    }
     const frame = this.activationFrames.at(-1);
-    if (frame) frame.push([it, depth]);
-    else this.activate(it, depth);
+    if (frame) frame.push([it, depth, recast]);
+    else this.activate(it, depth, false, false, recast);
+  }
+
+  /** The item's own On Activation effects read statuses: a condition on one, or removing / stealing / triggering them (config). */
+  private readsStatuses(it: CombatItem): boolean {
+    const known = this.readsCache.get(it.id);
+    if (known !== undefined) return known;
+    const actions = this.cfg.combat.recast.status_reading_actions;
+    const reads = it.effects.some(({ effect: e }) => {
+      if ((e.trigger !== 'on_activation' && e.trigger !== 'on_use') || (e.watch ?? 'self') !== 'self') return false;
+      const c = e.condition;
+      return actions.includes(e.action) || !!(c && (c.status !== undefined || c.no_status !== undefined || c.statuses_total || c.status_over_foe_hp));
+    });
+    this.readsCache.set(it.id, reads);
+    return reads;
   }
 
   attack(it: CombatItem, depth: number) {
@@ -1496,6 +1547,12 @@ class Battle implements EffectApi {
         if ((effect.listen === 'enemy') !== listening) continue;
         const match = effect.trigger === trigger || (trigger === 'on_activation' && effect.trigger === 'on_use');
         if (!match || !this.watches(owner, effect, trigger, ev, listening)) continue;
+        if (trigger === 'on_activation') {
+          // A wasted activation: the item's own effects don't run.
+          if (owner === this.actMode.muted && ev === owner && (effect.watch ?? 'self') !== 'dots') continue;
+          // No chain (config): the hats don't roll on a recast (nor what shares their roll: Frost Mage's Hat's Block).
+          if (this.actMode.recast && !this.cfg.combat.recast.chain && this.recastRoll(owner, effect)) continue;
+        }
         if (
           (trigger === 'on_status_applied' || trigger === 'on_status_damage' || trigger === 'on_status_resisted') &&
           effect.params?.status !== undefined &&
@@ -1523,6 +1580,12 @@ class Battle implements EffectApi {
         if (this.fightOver) return;
       }
     }
+  }
+
+  /** An "activate again" effect, or one rolled together with it. */
+  private recastRoll(owner: CombatItem, effect: ItemEffect): boolean {
+    if (isRecast(effect)) return true;
+    return effect.roll_group !== undefined && owner.effects.some(({ effect: e }) => e.roll_group === effect.roll_group && isRecast(e));
   }
 
   private runEffect(owner: CombatItem, effect: ItemEffect, index: number, depth: number, ev?: CombatItem) {

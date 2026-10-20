@@ -102,6 +102,24 @@ export const ConfigSchema = z
         death_timing: z.enum(['immediate', 'end_of_tick']).default('immediate'),
         /** Safety cap on activations chained inside one tick (spell → spell → …). */
         max_chain_depth: int,
+        /**
+         * "Activate again" (Wizard's / Mage's Hats: On Spell Activation, x% chance to activate it again), user
+         * 2026-10-20: every hat rolls on its own; a tool spell acts again in the same tick, a weapon spell queues.
+         */
+        recast: z
+          .object({
+            /** [UNVERIFIED] A recast is a spell activation too, so the hats roll on it again (true), or only the spell's own activation rolls them (false). */
+            chain: z.boolean(),
+            /** [UNVERIFIED] A weapon spell's recasts queue: each attacks this many ticks after the previous one (0 = all in the same tick). */
+            weapon_spacing_ticks: z.number().int().nonnegative(),
+            /** User, 2026-10-20: a spell that reads statuses (Instant Freeze's Freeze, Charm's buffs) acts once per tick; its extra activations that tick are wasted (watchers such as Witch's Mirror still see them). */
+            status_reading_once_per_tick: z.boolean(),
+            /** On-activation actions that count as reading statuses (besides a condition on a status). */
+            status_reading_actions: z.array(z.string()),
+            /** NOT a game rule: most recasts of one item in one tick, so hat spam can't hang the app (reported when hit). */
+            max_per_tick: int,
+          })
+          .strict(),
         /** [UNVERIFIED] Stun Resistance: chance × (1 − resist %) (multiply) or chance − resist % (subtract). */
         stun_resistance_mode: z.enum(['multiply', 'subtract']),
         /** [UNVERIFIED] Stunned again while stunned: keep the longer duration (longest) or add them (add). */

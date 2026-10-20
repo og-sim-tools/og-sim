@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /** Battle tab pieces: the build picker, folding boxes, item value, skins per hero, starting equipment, the enemy box. */
 import { join } from 'node:path';
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { loadProfile } from '../../src/engine/loader';
 import { loadGameDataFromDir } from '../../src/engine/loader-node';
@@ -58,11 +58,42 @@ describe('build picker', () => {
     fireEvent.click(screen.getByRole('button', { name: 'trixie spike' }));
     expect(p.onLoad).not.toHaveBeenCalled();
     dialog('Open "trixie spike"?').getByText(/unsaved changes to "raven" will be lost/);
-    fireEvent.click(dialog('Open "trixie spike"?').getByRole('button', { name: 'Open it' }));
+    fireEvent.click(dialog('Open "trixie spike"?').getByRole('button', { name: 'Open it without saving' }));
     expect(p.onLoad).toHaveBeenCalledWith('trixie spike');
     fireEvent.click(screen.getByRole('button', { name: 'New build' }));
-    fireEvent.click(dialog('Start a new build?').getByRole('button', { name: 'New build' }));
+    fireEvent.click(dialog('Start a new build?').getByRole('button', { name: 'Start one without saving' }));
     expect(p.onNew).toHaveBeenCalled();
+  });
+
+  it('with unsaved changes, the main choice saves them first and then goes on (not if saving fails)', async () => {
+    const p = picker();
+    fireEvent.click(screen.getByRole('button', { name: /raven/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'trixie spike' }));
+    const main = dialog('Open "trixie spike"?').getByRole('button', { name: 'Save "raven" and open it' });
+    expect(main.className).toMatch(/primary/);
+    fireEvent.click(main);
+    await waitFor(() => expect(p.onLoad).toHaveBeenCalledWith('trixie spike'));
+    expect(p.onSave).toHaveBeenCalledWith('raven');
+    const order = (f: unknown) => (f as ReturnType<typeof vi.fn>).mock.invocationCallOrder[0]!;
+    expect(order(p.onSave)).toBeLessThan(order(p.onLoad));
+    cleanup();
+    // Saving fails: it stays.
+    const q = picker({ onSave: vi.fn(async () => false) });
+    fireEvent.click(screen.getByRole('button', { name: /raven/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'trixie spike' }));
+    fireEvent.click(dialog('Open "trixie spike"?').getByRole('button', { name: 'Save "raven" and open it' }));
+    await waitFor(() => expect(q.onSave).toHaveBeenCalled());
+    expect(q.onLoad).not.toHaveBeenCalled();
+    cleanup();
+    // The temp build asks for a name first.
+    const t = picker({ active: '' });
+    fireEvent.click(screen.getByRole('button', { name: /Temp build/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'trixie spike' }));
+    fireEvent.click(dialog('Open "trixie spike"?').getByRole('button', { name: 'Save and open it…' }));
+    fireEvent.change(screen.getByLabelText('Build name'), { target: { value: 'my temp' } });
+    fireEvent.click(dialog('Save the temp build').getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(t.onLoad).toHaveBeenCalledWith('trixie spike'));
+    expect(t.onSave).toHaveBeenCalledWith('my temp');
   });
 
   it('opens a build straight away without unsaved changes; Save is off until something changes', () => {
