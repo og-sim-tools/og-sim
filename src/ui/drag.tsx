@@ -6,6 +6,7 @@
 import { type PointerEvent as ReactPointerEvent, type ReactNode, type RefObject, useEffect, useRef, useSyncExternalStore } from 'react';
 import type { Cell, Rotation } from '../engine/bag';
 import { SIZE, Sprite, type SpriteInfo } from './components/BagGrid';
+import { getSettings } from './settings';
 
 export interface DragItem {
   /** From an item list, from a bag, or from the storage box. */
@@ -29,6 +30,8 @@ export interface DragItem {
 export interface DragState extends DragItem {
   x: number;
   y: number;
+  /** Degrees turned since it was picked up (so a turn animates the short way round). */
+  spin: number;
 }
 
 export interface DropTarget {
@@ -117,7 +120,7 @@ export function beginDrag(e: ReactPointerEvent, item: DragItem) {
     if (!started) {
       if (Math.hypot(ev.clientX - sx, ev.clientY - sy) < THRESHOLD) return;
       started = true;
-      state = { ...item, x: ev.clientX, y: ev.clientY };
+      state = { ...item, x: ev.clientX, y: ev.clientY, spin: 0 };
       document.body.classList.add('dragging');
     }
     ev.preventDefault();
@@ -128,7 +131,7 @@ export function beginDrag(e: ReactPointerEvent, item: DragItem) {
     if (ev.key === ' ' || ev.key === 'Spacebar') {
       ev.preventDefault();
       ev.stopPropagation();
-      state = { ...state, rotation: (((state.rotation + 90) % 360) as Rotation) };
+      state = turned(state);
       moveTo(state.x, state.y, null);
     } else if (ev.key === 'Escape') {
       ev.preventDefault();
@@ -150,6 +153,47 @@ export function beginDrag(e: ReactPointerEvent, item: DragItem) {
   window.addEventListener('pointercancel', cancel);
   window.addEventListener('keydown', key, true);
 }
+
+const box = (cells: Cell[]) => {
+  const xs = cells.map((c) => c.x);
+  const ys = cells.map((c) => c.y);
+  const minX = Math.min(...xs);
+  const minY = Math.min(...ys);
+  return { minX, minY, w: Math.max(...xs) - minX + 1, h: Math.max(...ys) - minY + 1 };
+};
+
+/**
+ * The held item turned a quarter clockwise. It turns around the pointer (the held cell stays under it) or
+ * around the centre of its cells (settings: one choice for square items, one for the rest).
+ */
+export function turned(s: DragState): DragState {
+  const next: DragState = { ...s, rotation: (((s.rotation + 90) % 360) as Rotation), spin: s.spin + 90 };
+  const look = looks.get(s.scope)?.current;
+  const before = look?.(s);
+  const after = look?.(next);
+  if (!before?.cells.length || !after?.cells.length) return next;
+  const ob = box(before.cells);
+  const settings = getSettings();
+  if ((ob.w === ob.h ? settings.squarePivot : settings.otherPivot) !== 'center') return next;
+  // Keep the centre of its cells where it is: then find which cell (and where in it) is under the pointer.
+  const g = before.cells[s.grab] ?? before.cells[0]!;
+  const cx = s.x - (g.x - ob.minX + s.inCell.x) * SIZE + (ob.w * SIZE) / 2;
+  const cy = s.y - (g.y - ob.minY + s.inCell.y) * SIZE + (ob.h * SIZE) / 2;
+  const nb = box(after.cells);
+  const px = (s.x - (cx - (nb.w * SIZE) / 2)) / SIZE;
+  const py = (s.y - (cy - (nb.h * SIZE) / 2)) / SIZE;
+  let grab = 0;
+  let best = Infinity;
+  after.cells.forEach((c, i) => {
+    const d = Math.hypot(c.x - nb.minX + 0.5 - px, c.y - nb.minY + 0.5 - py);
+    if (d < best) [best, grab] = [d, i];
+  });
+  const c = after.cells[grab]!;
+  return { ...next, grab, inCell: { x: px - (c.x - nb.minX), y: py - (c.y - nb.minY) } };
+}
+
+/** The bag cell the held cell is over (the pointer may be off that cell after turning around the centre). */
+export const heldCellPoint = (d: DragItem, x: number, y: number) => ({ clientX: x - Math.floor(d.inCell.x) * SIZE, clientY: y - Math.floor(d.inCell.y) * SIZE });
 
 /** Let held items be dropped on this element. */
 export function useDropTarget(ref: RefObject<HTMLElement | null>, target: DropTarget) {
@@ -219,7 +263,7 @@ export function DragLayer(): ReactNode {
       {l.cells.map((c) => (
         <div key={`${c.x},${c.y}`} className="drag-cell" style={{ left: px(c.x), top: py(c.y), background: l.color }} />
       ))}
-      {l.sprite && <Sprite s={{ ...l.sprite, rotation: d.rotation }} cells={l.cells.map((c) => ({ x: c.x - minX, y: c.y - minY }))} px={(n) => n * SIZE} size={SIZE} z={2} />}
+      {l.sprite && <Sprite s={{ ...l.sprite, rotation: (((d.rotation - d.spin) % 360) + 360) % 360 + d.spin }} cells={l.cells.map((c) => ({ x: c.x - minX, y: c.y - minY }))} px={(n) => n * SIZE} size={SIZE} z={2} />}
     </div>
   );
 }

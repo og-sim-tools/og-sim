@@ -8,8 +8,8 @@ import { type DragItem, type DragLook, beginDrag, dragJustEnded, useDropTarget }
 import { SIZE, type SpriteInfo, spriteScale } from './BagGrid';
 import { TrashIcon } from './BuildPicker';
 
-/** Stored items are drawn smaller than in the bag, so they fit the narrow box. */
-export const STORAGE_SCALE = 0.6;
+/** Stored items are drawn at the bag's size (user, 2026-10-20). */
+export const STORAGE_SCALE = 1;
 const S = SIZE * STORAGE_SCALE;
 
 export interface StoredView {
@@ -39,9 +39,11 @@ interface Props {
   onRotate: (id: string) => void;
   /** Dropped with the item's top-left corner at (fx, fy), as shares of the box. */
   onDrop: (drag: DragItem, fx: number, fy: number) => void;
+  /** Space above it, to line it up with the bag's own cells. */
+  top?: number;
 }
 
-export function Storage({ items, width, height, selected, scope = 'build', look, onSelect, onRotate, onDrop }: Props) {
+export function Storage({ items, width, height, selected, scope = 'build', look, onSelect, onRotate, onDrop, top: offsetTop = 0 }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const [over, setOver] = useState(false);
   useDropTarget(ref, {
@@ -64,7 +66,7 @@ export function Storage({ items, width, height, selected, scope = 'build', look,
     },
   });
   return (
-    <div ref={ref} className={`storage${over ? ' over' : ''}`} role="region" aria-label="Storage" style={{ width, height }}>
+    <div ref={ref} className={`storage${over ? ' over' : ''}`} role="region" aria-label="Storage" style={{ width, height, marginTop: offsetTop }}>
       {items.length === 0 && <div className="storage-hint small muted">Storage: drop items here while you rearrange. They don't fight or count.</div>}
       {items.map((it) => {
         const minX = Math.min(...it.cells.map((c) => c.x));

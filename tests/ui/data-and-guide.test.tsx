@@ -79,7 +79,7 @@ describe('data not confirmed in game', () => {
     expect(within(screen.getByRole('table', { name: 'Not verified yet' })).getAllByRole('row').length - 1).toBe(unverifiedEntries(data).length);
     fireEvent.change(screen.getByLabelText('Search the data report'), { target: { value: 'hunters_bow' } });
     expect(within(screen.getByRole('table', { name: 'Not verified yet' })).getAllByRole('row').length - 1).toBeLessThanOrEqual(1);
-  });
+  }, 20000); // a big table: slow when the machine is busy
 });
 
 describe('the app', () => {

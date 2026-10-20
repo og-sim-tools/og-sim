@@ -174,12 +174,38 @@ function Filters({ f, set, tags, data, kinds = true, heroes = true }: { f: Brows
 
 const START: BrowserFilter & Order = { ...EMPTY_FILTER, sort: 'name' };
 
+/** The searches and filters, kept in this browser over reloads and tab changes (user, 2026-10-20). */
+const SEARCH_KEY = 'og-sim/item-search';
+interface SavedSearch {
+  tab: 'items' | 'starting';
+  f: BrowserFilter & Order;
+  sf: BrowserFilter & Order;
+  /** The class was picked by hand (else it follows the hero's). */
+  manual: boolean;
+}
+function loadSearch(): SavedSearch | null {
+  try {
+    const s = JSON.parse(localStorage.getItem(SEARCH_KEY) ?? 'null') as SavedSearch | null;
+    return s && typeof s === 'object' && s.f && s.sf ? { tab: s.tab === 'starting' ? 'starting' : 'items', f: { ...START, ...s.f }, sf: { ...START, ...s.sf }, manual: !!s.manual } : null;
+  } catch {
+    return null;
+  }
+}
+
 export function ItemBrowser({ data, supplyIds, onPick, onEdit, showEnemyItems = false, starting, heroClass = null }: Props) {
-  const [tab, setTab] = useState<'items' | 'starting'>('items');
-  const [f, setF] = useState<BrowserFilter & Order>(() => ({ ...START, cls: heroClass ?? '' }));
-  const [sf, setSf] = useState<BrowserFilter & Order>(() => ({ ...START, cls: heroClass ?? '' }));
+  const saved = useMemo(loadSearch, []);
+  const [tab, setTab] = useState<'items' | 'starting'>(saved?.tab ?? 'items');
+  const [f, setF] = useState<BrowserFilter & Order>(() => ({ ...(saved?.f ?? START), ...(saved?.manual ? {} : { cls: heroClass ?? '' }) }));
+  const [sf, setSf] = useState<BrowserFilter & Order>(() => ({ ...(saved?.sf ?? START), ...(saved?.manual ? {} : { cls: heroClass ?? '' }) }));
   // The class filter follows the hero's class (items for any class always show) until it's picked by hand.
-  const manualCls = useRef(false);
+  const manualCls = useRef(saved?.manual ?? false);
+  useEffect(() => {
+    try {
+      localStorage.setItem(SEARCH_KEY, JSON.stringify({ tab, f, sf, manual: manualCls.current } satisfies SavedSearch));
+    } catch {
+      /* a convenience only */
+    }
+  }, [tab, f, sf]);
   useEffect(() => {
     if (manualCls.current) return;
     setF((x) => ({ ...x, cls: heroClass ?? '' }));

@@ -17,7 +17,10 @@ import { BagPreview } from './components/BagPreview';
 import { type AccountImport, accountArchive, downloadBytes, looksLikeBuild, readAccountArchive } from './state/accountArchive';
 import { unzipFiles } from './state/zip';
 import { safeBuildName } from '../engine/saves/names';
-import { BagGrid, rarityColor, spriteOf } from './components/BagGrid';
+import { BagGrid, marginFor, rarityColor, spriteOf } from './components/BagGrid';
+import { TrashIcon } from './components/BuildPicker';
+import { useDragState } from './drag';
+import { type Settings, setSettings, useSettings } from './settings';
 import { type DragItem, DragLayer, useDragLook, useDropElsewhere, useDropTarget } from './drag';
 import { type Landing, dropInBag, dropInBin, keyOnSelected, landing, lookOf, turnedCells } from './state/bagEdit';
 import { Storage, type StoredView } from './components/Storage';
@@ -155,6 +158,8 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
   /** The tutorial: asking whether to start it, then running. */
   const [askTour, setAskTour] = useState(false);
   const [touring, setTouring] = useState(false);
+  const settings = useSettings();
+  const [showSettings, setShowSettings] = useState(false);
   const mobile = useMedia('(max-width: 820px)');
   const [step, setStep] = useState<StepId>('profile');
   /** On a phone, only the current step's sections show. */
@@ -869,8 +874,11 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
   const bagSize = sizeOf(bagLayout.bag?.mask, bagSizes);
   const enhancer = enhancerOf(data, bagProfile, bagHeroId);
   // The storage box: as tall as the bag (with its 1-cell border), level with it, about a third as wide.
-  const storageH = (loadout.bag.height + 2) * 40;
-  const storageW = Math.round(((loadout.bag.width + 2) * 40) / 3.5);
+  // As tall as the bag's own cells and level with them (the border around the bag isn't counted); wide enough
+  // for items at full size.
+  const bagMargin = marginFor(loadout.bag.width, loadout.bag.height, [...loadout.layout.items.values()].flatMap((i) => i.cells));
+  const storageH = loadout.bag.height * 40;
+  const storageW = 4 * 40;
   const flags = buildFlags(loadout, loaded);
   const pets = petPoints(data, bagProfile);
   /** Edit the profile being shown (mine or the enemy's) with a mutating function. */
@@ -973,7 +981,8 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
   return (
     <StoreContext.Provider value={store}>
     <DragLayer />
-    <div className="app">
+    <div className={`app${settings.animateRotation ? ' anim-rot' : ''}`} style={{ ['--rot-ms' as string]: `${settings.rotationMs}ms` }}>
+      {showSettings && <SettingsDialog settings={settings} onClose={() => setShowSettings(false)} />}
       <div className="topbar">
         <h1>OG Backpack Simulator</h1>
         <div className="tabs" role="tablist" data-tour="topbar.tabs">
@@ -1038,6 +1047,9 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
             </span>
           </label>
           </span>
+          <button className="icon-button gear" aria-label="Settings" title="Settings" onClick={() => setShowSettings(true)}>
+            <GearIcon />
+          </button>
         </span>
       </div>
       {mobile && STEPS.some((x) => x.tab === tab) && (
@@ -1186,6 +1198,8 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
             {buildPanel}
           </div>
           <div className="stack" style={showIf(['items'])}>
+            <div className="items-box">
+            <RemoveOverlay />
             <Panel id="battle.items" title="Items">
               <ItemBrowser
                 data={data}
@@ -1211,6 +1225,7 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
                 }}
               />
             </Panel>
+            </div>
           </div>
           <div className="stack" style={showIf(['items'])}>
             {editingEnemy && (
@@ -1314,6 +1329,7 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
                   onSelect={setSelected}
                   onRotate={() => onKey('rotate')}
                   onDrop={onStore}
+                  top={bagMargin * 40}
                 />
               </div>
               <div className="row small" style={{ justifyContent: 'space-between', marginTop: 6 }}>
@@ -1622,5 +1638,75 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
       {tab === 'data' && <DataPanel key={dataFocus ? 'build' : 'all'} result={loaded} buildRefs={buildDataRefs(playerLoadout)} focusBuild={dataFocus} />}
     </div>
     </StoreContext.Provider>
+  );
+}
+
+/** Over the item lists while a bag's item is held: drop it here (or anywhere outside the Bag box) to remove it. */
+function RemoveOverlay() {
+  const d = useDragState();
+  if (!d || d.kind === 'item' || d.scope !== 'build') return null;
+  return (
+    <div className="remove-overlay" aria-hidden="true">
+      <TrashIcon />
+      <span>Remove item</span>
+    </div>
+  );
+}
+
+function GearIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M19.14 12.94a7.07 7.07 0 000-1.88l2.03-1.58a.5.5 0 00.12-.64l-1.92-3.32a.5.5 0 00-.6-.22l-2.39.96a7.03 7.03 0 00-1.63-.94l-.36-2.54a.5.5 0 00-.5-.42h-3.84a.5.5 0 00-.49.42l-.36 2.54c-.58.24-1.13.55-1.63.94l-2.39-.96a.5.5 0 00-.6.22L2.66 8.84a.5.5 0 00.12.64l2.03 1.58a7.07 7.07 0 000 1.88l-2.03 1.58a.5.5 0 00-.12.64l1.92 3.32c.13.22.39.3.6.22l2.39-.96c.5.39 1.05.7 1.63.94l.36 2.54c.04.24.25.42.49.42h3.84c.25 0 .45-.18.49-.42l.36-2.54c.58-.24 1.13-.55 1.63-.94l2.39.96c.22.08.47 0 .6-.22l1.92-3.32a.5.5 0 00-.12-.64l-2.03-1.58zM12 15.5A3.5 3.5 0 1112 8.5a3.5 3.5 0 010 7z"
+      />
+    </svg>
+  );
+}
+
+/** Settings: items turning smoothly (and how fast), and what a held item turns around. */
+function SettingsDialog({ settings, onClose }: { settings: Settings; onClose: () => void }) {
+  const pivot = (key: 'squarePivot' | 'otherPivot', label: string) => (
+    <fieldset className="settings-pivot">
+      <legend className="small">{label}</legend>
+      <label className="check-line small">
+        <input type="radio" name={key} checked={settings[key] === 'cursor'} onChange={() => setSettings({ [key]: 'cursor' })} />
+        <span>around the cursor (the part you hold stays under it)</span>
+      </label>
+      <label className="check-line small">
+        <input type="radio" name={key} checked={settings[key] === 'center'} onChange={() => setSettings({ [key]: 'center' })} />
+        <span>around the centre of its cells</span>
+      </label>
+    </fieldset>
+  );
+  return (
+    <Dialog title="Settings" onCancel={onClose} actions={[]}>
+      <h3>Rotating</h3>
+      <label className="check-line small">
+        <input type="checkbox" checked={settings.animateRotation} onChange={(e) => setSettings({ animateRotation: e.target.checked })} />
+        <span>Show items turning (instead of jumping to the new direction)</span>
+      </label>
+      <label className="row small" style={{ marginTop: 4 }}>
+        <span className="muted">Turn time</span>
+        <input
+          type="number"
+          min={0}
+          max={2000}
+          step={25}
+          aria-label="Turn time (ms)"
+          disabled={!settings.animateRotation}
+          value={settings.rotationMs}
+          onChange={(e) => {
+            const v = Number(e.target.value);
+            if (e.target.value !== '' && Number.isFinite(v)) setSettings({ rotationMs: Math.max(0, Math.min(2000, Math.round(v))) });
+          }}
+        />
+        ms
+      </label>
+      <h3>Turning an item while dragging it (space)</h3>
+      {pivot('squarePivot', 'Square items (as wide as they are tall)')}
+      {pivot('otherPivot', 'Other items')}
+      <div className="small muted">Kept in this browser.</div>
+    </Dialog>
   );
 }

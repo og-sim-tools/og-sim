@@ -180,3 +180,49 @@ describe('the item class filter', () => {
     expect(cls()).toBe(''); // picked by hand: stays
   });
 });
+
+describe('feedback of 2026-10-20, later still', () => {
+  it('turning a held item: around the cursor keeps the held cell; around the centre keeps the centre of its cells', async () => {
+    const { turned } = await import('../../src/ui/drag');
+    const { setSettings } = await import('../../src/ui/settings');
+    const { useDragLook } = await import('../../src/ui/drag');
+    // A 3 × 1 item held by its left cell; its look turns with it.
+    const cellsFor = (r: number) => (r % 180 === 0 ? [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 2, y: 0 }] : [{ x: 0, y: 0 }, { x: 0, y: 1 }, { x: 0, y: 2 }]);
+    function Look() {
+      useDragLook('t', (d) => ({ cells: cellsFor(d.rotation), color: 'red', sprite: null }));
+      return null;
+    }
+    render(<Look />);
+    const held = { kind: 'placed' as const, id: 'x', item: 'x', rotation: 0 as const, grab: 0, inCell: { x: 0.5, y: 0.5 }, scope: 't', x: 100, y: 100, spin: 0 };
+    setSettings({ otherPivot: 'cursor' });
+    expect(turned(held)).toMatchObject({ rotation: 90, grab: 0, inCell: { x: 0.5, y: 0.5 }, spin: 90 });
+    setSettings({ otherPivot: 'center' });
+    // Centre of the row was 1 cell to the right of the pointer; after turning, the column's centre is there:
+    // the pointer is now 1 cell left of the column, beside its middle cell.
+    const t = turned(held);
+    expect(t.grab).toBe(1);
+    expect(t.inCell.x).toBeCloseTo(-0.5, 6);
+    expect(t.inCell.y).toBeCloseTo(0.5, 6);
+    setSettings({ otherPivot: 'cursor' });
+  });
+
+  it('the item searches are remembered over a reload', async () => {
+    const { ItemBrowser } = await import('../../src/ui/components/ItemBrowser');
+    const props = { data, supplyIds: new Set<string>(), onPick: vi.fn(), onEdit: vi.fn() };
+    const first = render(<ItemBrowser {...props} heroClass="ranger" />);
+    fireEvent.change(screen.getByLabelText('Search items'), { target: { value: 'bow' } });
+    fireEvent.change(screen.getByLabelText('Tag'), { target: { value: 'weapon' } });
+    first.unmount();
+    render(<ItemBrowser {...props} heroClass="ranger" />);
+    expect((screen.getByLabelText('Search items') as HTMLInputElement).value).toBe('bow');
+    expect((screen.getByLabelText('Tag') as HTMLSelectElement).value).toBe('weapon');
+  });
+
+  it('settings are kept in this browser', async () => {
+    const { setSettings, getSettings } = await import('../../src/ui/settings');
+    setSettings({ animateRotation: true, rotationMs: 300 });
+    expect(JSON.parse(localStorage.getItem('og-sim/settings')!)).toMatchObject({ animateRotation: true, rotationMs: 300 });
+    expect(getSettings().rotationMs).toBe(300);
+    setSettings({ animateRotation: false, rotationMs: 150 });
+  });
+});

@@ -11,7 +11,7 @@ import type { Loadout, LoadoutIssue } from '../../engine/loadout';
 import { copyName, copyNumbers } from '../../engine/loadout';
 import { type KeyAction, keyAction } from '../state/layoutOps';
 import { imageUrl } from '../staticData';
-import { type DragItem, beginDrag, cellUnder, dragJustEnded, useDropTarget } from '../drag';
+import { type DragItem, beginDrag, cellUnder, dragJustEnded, heldCellPoint, useDropTarget } from '../drag';
 
 /** Most cells drawn around the bag for out-of-bag item cells and dots (items can't go further out: layoutOps REACH). */
 export const MAX_MARGIN = 4;
@@ -137,6 +137,14 @@ export function BagGrid(p: Props) {
   const { bag, layout } = loadout;
   const ref = useRef<HTMLDivElement>(null);
   const scope = p.scope ?? 'build';
+  /** Degrees each item's picture is shown at: always turning clockwise by the short way (so a turn animates). */
+  const shownTurn = useRef(new Map<string, number>());
+  const turnOf = (id: string, r: number) => {
+    const prev = shownTurn.current.get(id);
+    const v = prev === undefined ? r : prev + ((((r - prev) % 360) + 360) % 360);
+    shownTurn.current.set(id, v);
+    return v;
+  };
   /** Where the held item would land. */
   const [preview, setPreview] = useState<Landing | null>(null);
   const previewKey = useRef('');
@@ -190,7 +198,7 @@ export function BagGrid(p: Props) {
     accepts: (d) => !p.readOnly && !p.maskEdit && (d.kind === 'placed' ? d.scope === scope : !!p.acceptsNew && (d.kind === 'item' || d.scope === scope)),
     over: (d, x, y) => {
       if (!p.dropTarget) return;
-      const c = cellAt({ clientX: x, clientY: y });
+      const c = cellAt(heldCellPoint(d, x, y));
       const key = `${d.kind}:${d.id}:${d.rotation}:${c.x},${c.y}`;
       if (key === previewKey.current) return;
       previewKey.current = key;
@@ -199,7 +207,7 @@ export function BagGrid(p: Props) {
     leave: clearPreview,
     drop: (d, x, y) => {
       clearPreview();
-      const c = cellAt({ clientX: x, clientY: y });
+      const c = cellAt(heldCellPoint(d, x, y));
       p.onDrop(d, c.x, c.y);
       ref.current?.focus();
     },
@@ -243,7 +251,8 @@ export function BagGrid(p: Props) {
   for (const [id, item] of layout.items) {
     const entry = loadout.entries.get(id);
     const copy = copies.get(id);
-    const sprite = spriteOf(item.def as Parameters<typeof spriteOf>[0], item.placement.rotation);
+    const base = spriteOf(item.def as Parameters<typeof spriteOf>[0], item.placement.rotation);
+    const sprite = base ? { ...base, rotation: turnOf(id, item.placement.rotation) } : null;
     if (sprite) sprites.push(<Sprite key={`s${id}`} s={sprite} cells={item.cells} px={px} size={SIZE} z={id === selected ? 4 : 3} />);
     // Gear shows the rarity it's equipped at (no rarity known → the plain gear colour).
     const color =

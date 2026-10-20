@@ -244,10 +244,16 @@ describe('the Build tab', () => {
     expect(screen.queryByRole('region', { name: 'Bin' })).toBeNull();
     const grid = screen.getByRole('grid', { name: 'Backpack' });
     const storage = screen.getByRole('region', { name: 'Storage' });
-    expect(storage.style.height).toBe(grid.style.height);
+    // As tall as the bag's own 6 rows (not the border around it), level with them.
+    expect(storage.style.height).toBe('240px');
+    expect(storage.style.marginTop).toBe('40px');
+    expect(grid.style.height).toBe('320px');
     pick("Hunter's Bow");
     const cell = cellsOf("Hunter's Bow")[0]!;
     ptr(cell, 'pointerdown', 5, 5);
+    // While it's held, the item lists say they remove it.
+    ptr(document.body, 'pointermove', 30, 30);
+    expect(screen.getByText('Remove item')).toBeTruthy();
     const status = document.querySelector('.bag-status')!;
     ptr(status, 'pointermove', 10, 10);
     ptr(status, 'pointerup', 10, 10);
