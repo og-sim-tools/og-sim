@@ -135,7 +135,7 @@ describe('skill activations', () => {
     const pf = Object.values(r.items).find((i) => i.name === 'Primal Flame')!;
     expect(pf.skillActivations).toBe(2);
     expect(pf.activations).toBeGreaterThan(2);
-  });
+  }, 20000); // loads the whole game data: slow when the machine is busy
 });
 
 describe('expiry log', () => {

@@ -391,7 +391,7 @@ details.detailed-stats > summary { cursor: pointer; font-weight: 600; }
 /* Settings. */
 .icon-button.gear { color: var(--muted); }
 .icon-button.gear:hover { color: var(--text); }
-.settings-pivot { border: 1px solid var(--border); border-radius: 6px; margin: 6px 0; padding: 4px 8px; display: flex; flex-direction: column; gap: 2px; }
+.settings-pivot { margin: 4px 0; justify-content: space-between; flex-wrap: wrap; }
 
 /* Items turning smoothly (Settings). */
 .anim-rot .bag .sprite, .anim-rot .bag .item-cell { transition: left var(--rot-ms), top var(--rot-ms), width var(--rot-ms), height var(--rot-ms); }

@@ -18,7 +18,7 @@ import { aggregateStats } from '../../engine/stats';
 import { BagGrid } from './BagGrid';
 import { BagPreview } from './BagPreview';
 import { type DragItem, useDragLook } from '../drag';
-import { landing, lookOf } from '../state/bagEdit';
+import { landing, lookOf, turnInBag } from '../state/bagEdit';
 import { Panel } from './Panel';
 import { StatsPanel } from './StatsPanel';
 
@@ -272,7 +272,7 @@ export function OptimizePanel({ data, profile, layout, layoutName, loadout, layo
     if (!picked1) return;
     const d = moveBy(action);
     if (d) change((ps) => ps.map((p) => (p.id === picked1 ? { ...p, ...within(p.id, p.x + d.dx, p.y + d.dy) } : p)));
-    else if (action === 'rotate') change((ps) => ps.map((p) => (p.id === picked1 ? { ...p, rotation: rotateCw(p.rotation) } : p)));
+    else if (action === 'rotate') change((ps) => ps.map((p) => (p.id === picked1 && shownLoadout ? { ...p, ...turnInBag(shownLoadout, { ...p, id: p.id ?? '' }) } : p)));
     else if (action === 'remove') {
       change((ps) => ps.filter((p) => p.id !== picked1));
       setPicked1(null);

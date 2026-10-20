@@ -20,7 +20,7 @@ import { safeBuildName } from '../engine/saves/names';
 import { BagGrid, marginFor, rarityColor, spriteOf } from './components/BagGrid';
 import { TrashIcon } from './components/BuildPicker';
 import { useDragState } from './drag';
-import { type Settings, setSettings, useSettings } from './settings';
+import { ANCHORS, type Settings, setSettings, useSettings } from './settings';
 import { type DragItem, DragLayer, useDragLook, useDropElsewhere, useDropTarget } from './drag';
 import { type Landing, dropInBag, dropInBin, keyOnSelected, landing, lookOf, turnedCells } from './state/bagEdit';
 import { Storage, type StoredView } from './components/Storage';
@@ -1666,18 +1666,25 @@ function GearIcon() {
 
 /** Settings: items turning smoothly (and how fast), and what a held item turns around. */
 function SettingsDialog({ settings, onClose }: { settings: Settings; onClose: () => void }) {
-  const pivot = (key: 'squarePivot' | 'otherPivot', label: string) => (
-    <fieldset className="settings-pivot">
-      <legend className="small">{label}</legend>
-      <label className="check-line small">
-        <input type="radio" name={key} checked={settings[key] === 'cursor'} onChange={() => setSettings({ [key]: 'cursor' })} />
-        <span>around the cursor (the part you hold stays under it)</span>
-      </label>
-      <label className="check-line small">
-        <input type="radio" name={key} checked={settings[key] === 'center'} onChange={() => setSettings({ [key]: 'center' })} />
-        <span>around the centre of its cells</span>
-      </label>
-    </fieldset>
+  const NAMES: Record<string, string> = {
+    cursor: 'around the cursor (the part you hold stays under it)',
+    center: 'around the centre of its cells',
+    'top-left': 'keeping its top-left corner',
+    'top-right': 'keeping its top-right corner',
+    'bottom-left': 'keeping its bottom-left corner',
+    'bottom-right': 'keeping its bottom-right corner',
+  };
+  const pivot = (key: 'squarePivot' | 'otherPivot' | 'placedSquarePivot' | 'placedOtherPivot', label: string) => (
+    <label className="row small settings-pivot">
+      <span className="muted">{label}</span>
+      <select aria-label={label} value={settings[key]} onChange={(e) => setSettings({ [key]: e.target.value } as Partial<Settings>)}>
+        {(key.startsWith('placed') ? ANCHORS : ['cursor', ...ANCHORS]).map((v) => (
+          <option key={v} value={v}>
+            {NAMES[v]}
+          </option>
+        ))}
+      </select>
+    </label>
   );
   return (
     <Dialog title="Settings" onCancel={onClose} actions={[]}>
@@ -1703,9 +1710,12 @@ function SettingsDialog({ settings, onClose }: { settings: Settings; onClose: ()
         />
         ms
       </label>
+      <h3>Turning an item in the bag (space or a click)</h3>
+      {pivot('placedSquarePivot', 'Square items (as wide as they are tall)')}
+      {pivot('placedOtherPivot', 'Other items')}
       <h3>Turning an item while dragging it (space)</h3>
-      {pivot('squarePivot', 'Square items (as wide as they are tall)')}
-      {pivot('otherPivot', 'Other items')}
+      {pivot('squarePivot', 'Square items, held')}
+      {pivot('otherPivot', 'Other items, held')}
       <div className="small muted">Kept in this browser.</div>
     </Dialog>
   );

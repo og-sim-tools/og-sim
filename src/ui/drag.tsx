@@ -6,7 +6,7 @@
 import { type PointerEvent as ReactPointerEvent, type ReactNode, type RefObject, useEffect, useRef, useSyncExternalStore } from 'react';
 import type { Cell, Rotation } from '../engine/bag';
 import { SIZE, Sprite, type SpriteInfo } from './components/BagGrid';
-import { getSettings } from './settings';
+import { type Anchor, getSettings } from './settings';
 
 export interface DragItem {
   /** From an item list, from a bag, or from the storage box. */
@@ -154,6 +154,15 @@ export function beginDrag(e: ReactPointerEvent, item: DragItem) {
   window.addEventListener('keydown', key, true);
 }
 
+/**
+ * How far an item's top-left corner moves (in cells) when its w × h cells turn into w2 × h2 and one corner (or
+ * the centre) stays put.
+ */
+export function anchorShift(anchor: Anchor, w: number, h: number, w2: number, h2: number): { dx: number; dy: number } {
+  if (anchor === 'center') return { dx: (w - w2) / 2, dy: (h - h2) / 2 };
+  return { dx: anchor.endsWith('right') ? w - w2 : 0, dy: anchor.startsWith('bottom') ? h - h2 : 0 };
+}
+
 const box = (cells: Cell[]) => {
   const xs = cells.map((c) => c.x);
   const ys = cells.map((c) => c.y);
@@ -174,14 +183,16 @@ export function turned(s: DragState): DragState {
   if (!before?.cells.length || !after?.cells.length) return next;
   const ob = box(before.cells);
   const settings = getSettings();
-  if ((ob.w === ob.h ? settings.squarePivot : settings.otherPivot) !== 'center') return next;
-  // Keep the centre of its cells where it is: then find which cell (and where in it) is under the pointer.
+  const pivot = ob.w === ob.h ? settings.squarePivot : settings.otherPivot;
+  if (pivot === 'cursor') return next;
+  // Keep that corner (or the centre) of its cells where it is: then find which cell (and where in it) is under the pointer.
   const g = before.cells[s.grab] ?? before.cells[0]!;
-  const cx = s.x - (g.x - ob.minX + s.inCell.x) * SIZE + (ob.w * SIZE) / 2;
-  const cy = s.y - (g.y - ob.minY + s.inCell.y) * SIZE + (ob.h * SIZE) / 2;
+  const left = s.x - (g.x - ob.minX + s.inCell.x) * SIZE;
+  const top = s.y - (g.y - ob.minY + s.inCell.y) * SIZE;
   const nb = box(after.cells);
-  const px = (s.x - (cx - (nb.w * SIZE) / 2)) / SIZE;
-  const py = (s.y - (cy - (nb.h * SIZE) / 2)) / SIZE;
+  const shift = anchorShift(pivot, ob.w, ob.h, nb.w, nb.h);
+  const px = (s.x - (left + shift.dx * SIZE)) / SIZE;
+  const py = (s.y - (top + shift.dy * SIZE)) / SIZE;
   let grab = 0;
   let best = Infinity;
   after.cells.forEach((c, i) => {

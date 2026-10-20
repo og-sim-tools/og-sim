@@ -226,3 +226,26 @@ describe('feedback of 2026-10-20, later still', () => {
     setSettings({ animateRotation: false, rotationMs: 150 });
   });
 });
+
+describe('turning an item in the bag', () => {
+  it('keeps the corner (or the centre) the settings say; held items can keep a corner too', async () => {
+    const { turnInBag } = await import('../../src/ui/state/bagEdit');
+    const { setSettings } = await import('../../src/ui/settings');
+    const { anchorShift } = await import('../../src/ui/drag');
+    // Hunter's Bow is 1 wide, 2 tall: turned it's 2 wide, 1 tall.
+    const lo = buildLoadout(data, profile, LayoutSchema.parse({ placements: [{ id: 'b', item: 'hunters_bow', x: 3, y: 1 }] }));
+    const p = { id: 'b', item: 'hunters_bow', x: 3, y: 1, rotation: 0 as const };
+    const at = (a: 'center' | 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right') => {
+      setSettings({ placedOtherPivot: a });
+      const r = turnInBag(lo, p);
+      return [r.x, r.y, r.rotation];
+    };
+    expect(at('top-left')).toEqual([3, 1, 90]);
+    expect(at('top-right')).toEqual([2, 1, 90]);
+    expect(at('bottom-left')).toEqual([3, 2, 90]);
+    expect(at('bottom-right')).toEqual([2, 2, 90]);
+    expect(at('center')).toEqual([2, 1, 90]); // half cells round down
+    setSettings({ placedOtherPivot: 'top-left' });
+    expect(anchorShift('bottom-right', 3, 1, 1, 3)).toEqual({ dx: 2, dy: -2 });
+  });
+});

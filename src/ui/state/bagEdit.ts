@@ -7,7 +7,8 @@ import { type Cell, footprintOf, isUsable, occupantsAt, placeFootprint } from '.
 import type { Gear, Item } from '../../engine/loader';
 import { type Loadout, nextGearDef } from '../../engine/loadout';
 import { rarityColor, spriteOf } from '../components/BagGrid';
-import type { DragItem, DragLook } from '../drag';
+import { type DragItem, type DragLook, anchorShift } from '../drag';
+import { getSettings } from '../settings';
 import { type KeyAction, type UiLayout, addPlacement, fromStorage, moveBy, reachShift, removePlacement, removeStored, rotateCw, updatePlacement, updateStored } from './layoutOps';
 
 export interface Landing {
@@ -72,6 +73,28 @@ export function dropInBin(layout: UiLayout, d: DragItem): UiLayout {
 }
 
 /**
+ * A placed item turned a quarter clockwise, keeping the corner (or the centre) of its cells that the settings
+ * say (square items and the rest each have their own; default the top-left corner), within reach of the bag.
+ */
+export function turnInBag(loadout: Loadout, p: { id: string; item: string; x: number; y: number; rotation: 0 | 90 | 180 | 270 }): { x: number; y: number; rotation: 0 | 90 | 180 | 270 } {
+  const rotation = rotateCw(p.rotation);
+  const def = defFor(loadout, { kind: 'placed', id: p.id, item: p.item });
+  const now = turnedCells(def, p.rotation);
+  const then = turnedCells(def, rotation);
+  if (!now || !then) return { x: p.x, y: p.y, rotation };
+  const size = (cs: Cell[]) => ({ w: Math.max(...cs.map((c) => c.x)) + 1, h: Math.max(...cs.map((c) => c.y)) + 1 });
+  const a = size(now);
+  const b = size(then);
+  const s = getSettings();
+  const shift = anchorShift(a.w === a.h ? s.placedSquarePivot : s.placedOtherPivot, a.w, a.h, b.w, b.h);
+  // Half cells (the centre of an even × odd item) round down.
+  const x = p.x + Math.floor(shift.dx);
+  const y = p.y + Math.floor(shift.dy);
+  const r = reachShift(then.map((c) => ({ x: c.x + x, y: c.y + y })), loadout.bag);
+  return { x: x + r.dx, y: y + r.dy, rotation };
+}
+
+/**
  * A key on the selected item: arrows move it (no further than REACH cells out), space turns it, Delete removes it,
  * Escape lets go. Items in the storage box only turn or go. Returns null when nothing changes.
  */
@@ -96,7 +119,7 @@ export function keyOnSelected(layout: UiLayout, loadout: Loadout, selected: stri
     const y = p.y + d.dy + s.dy;
     return x === p.x && y === p.y ? null : { layout: updatePlacement(layout, selected, { x, y }), selected };
   }
-  if (action === 'rotate') return { layout: updatePlacement(layout, selected, { rotation: rotateCw(p.rotation) }), selected };
+  if (action === 'rotate') return { layout: updatePlacement(layout, selected, turnInBag(loadout, p)), selected };
   if (action === 'remove') return { layout: removePlacement(layout, selected), selected: null };
   if (action === 'cancel') return { selected: null };
   return null;
