@@ -21,6 +21,9 @@ The game wiki may be outdated or badly translated, so I need to monitor everythi
 - Mark every entry that came from the web with `source: wiki`, the URL, and `verified: false`.
 - Append each fetch to `data/SOURCES.md`: date, URL, what was extracted, and which data files changed.
 
+## Pushing
+- Whenever I ask you to push a patch, finish your reply with brief patch notes I can post on my community Discord: short, player-facing bullet points (what changed and how to use it), no code or file names.
+
 ## Commands
 - Dev server: `npm run dev`
 - Tests: `npm test`

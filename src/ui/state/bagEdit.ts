@@ -41,7 +41,7 @@ export function lookOf(loadout: Loadout, d: DragItem): DragLook | null {
   const isGear = loadout.data.gear.has(d.item);
   const entry = d.kind === 'placed' ? loadout.entries.get(d.id) : undefined;
   const color = entry?.kind === 'gear' && entry.gearRarity ? rarityColor(entry.gearRarity) : rarityColor('rarity' in def ? (def.rarity as string) : null, isGear);
-  return { cells, color, sprite: spriteOf(def as Parameters<typeof spriteOf>[0], d.rotation) };
+  return { cells, color, gear: entry ? entry.kind === 'gear' : isGear, sprite: spriteOf(def as Parameters<typeof spriteOf>[0], d.rotation) };
 }
 
 /** Where a held item lands with its held cell over bag cell (x, y). */

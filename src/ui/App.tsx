@@ -20,8 +20,8 @@ import { safeBuildName } from '../engine/saves/names';
 import { BagGrid, marginFor, rarityColor, spriteOf } from './components/BagGrid';
 import { TrashIcon } from './components/BuildPicker';
 import { useDragState } from './drag';
-import { ANCHORS, type Settings, setSettings, useSettings } from './settings';
-import { type DragItem, DragLayer, useDragLook, useDropElsewhere, useDropTarget } from './drag';
+import { ANCHORS, RARITY_LOOKS, type RarityLook, type Settings, setSettings, useSettings } from './settings';
+import { type DragItem, DragLayer, dragUnder, nearestBox, useDragLook, useDropElsewhere, useDropTarget } from './drag';
 import { type Landing, dropInBag, dropInBin, keyOnSelected, landing, lookOf, turnedCells } from './state/bagEdit';
 import { Storage, type StoredView } from './components/Storage';
 import { bagSizesFor, enhancerOf, sizeOf } from './state/bagSizes';
@@ -417,10 +417,14 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
   const supplyIds = useMemo(() => new Set(loadout ? availableSupplies(loadout).map((s) => s.item.id) : []), [loadout]);
   // Held items of the Build tab's bag and lists look like this under the pointer.
   useDragLook('build', (d) => (loadout ? lookOf(loadout, d) : null));
-  // Dropped outside the Bag box: the item is removed (user, 2026-10-20). Inside it, off the bag and the storage: it goes back.
+  // Dropped in another box of the page (or in the gap nearest to one): the item is removed (user, 2026-10-20).
+  // Inside the Bag box (or nearest to it), off the bag and the storage: it goes back.
   const bagBoxRef = useRef<HTMLDivElement>(null);
   useDropTarget(bagBoxRef, { accepts: (d) => d.kind !== 'item' && d.scope === 'build', drop: () => {} });
-  useDropElsewhere('build', (d) => onTrashRef.current(d));
+  useDropElsewhere('build', (d, x, y, under) => {
+    const box = removeBoxAt(x, y, under);
+    if (box && !box.classList.contains('bag-box')) onTrashRef.current(d);
+  });
   const onTrashRef = useRef<(d: DragItem) => void>(() => {});
   /** An item in the storage box, for its details: on its own (it has no neighbours there). */
   const inspectedStored = inspected ? bagLayout.storage?.find((x) => x.id === inspected) : undefined;
@@ -595,6 +599,7 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
         cells,
         rotation: st.rotation,
         color: rarityColor('rarity' in def ? (def.rarity as string) : null, isGear),
+        gear: isGear,
         sprite: spriteOf(def as Parameters<typeof spriteOf>[0], st.rotation),
         x: st.x,
         y: st.y,
@@ -1197,9 +1202,9 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
           <div className="build-strip" style={showIf(['hero', 'gear', 'pets', 'skins', 'items'])}>
             {buildPanel}
           </div>
-          <div className="stack" style={showIf(['items'])}>
+          <RemoveOverlay />
+          <div className="stack build-items" style={showIf(['items'])}>
             <div className="items-box">
-            <RemoveOverlay />
             <Panel id="battle.items" title="Items">
               <ItemBrowser
                 data={data}
@@ -1227,7 +1232,7 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
             </Panel>
             </div>
           </div>
-          <div className="stack" style={showIf(['items'])}>
+          <div className="stack build-bag" style={showIf(['items'])}>
             {editingEnemy && (
               <div className="issue warning">
                 Editing <b>{enemyName}</b>'s build: bag, hero, gear, pets and skins here, its heroes and auras in the Profile tab. It's saved with your build.{' '}
@@ -1292,7 +1297,7 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
                     {enhancer ? ` (${enhancer.label})` : ''}: they're random in game.
                   </div>
                 ) : (
-                  <div className="muted">Click an item on the left to put it in the bag, or drag it in. Click an item in the bag to select it.</div>
+                  <div className="muted">Click an item on the right to put it in the bag, or drag it in. Click an item in the bag to select it.</div>
                 )}
               </div>
               <div className="bag-and-storage">
@@ -1434,7 +1439,7 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
               }
             />
           </div>
-          <div className="stack" style={showIf(['hero', 'gear', 'pets', 'skins'])}>
+          <div className="stack build-setup" style={showIf(['hero', 'gear', 'pets', 'skins'])}>
             <div style={showIf(['hero'])}>
             <Panel id="battle.hero" title="Hero">
               <HeroEditor data={data} profile={bagProfile} heroId={editingEnemy ? bagProfile.active_hero : (layout.hero ?? null)} onHero={(id) => (editingEnemy ? setBagProfile({ ...bagProfile, active_hero: id }) : setBuildHero(id))} update={updateBag} account={!editingEnemy} />
@@ -1641,12 +1646,26 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
   );
 }
 
-/** Over the item lists while a bag's item is held: drop it here (or anywhere outside the Bag box) to remove it. */
+/**
+ * The Build tab's boxes a held item can be dropped in: the Bag box keeps it, any other removes it. Each box is a
+ * panel (the Bag box counts as one, with what's in it).
+ */
+function removeBoxAt(x: number, y: number, under: Element | null): Element | null {
+  const page = document.querySelector('.main.build');
+  if (!page) return null;
+  const boxes = [...page.querySelectorAll('.bag-box, .panel')].filter((b) => b.classList.contains('bag-box') || !b.closest('.bag-box'));
+  return nearestBox(boxes, x, y, under);
+}
+
+/** While a bag's item is held over a box other than the Bag box (or the gap nearest it): dropping it there removes it. */
 function RemoveOverlay() {
   const d = useDragState();
   if (!d || d.kind === 'item' || d.scope !== 'build') return null;
+  const box = removeBoxAt(d.x, d.y, dragUnder());
+  if (!box || box.classList.contains('bag-box')) return null;
+  const r = box.getBoundingClientRect();
   return (
-    <div className="remove-overlay" aria-hidden="true">
+    <div className="remove-overlay" aria-hidden="true" style={{ left: r.left, top: r.top, width: r.width, height: r.height }}>
       <TrashIcon />
       <span>Remove item</span>
     </div>
@@ -1686,6 +1705,48 @@ function SettingsDialog({ settings, onClose }: { settings: Settings; onClose: ()
       </select>
     </label>
   );
+  const LOOKS: Record<RarityLook, string> = { full: 'full background', ring: 'a ring of that colour', none: 'nothing' };
+  const percent = (key: keyof Settings, label: string, disabled: boolean) => (
+    <label className="row small">
+      <span className="muted">{label}</span>
+      <input
+        type="number"
+        min={0}
+        max={100}
+        step={5}
+        aria-label={label}
+        disabled={disabled}
+        value={settings[key] as number}
+        onChange={(e) => {
+          const v = Number(e.target.value);
+          if (e.target.value !== '' && Number.isFinite(v)) setSettings({ [key]: Math.max(0, Math.min(100, Math.round(v))) } as Partial<Settings>);
+        }}
+        style={{ width: 64 }}
+      />
+      %
+    </label>
+  );
+  const rarity = (kind: 'item' | 'gear', label: string) => {
+    const look = settings[`${kind}Look`];
+    return (
+      <div className="settings-rarity">
+        <label className="row small settings-pivot">
+          <span className="muted">{label}</span>
+          <select aria-label={`${label}: rarity colour`} value={look} onChange={(e) => setSettings({ [`${kind}Look`]: e.target.value } as Partial<Settings>)}>
+            {RARITY_LOOKS.map((v) => (
+              <option key={v} value={v}>
+                {LOOKS[v]}
+              </option>
+            ))}
+          </select>
+        </label>
+        <div className="row" style={{ gap: 12 }}>
+          {percent(`${kind}Opacity`, `${label}: opacity`, look === 'none')}
+          {percent(`${kind}SelectedOpacity`, `${label}: opacity when selected`, look === 'none')}
+        </div>
+      </div>
+    );
+  };
   return (
     <Dialog title="Settings" onCancel={onClose} actions={[]}>
       <h3>Rotating</h3>
@@ -1710,6 +1771,10 @@ function SettingsDialog({ settings, onClose }: { settings: Settings; onClose: ()
         />
         ms
       </label>
+      <h3>Rarity colour behind items</h3>
+      {rarity('item', 'Items')}
+      {rarity('gear', 'Gear')}
+      <div className="small muted">For items with a picture; one without a picture always has its full colour.</div>
       <h3>Turning an item in the bag (space or a click)</h3>
       {pivot('placedSquarePivot', 'Square items (as wide as they are tall)')}
       {pivot('placedOtherPivot', 'Other items')}

@@ -3,10 +3,10 @@
  * follows the pointer, space turns it while it's held (user, 2026-10-20) and Escape puts it back. Where it can be
  * dropped (a bag, the storage box, the bin) registers itself with useDropTarget.
  */
-import { type PointerEvent as ReactPointerEvent, type ReactNode, type RefObject, useEffect, useRef, useSyncExternalStore } from 'react';
+import { type PointerEvent as ReactPointerEvent, type ReactNode, type RefObject, useEffect, useLayoutEffect, useRef, useSyncExternalStore } from 'react';
 import type { Cell, Rotation } from '../engine/bag';
-import { SIZE, Sprite, type SpriteInfo } from './components/BagGrid';
-import { type Anchor, getSettings } from './settings';
+import { SIZE, Sprite, type SpriteInfo, rarityPaint } from './components/BagGrid';
+import { type Anchor, getSettings, useSettings } from './settings';
 
 export interface DragItem {
   /** From an item list, from a bag, or from the storage box. */
@@ -46,17 +46,21 @@ export interface DropTarget {
 export interface DragLook {
   cells: Cell[];
   color: string;
+  /** Gear (its rarity colour follows the gear settings). */
+  gear?: boolean;
   sprite: SpriteInfo | null;
 }
 
 const THRESHOLD = 5;
 const targets = new Map<HTMLElement, { current: DropTarget }>();
 /** What happens to a bag's item dropped where nothing takes it (the Build tab: it's removed). */
-const elsewhere = new Map<string, { current: (d: DragItem) => void }>();
+const elsewhere = new Map<string, { current: (d: DragItem, x: number, y: number, under: Element | null) => void }>();
 /** How held items of each bag look (each bag knows its own items). */
 const looks = new Map<string, { current: (d: DragItem) => DragLook | null }>();
 let state: DragState | null = null;
 let current: HTMLElement | null = null;
+/** The element under the pointer while something is held. */
+let under: Element | null = null;
 let justEnded = false;
 const listeners = new Set<() => void>();
 const notify = () => listeners.forEach((l) => l());
@@ -66,11 +70,35 @@ export const dragJustEnded = () => justEnded;
 // A new press starts afresh.
 if (typeof window !== 'undefined') window.addEventListener('pointerdown', () => (justEnded = false), true);
 export const dragState = () => state;
+/** The element under the pointer while something is held (null when nothing is). */
+export const dragUnder = () => under;
+
+/** The element at a point (falling back to the event's target where the browser can't say, as in tests). */
+const elementAt = (x: number, y: number, fallback: EventTarget | null) =>
+  ((typeof document.elementFromPoint === 'function' ? document.elementFromPoint(x, y) : null) as Element | null) ?? (fallback as Element | null);
+
+/**
+ * Of `boxes`, the one a point belongs to: the one it's in (by `under`, the element there, or by position), else
+ * the nearest one, so the gaps between boxes belong to a box too (user, 2026-10-20: no threading the needle).
+ */
+export function nearestBox(boxes: readonly Element[], x: number, y: number, under: Element | null): Element | null {
+  const holder = under ? boxes.find((b) => b.contains(under)) : undefined;
+  if (holder) return holder;
+  let best: Element | null = null;
+  let bestD = Infinity;
+  for (const b of boxes) {
+    const r = b.getBoundingClientRect();
+    // Hidden boxes (another step on a phone) don't count.
+    if (r.width === 0 && r.height === 0 && boxes.some((o) => o.getBoundingClientRect().width > 0)) continue;
+    const d = Math.hypot(Math.max(r.left - x, 0, x - r.right), Math.max(r.top - y, 0, y - r.bottom));
+    if (d < bestD) [best, bestD] = [b, d];
+  }
+  return best;
+}
 
 /** The registered target at a point (the held item's picture doesn't count: it lets the pointer through). */
 function targetAt(x: number, y: number, fallback: EventTarget | null): HTMLElement | null {
-  let el = (typeof document.elementFromPoint === 'function' ? document.elementFromPoint(x, y) : null) as HTMLElement | null;
-  el ??= fallback as HTMLElement | null;
+  let el = elementAt(x, y, fallback) as HTMLElement | null;
   for (; el; el = el.parentElement) if (targets.has(el)) return el;
   return null;
 }
@@ -78,6 +106,8 @@ function targetAt(x: number, y: number, fallback: EventTarget | null): HTMLEleme
 function moveTo(x: number, y: number, fallback: EventTarget | null) {
   if (!state) return;
   state = { ...state, x, y };
+  // A turn (no pointer event) keeps what was under it.
+  if (fallback || typeof document.elementFromPoint === 'function') under = elementAt(x, y, fallback);
   const t = targetAt(x, y, fallback);
   const target = t ? targets.get(t)!.current : null;
   const ok = !!target && target.accepts(state);
@@ -93,10 +123,11 @@ function finish(drop: boolean, x: number, y: number, fallback: EventTarget | nul
     const t = targetAt(x, y, fallback);
     const target = t ? targets.get(t)!.current : null;
     if (target && target.accepts(s)) target.drop(s, x, y);
-    else if (s.kind !== 'item') elsewhere.get(s.scope)?.current(s);
+    else if (s.kind !== 'item') elsewhere.get(s.scope)?.current(s, x, y, elementAt(x, y, fallback));
   }
   if (current) targets.get(current)?.current.leave?.();
   current = null;
+  under = null;
   state = null;
   document.body.classList.remove('dragging');
   // The click the browser sends after the drop isn't a click (a cancelled drag sends none).
@@ -221,8 +252,8 @@ export function useDropTarget(ref: RefObject<HTMLElement | null>, target: DropTa
   });
 }
 
-/** A bag's item dropped where nothing takes it (outside the bag box): call `fn` (user, 2026-10-20: remove it). */
-export function useDropElsewhere(scope: string, fn: (d: DragItem) => void) {
+/** A bag's item dropped where nothing takes it, at (x, y) over `under`: call `fn` (the Build tab removes it, or puts it back). */
+export function useDropElsewhere(scope: string, fn: (d: DragItem, x: number, y: number, under: Element | null) => void) {
   const latest = useRef(fn);
   latest.current = fn;
   useEffect(() => {
@@ -256,25 +287,61 @@ export function useDragState(): DragState | null {
   );
 }
 
-/** The held item, drawn under the pointer at bag scale (it lets the pointer through to what's under it). */
+/**
+ * The held item, drawn under the pointer at bag scale (it lets the pointer through to what's under it). With
+ * turning shown (settings), a turn while held swings the whole item from where it was to where it is now.
+ */
 export function DragLayer(): ReactNode {
   const d = useDragState();
-  if (!d) return null;
-  const l = looks.get(d.scope)?.current(d) ?? null;
-  if (!l || !l.cells.length) return null;
-  const minX = Math.min(...l.cells.map((c) => c.x));
-  const minY = Math.min(...l.cells.map((c) => c.y));
-  const g = l.cells[d.grab] ?? l.cells[0]!;
-  const left = d.x - (g.x - minX + d.inCell.x) * SIZE;
-  const top = d.y - (g.y - minY + d.inCell.y) * SIZE;
+  const settings = useSettings();
+  const turnBox = useRef<HTMLDivElement>(null);
+  /** The held item's centre (relative to the pointer) and how far it had turned, last time it was drawn. */
+  const last = useRef<{ spin: number; cx: number; cy: number } | null>(null);
+  const l = d ? (looks.get(d.scope)?.current(d) ?? null) : null;
+  const shown = d && l && l.cells.length ? l : null;
+  const minX = shown ? Math.min(...shown.cells.map((c) => c.x)) : 0;
+  const minY = shown ? Math.min(...shown.cells.map((c) => c.y)) : 0;
+  const w = shown ? (Math.max(...shown.cells.map((c) => c.x)) - minX + 1) * SIZE : 0;
+  const h = shown ? (Math.max(...shown.cells.map((c) => c.y)) - minY + 1) * SIZE : 0;
+  const g = shown ? (shown.cells[d!.grab] ?? shown.cells[0]!) : null;
+  const left = d && g ? d.x - (g.x - minX + d.inCell.x) * SIZE : 0;
+  const top = d && g ? d.y - (g.y - minY + d.inCell.y) * SIZE : 0;
+  const cx = d ? left + w / 2 - d.x : 0;
+  const cy = d ? top + h / 2 - d.y : 0;
+  useLayoutEffect(() => {
+    const prev = last.current;
+    last.current = d && shown ? { spin: d.spin, cx, cy } : null;
+    if (!d || !shown || !prev || prev.spin === d.spin || !settings.animateRotation || settings.rotationMs <= 0) return;
+    const el = turnBox.current;
+    if (!el || typeof el.animate !== 'function') return;
+    // From the old spot and direction (a quarter turn back) to the new one, around its centre.
+    el.animate([{ transform: `translate(${prev.cx - cx}px, ${prev.cy - cy}px) rotate(${prev.spin - d.spin}deg)` }, { transform: 'none' }], { duration: settings.rotationMs, easing: 'ease-out' });
+  });
+  if (!d || !shown) return null;
   const px = (n: number) => (n - minX) * SIZE;
   const py = (n: number) => (n - minY) * SIZE;
+  const paint = rarityPaint(shown.color, { gear: !!shown.gear, selected: false, picture: !!shown.sprite }, settings);
+  const own = new Set(shown.cells.map((c) => `${c.x},${c.y}`));
+  const edge = (c: Cell, dx: number, dy: number) => (own.has(`${c.x + dx},${c.y + dy}`) ? '0' : paint.edge ? '3px' : '1px');
   return (
     <div className="drag-layer" style={{ left, top }} aria-hidden="true">
-      {l.cells.map((c) => (
-        <div key={`${c.x},${c.y}`} className="drag-cell" style={{ left: px(c.x), top: py(c.y), background: l.color }} />
-      ))}
-      {l.sprite && <Sprite s={{ ...l.sprite, rotation: (((d.rotation - d.spin) % 360) + 360) % 360 + d.spin }} cells={l.cells.map((c) => ({ x: c.x - minX, y: c.y - minY }))} px={(n) => n * SIZE} size={SIZE} z={2} />}
+      <div ref={turnBox} className="drag-turn" style={{ width: w, height: h }}>
+        {shown.cells.map((c) => (
+          <div
+            key={`${c.x},${c.y}`}
+            className="drag-cell"
+            style={{
+              left: px(c.x),
+              top: py(c.y),
+              background: paint.background,
+              borderStyle: 'solid',
+              borderColor: paint.edge ?? 'rgba(0,0,0,0.35)',
+              borderWidth: `${edge(c, 0, -1)} ${edge(c, 1, 0)} ${edge(c, 0, 1)} ${edge(c, -1, 0)}`,
+            }}
+          />
+        ))}
+        {shown.sprite && <Sprite s={{ ...shown.sprite, rotation: d.rotation }} cells={shown.cells.map((c) => ({ x: c.x - minX, y: c.y - minY }))} px={(n) => n * SIZE} size={SIZE} z={2} />}
+      </div>
     </div>
   );
 }

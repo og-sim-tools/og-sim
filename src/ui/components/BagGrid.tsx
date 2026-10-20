@@ -12,6 +12,7 @@ import { copyName, copyNumbers } from '../../engine/loadout';
 import { type KeyAction, keyAction } from '../state/layoutOps';
 import { imageUrl } from '../staticData';
 import { type DragItem, beginDrag, cellUnder, dragJustEnded, heldCellPoint, useDropTarget } from '../drag';
+import { type Settings, getSettings, useSettings } from '../settings';
 
 /** Most cells drawn around the bag for out-of-bag item cells and dots (items can't go further out: layoutOps REACH). */
 export const MAX_MARGIN = 4;
@@ -125,6 +126,23 @@ export function rarityColor(rarity: string | null | undefined, gear = false): st
   return gear ? 'var(--r-gear)' : `var(--r-${rarity ?? 'common'})`;
 }
 
+/**
+ * How an item's cells are painted with its rarity colour (settings: items and gear each have their own look and
+ * strength, normally and when selected or hovered). Items without a picture always get the full colour: it's all
+ * there is to see of them. `edge` is the colour of the ring round its cells (null = the usual thin dark edge).
+ */
+export function rarityPaint(color: string, o: { gear: boolean; selected: boolean; picture: boolean }, s: Settings = getSettings()): { background: string; edge: string | null } {
+  if (!o.picture) return { background: color, edge: null };
+  const look = o.gear ? s.gearLook : s.itemLook;
+  const pct = o.gear ? (o.selected ? s.gearSelectedOpacity : s.gearOpacity) : o.selected ? s.itemSelectedOpacity : s.itemOpacity;
+  const shade = pct >= 100 ? color : pct <= 0 ? 'transparent' : `color-mix(in srgb, ${color} ${pct}%, transparent)`;
+  // Without a full background, a selected item gets a faint light one so it still stands out.
+  const plain = o.selected ? 'rgba(255, 255, 255, 0.14)' : 'transparent';
+  if (look === 'full') return { background: shade, edge: null };
+  if (look === 'ring') return { background: plain, edge: shade };
+  return { background: plain, edge: null };
+}
+
 /** Cells of margin needed so every item cell outside the bag can still be drawn (dots further out aren't drawn). */
 export function marginFor(width: number, height: number, cells: readonly Cell[]): number {
   let m = 1;
@@ -137,6 +155,7 @@ export function BagGrid(p: Props) {
   const { bag, layout } = loadout;
   const ref = useRef<HTMLDivElement>(null);
   const scope = p.scope ?? 'build';
+  const settings = useSettings();
   /** Degrees each item's picture is shown at: always turning clockwise by the short way (so a turn animates). */
   const shownTurn = useRef(new Map<string, number>());
   const turnOf = (id: string, r: number) => {
@@ -261,6 +280,7 @@ export function BagGrid(p: Props) {
           ? rarityColor(entry.gearRarity)
           : rarityColor(null, true)
         : rarityColor('rarity' in item.def ? (item.def.rarity as string) : null);
+    const paint = rarityPaint(color, { gear: entry?.kind === 'gear', selected: id === selected || id === hovered, picture: !!sprite }, settings);
     const own = new Set(item.cells.map(cellKey));
     const first = [...item.cells].sort((a, b) => a.y - b.y || a.x - b.x)[0];
     if (copy && first) {
@@ -271,7 +291,7 @@ export function BagGrid(p: Props) {
       );
     }
     item.cells.forEach((c, index) => {
-      const edge = (dx: number, dy: number) => (own.has(cellKey({ x: c.x + dx, y: c.y + dy })) ? '0' : '2px');
+      const edge = (dx: number, dy: number) => (own.has(cellKey({ x: c.x + dx, y: c.y + dy })) ? '0' : paint.edge ? '3px' : '2px');
       itemCells.push(
         <div
           key={`i${id}${c.x},${c.y}`}
@@ -279,9 +299,9 @@ export function BagGrid(p: Props) {
           style={{
             left: px(c.x),
             top: px(c.y),
-            background: color,
+            background: paint.background,
             borderStyle: 'solid',
-            borderColor: id === selected ? 'white' : 'rgba(0,0,0,0.35)',
+            borderColor: paint.edge ?? (id === selected ? 'white' : 'rgba(0,0,0,0.35)'),
             borderWidth: `${edge(0, -1)} ${edge(1, 0)} ${edge(0, 1)} ${edge(-1, 0)}`,
             zIndex: id === selected ? 2 : 1,
             // While marking enhanced cells, clicks go through to the cell underneath.

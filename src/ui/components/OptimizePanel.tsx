@@ -19,6 +19,7 @@ import { BagGrid } from './BagGrid';
 import { BagPreview } from './BagPreview';
 import { type DragItem, useDragLook } from '../drag';
 import { landing, lookOf, turnInBag } from '../state/bagEdit';
+import { Dialog } from './Dialog';
 import { Panel } from './Panel';
 import { StatsPanel } from './StatsPanel';
 
@@ -127,6 +128,9 @@ export function OptimizePanel({ data, profile, layout, layoutName, loadout, layo
   const [edit, setEdit] = useState<Placement[] | null>(null);
   const [picked1, setPicked1] = useState<string | null>(null);
   const [testing, setTesting] = useState(false);
+  /** The shown build was taken into the Build tab (Use this build) since the run or my last edit. */
+  const [kept, setKept] = useState(false);
+  const [confirmRun, setConfirmRun] = useState(false);
   // A different build shown: drop unsaved edits to the previous one.
   useEffect(() => {
     setEdit(null);
@@ -179,6 +183,7 @@ export function OptimizePanel({ data, profile, layout, layoutName, loadout, layo
   const [ranWith, setRanWith] = useState<string | null>(null);
 
   const run = async (startPlacements?: Placement[]) => {
+    setKept(false);
     setError(null);
     setResult(null);
     setSel(null);
@@ -260,7 +265,13 @@ export function OptimizePanel({ data, profile, layout, layoutName, loadout, layo
     [shownLoadout],
   );
   const editValid = editIssues.length === 0;
-  const change = (fn: (ps: Placement[]) => Placement[]) => working && setEdit(fn(working.map((p) => ({ ...p }))));
+  const change = (fn: (ps: Placement[]) => Placement[]) => {
+    if (!working) return;
+    setEdit(fn(working.map((p) => ({ ...p }))));
+    setKept(false);
+  };
+  // A run found a better build (or I edited one) that isn't in the Build tab yet: a new run would lose it.
+  const unsaved = !!result && !running && !kept && (result.best.id !== 0 || !!edit);
   /** Where an item moved to (x, y) ends up: never more than REACH cells outside the bag. */
   const within = (id: string, x: number, y: number) => {
     const it = shownLoadout?.layout.items.get(id);
@@ -515,12 +526,32 @@ export function OptimizePanel({ data, profile, layout, layoutName, loadout, layo
           ))}
           <h3>3. Run</h3>
           <div className="row">
-            <button className="primary" disabled={running || picked.length === 0} onClick={() => void run()}>
+            <button className="primary" disabled={running || picked.length === 0} onClick={() => (unsaved ? setConfirmRun(true) : void run())}>
               {opts.iterations === 0 ? 'Test my build' : 'Run optimization'}
             </button>
             {picked.length === 0 && <span className="small muted">Tick at least one opponent first.</span>}
             {running && <button onClick={() => (stop.current = true)}>Stop</button>}
           </div>
+          {confirmRun && (
+            <Dialog
+              title="Replace the last results?"
+              onCancel={() => setConfirmRun(false)}
+              actions={[
+                {
+                  label: opts.iterations === 0 ? 'Test anyway' : 'Run anyway',
+                  kind: 'primary',
+                  onClick: () => {
+                    setConfirmRun(false);
+                    void run();
+                  },
+                },
+              ]}
+            >
+              <p className="small">
+                {edit ? 'Your edited build' : 'The best build from your last optimization'} isn't saved: it hasn't been taken into the Build tab with Use this build. A new run replaces these results.
+              </p>
+            </Dialog>
+          )}
           {error && <div className="issue error">{error}</div>}
           {result && !running && ranWith && ranWith !== signature && (
             <div className="issue warning" style={{ marginTop: 8 }}>
@@ -604,7 +635,13 @@ export function OptimizePanel({ data, profile, layout, layoutName, loadout, layo
               </div>
               {edit && !editValid && <div className="issue error small">Items overlap or sit outside the bag: fix that before testing.</div>}
               <div className="row" style={{ marginTop: 6, flexWrap: 'wrap', gap: 6 }}>
-                <button disabled={shown.id === 0 && !edit} onClick={() => onApply(working ?? shown.placements)}>
+                <button
+                  disabled={shown.id === 0 && !edit}
+                  onClick={() => {
+                    onApply(working ?? shown.placements);
+                    setKept(true);
+                  }}
+                >
                   Use this build
                 </button>
                 <button disabled={running || testing || !editValid} onClick={() => void run(working ?? shown.placements)} title="Run the optimization again, starting from this build (with my edits)">

@@ -5,7 +5,8 @@
 import { useRef, useState } from 'react';
 import type { Cell } from '../../engine/bag';
 import { type DragItem, type DragLook, beginDrag, dragJustEnded, useDropTarget } from '../drag';
-import { SIZE, type SpriteInfo, spriteScale } from './BagGrid';
+import { useSettings } from '../settings';
+import { SIZE, type SpriteInfo, rarityPaint, spriteScale } from './BagGrid';
 import { TrashIcon } from './BuildPicker';
 
 /** Stored items are drawn at the bag's size (user, 2026-10-20). */
@@ -20,6 +21,8 @@ export interface StoredView {
   cells: Cell[];
   rotation: 0 | 90 | 180 | 270;
   color: string;
+  /** Gear (its rarity colour follows the gear settings). */
+  gear?: boolean;
   sprite: SpriteInfo | null;
   /** Top-left corner as shares (0–1) of the box. */
   x: number;
@@ -46,6 +49,7 @@ interface Props {
 export function Storage({ items, width, height, selected, scope = 'build', look, onSelect, onRotate, onDrop, top: offsetTop = 0 }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const [over, setOver] = useState(false);
+  const settings = useSettings();
   useDropTarget(ref, {
     accepts: (d) => d.kind === 'item' || d.scope === scope,
     over: () => setOver(true),
@@ -76,6 +80,9 @@ export function Storage({ items, width, height, selected, scope = 'build', look,
         // Kept inside the box however it was dropped.
         const left = Math.max(0, Math.min(width - w, it.x * width));
         const top = Math.max(0, Math.min(height - h, it.y * height));
+        const paint = rarityPaint(it.color, { gear: !!it.gear, selected: it.id === selected, picture: !!it.sprite }, settings);
+        const own = new Set(it.cells.map((c) => `${c.x},${c.y}`));
+        const edge = (c: Cell, dx: number, dy: number) => (own.has(`${c.x + dx},${c.y + dy}`) ? '0' : paint.edge ? '3px' : '1px');
         return (
           <div
             key={it.id}
@@ -105,7 +112,20 @@ export function Storage({ items, width, height, selected, scope = 'build', look,
             }}
           >
             {it.cells.map((c) => (
-              <div key={`${c.x},${c.y}`} className="stored-cell" style={{ left: (c.x - minX) * S, top: (c.y - minY) * S, width: S, height: S, background: it.color }} />
+              <div
+                key={`${c.x},${c.y}`}
+                className="stored-cell"
+                style={{
+                  left: (c.x - minX) * S,
+                  top: (c.y - minY) * S,
+                  width: S,
+                  height: S,
+                  background: paint.background,
+                  borderStyle: 'solid',
+                  borderColor: paint.edge ?? 'rgba(0,0,0,0.35)',
+                  borderWidth: `${edge(c, 0, -1)} ${edge(c, 1, 0)} ${edge(c, 0, 1)} ${edge(c, -1, 0)}`,
+                }}
+              />
             ))}
             {it.sprite && (
               <img
