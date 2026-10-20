@@ -92,3 +92,25 @@ describe('phones', () => {
     }
   }, 30000);
 });
+
+describe('Optimize with 0 builds to try', () => {
+  it('tests my build as it is against the opponents, changing nothing', async () => {
+    const { OptimizePanel } = await import('../../src/ui/components/OptimizePanel');
+    const mine = LayoutSchema.parse({ placements: [{ id: 'b1', item: 'hunters_bow', x: 0, y: 0 }, { id: 'r1', item: 'rock', x: 3, y: 0 }], battle: { mode: 'arena', seed: 1, runs: 1 } });
+    const myLo = buildLoadout(data, profile, mine);
+    const foe = { profile, placements: [{ id: 'f1', item: 'hunters_bow', x: 0, y: 0, rotation: 0 as const, supply: false }] };
+    const onApply = vi.fn();
+    render(<OptimizePanel data={data} profile={profile} layout={mine} layoutName="mine" loadout={myLo} layouts={['foe one', 'foe two']} layoutAsBuild={vi.fn(async () => foe)} onApply={onApply} />);
+    fireEvent.change(screen.getByLabelText('Builds to try'), { target: { value: '0' } });
+    expect((screen.getByLabelText('Builds to try') as HTMLInputElement).value).toBe('0');
+    fireEvent.change(screen.getByLabelText('Seeds per opponent'), { target: { value: '2' } });
+    fireEvent.click(screen.getByRole('checkbox', { name: /foe one/ }));
+    fireEvent.click(screen.getByRole('checkbox', { name: /foe two/ }));
+    expect(screen.getByText(/About 4 battles per run/)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Test my build' }));
+    expect(await screen.findByText('Builds tried (1)', {}, { timeout: 10000 })).toBeTruthy();
+    expect(screen.getAllByText('starting build').length).toBeGreaterThan(0);
+    // It's my build, unchanged: the clean-up pass doesn't run (the Rock does nothing and would be dropped otherwise).
+    expect(screen.queryByText(/drop Rock/)).toBeNull();
+  }, 30000);
+});

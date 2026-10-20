@@ -186,8 +186,11 @@ export function OptimizePanel({ data, profile, layout, layoutName, loadout, layo
         opponents.push({ name: label, enemy: resolveEnemies(data, { mode, enemy } as never) });
       }
       if (opponents.length === 0) throw new Error('Pick at least one opponent build.');
+      // 0 builds to try: only score my build as it is (no clean-up changes either).
+      const testOnly = opts.iterations === 0;
       const o: OptimizeOptions = {
         ...opts,
+        ...(testOnly ? { cleanup: false } : {}),
         valueBudget: opts.allowItemChanges ? budget : undefined,
         shakeUp: opts.shake ? { patience: opts.shakePatience, size: opts.shakeSize } : undefined,
         seedBase: typeof layout.battle?.seed === 'number' ? layout.battle.seed : 1,
@@ -196,7 +199,7 @@ export function OptimizePanel({ data, profile, layout, layoutName, loadout, layo
       };
       const base = startPlacements ? { ...layout, placements: startPlacements } : layout;
       lastRun.current = { opponents, o, base };
-      const gen = opts.multiSeed && opts.searchRuns > 1 ? optimizeMany(data, profile, base, opponents, o, opts.searchRuns, opts.chainRuns) : optimize(data, profile, base, opponents, o);
+      const gen = !testOnly && opts.multiSeed && opts.searchRuns > 1 ? optimizeMany(data, profile, base, opponents, o, opts.searchRuns, opts.chainRuns) : optimize(data, profile, base, opponents, o);
       setRanWith(signature);
       stop.current = false;
       started.current = Date.now();
@@ -355,8 +358,18 @@ export function OptimizePanel({ data, profile, layout, layoutName, loadout, layo
             <input id="opt-seeds" type="number" min={1} value={opts.seeds} onChange={(e) => set('seeds', Math.max(1, Number(e.target.value) || 1))} style={{ width: 80 }} />
             <div className="help muted">Battles against each opponent for every build tried (more = steadier scores, slower).</div>
             <label htmlFor="opt-iter">Builds to try</label>
-            <input id="opt-iter" type="number" min={1} value={opts.iterations} onChange={(e) => set('iterations', Math.max(1, Number(e.target.value) || 1))} style={{ width: 80 }} />
-            <div className="help muted">How many changed builds it tries after yours.</div>
+            <input
+              id="opt-iter"
+              type="number"
+              min={0}
+              value={opts.iterations}
+              onChange={(e) => {
+                const v = Number(e.target.value);
+                if (e.target.value !== '' && Number.isFinite(v)) set('iterations', Math.max(0, Math.round(v)));
+              }}
+              style={{ width: 80 }}
+            />
+            <div className="help muted">How many changed builds it tries after yours. 0 = just test your build as it is against the opponents (nothing is changed).</div>
             <label htmlFor="opt-items">Change items too</label>
             <label className="check-line">
               <input id="opt-items" type="checkbox" checked={opts.allowItemChanges} onChange={(e) => set('allowItemChanges', e.target.checked)} />
@@ -463,7 +476,7 @@ export function OptimizePanel({ data, profile, layout, layoutName, loadout, layo
           </div>
           </details>
           <div className="small muted" style={{ marginTop: 6 }}>
-            About {opts.seeds * Math.max(1, picked.length) * (opts.iterations + 1) * (opts.multiSeed ? opts.searchRuns : 1)} battles per run.
+            About {opts.seeds * Math.max(1, picked.length) * (opts.iterations + 1) * (opts.multiSeed && opts.iterations > 0 ? opts.searchRuns : 1)} battles per run.
           </div>
           {questNotes.map((w) => (
             <div key={w} className="issue warning small" style={{ marginTop: 4 }}>
@@ -473,7 +486,7 @@ export function OptimizePanel({ data, profile, layout, layoutName, loadout, layo
           <h3>3. Run</h3>
           <div className="row">
             <button className="primary" disabled={running || picked.length === 0} onClick={() => void run()}>
-              Run optimization
+              {opts.iterations === 0 ? 'Test my build' : 'Run optimization'}
             </button>
             {picked.length === 0 && <span className="small muted">Tick at least one opponent first.</span>}
             {running && <button onClick={() => (stop.current = true)}>Stop</button>}
@@ -490,7 +503,7 @@ export function OptimizePanel({ data, profile, layout, layoutName, loadout, layo
                 <div style={{ width: `${(100 * progress.battles) / Math.max(1, progress.totalBattles)}%` }} />
               </div>
               <div className="small muted">
-                Build {progress.candidate + 1} / {(opts.iterations + 1) * (opts.multiSeed ? opts.searchRuns : 1)} · {progress.battles} / {progress.totalBattles} battles · about {Math.ceil(eta / 1000)} s left
+                Build {progress.candidate + 1} / {(opts.iterations + 1) * (opts.multiSeed && opts.iterations > 0 ? opts.searchRuns : 1)} · {progress.battles} / {progress.totalBattles} battles · about {Math.ceil(eta / 1000)} s left
                 {progress.best && ` · best so far ${num(progress.best.meanScore)} (${pct(progress.best.winRate)} wins)`}
               </div>
             </div>
