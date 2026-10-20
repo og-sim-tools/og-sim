@@ -10,6 +10,8 @@
  * Version 2: the account keeps only heroes' stars and links, and auras; each build keeps the rest.
  * Version 3 (2026-10-19): blessings, pets' and skins' stars, and HP / ATK / Block are account-wide again; a
  * build keeps its hero, gear, which pets and skins it brings, the bag (and storage) and the battle.
+ * Version 4 (2026-10-20): the battle settings can name a chapter, and a typed-in enemy's attacks can inflict
+ * statuses on hit and deal a % of max HP. Nothing older changes meaning.
  */
 import { DEFAULT_BASIC_STATS } from './files';
 import type { SaveNote } from './salvage';
@@ -149,4 +151,11 @@ export function buildV2toV3(raw: Raw, notes: SaveNote[] = []): Raw {
   if (raw.skins !== undefined) out.skins = skins.map((x) => (isObj(x) ? Object.fromEntries(Object.entries(x).filter(([k]) => k !== 'stars')) : x));
   out.legacy = legacy;
   return out;
+}
+
+// ------------------------------------------------------------------ v3 → v4
+
+/** v3 → v4 (account or build): only new optional settings, so nothing to change but the number. */
+export function v3toV4(raw: Raw): Raw {
+  return { ...raw, version: 4 };
 }

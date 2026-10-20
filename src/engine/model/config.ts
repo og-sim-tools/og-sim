@@ -157,9 +157,19 @@ export const ConfigSchema = z
           pvp: z.boolean().default(false),
           /** Who wins when time runs out: the enemy (stages), or whoever has the higher remaining HP % (Arena). */
           timeout_winner: z.enum(['enemy', 'hp_pct']).default('enemy'),
+          /** When time runs out I'm defeated outright, past Invincible and lethal saves (raids). */
+          timeout_kills: z.boolean().default(false),
         })
         .strict(),
     ),
+    /**
+     * Chapter mode: how many chapters there are, how many enemies a chapter has (every `boss_every`-th has
+     * `boss_enemies`), and from which chapter the enemies repeat every `repeat_every` chapters (with other base stats).
+     */
+    chapters: z
+      .object({ count: int, enemies: int, boss_every: int, boss_enemies: int, repeat_from: int, repeat_every: int })
+      .strict()
+      .default({ count: 120, enemies: 12, boss_every: 5, boss_enemies: 5, repeat_from: 10, repeat_every: 25 }),
   })
   .strict();
 export type Config = z.infer<typeof ConfigSchema>;

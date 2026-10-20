@@ -30,6 +30,8 @@ import { sortEntries } from '../../src/ui/state/browser';
 import { REACH, addStored, fromStorage, layoutToYaml, reachShift, removeStored, toStorage, updateStored, withIds } from '../../src/ui/state/layoutOps';
 
 afterEach(cleanup);
+/** A pointer event at (x, y) (jsdom has no PointerEvent; React only looks at the type). */
+const ptr = (el: Element, type: string, x: number, y: number) => fireEvent(el, new MouseEvent(type, { bubbles: true, cancelable: true, clientX: x, clientY: y, button: 0 }));
 beforeEach(() => localStorage.clear());
 const data = loadGameDataFromDir(join(ROOT, 'data')).data;
 const profile = (text: string) => loadProfile({ path: 'p.yaml', text: `basic_stats: { hp: 1M, atk: 100K, initial_block: 0 }\n${text}` }, data).profile!;
@@ -158,8 +160,8 @@ describe('the item list', () => {
 describe('the Build tab', () => {
   const start = async () => {
     const store = browserStore(localStorage);
-    await store.writeAccount('version: 3\nheroes: [{ id: erwen, stars: 9 }]\n');
-    await store.writeBuild('bows', 'version: 3\nhero: erwen\nplacements: []\n');
+    await store.writeAccount('version: 4\nheroes: [{ id: erwen, stars: 9 }]\n');
+    await store.writeBuild('bows', 'version: 4\nhero: erwen\nplacements: []\n');
     lastBuild.set('bows');
     render(<App store={store} />);
     await screen.findByLabelText('Hero for this build', {}, { timeout: 10000 });
@@ -167,7 +169,11 @@ describe('the Build tab', () => {
   };
   const pick = (name: string) => {
     fireEvent.change(screen.getByLabelText('Search items'), { target: { value: name } });
-    fireEvent.click([...document.querySelectorAll('.list-row')].find((r) => r.querySelector('.name')?.textContent === name)!);
+    const row = [...document.querySelectorAll('.list-row')].find((r) => r.querySelector('.name')?.textContent === name)!;
+    // As in a browser: a press, then the click.
+    ptr(row, 'pointerdown', 0, 0);
+    ptr(row, 'pointerup', 0, 0);
+    fireEvent.click(row);
   };
   // The Build tab's bag (the Battle tab, kept mounted but hidden, shows the same build).
   const cellsOf = (name: string) => [...screen.getByRole('grid', { name: 'Backpack' }).querySelectorAll<HTMLElement>('.item-cell')].filter((c) => c.title.startsWith(name));
@@ -202,36 +208,64 @@ describe('the Build tab', () => {
     const store = await start();
     pick("Hunter's Bow");
     const bow = () => cellsOf("Hunter's Bow")[0]!;
-    const dt = () => {
-      const s: Record<string, string> = {};
-      return { setData: (k: string, v: string) => (s[k] = v), getData: (k: string) => s[k] ?? '', effectAllowed: '', dropEffect: '' };
+    const storage = () => screen.getByRole('region', { name: 'Storage' });
+    const bag = () => screen.getByRole('grid', { name: 'Backpack' });
+    // Pick up, move, let go (jsdom: the element under the pointer is the event's target).
+    const drag = (from: Element | undefined, to: Element, x = 10, y = 10, what = '') => {
+      expect(from, `nothing to drag: ${what}`).toBeTruthy();
+      ptr(from!, 'pointerdown', 5, 5);
+      ptr(to, 'pointermove', x, y);
+      ptr(to, 'pointerup', x, y);
     };
-    let t = dt();
-    fireEvent.dragStart(bow(), { dataTransfer: t });
-    fireEvent.drop(screen.getByRole('region', { name: 'Storage' }), { dataTransfer: t });
+    drag(bow(), storage(), 10, 10, 'bow to storage');
     expect(cellsOf("Hunter's Bow")).toHaveLength(0);
     const stored = () => document.querySelector<HTMLElement>('.stored-item')!;
     expect(stored().title).toMatch(/Hunter's Bow \(in storage\)/);
-    t = dt();
-    fireEvent.dragStart(stored(), { dataTransfer: t });
-    const bag = screen.getByRole('grid', { name: 'Backpack' });
-    const drop = createEvent.drop(bag, { dataTransfer: t });
-    Object.defineProperties(drop, { clientX: { value: 40 * 3 + 5 }, clientY: { value: 40 * 2 + 5 } });
-    fireEvent(bag, drop);
+    // Its details work in the storage too (its numbers on its own).
+    fireEvent.click(stored());
+    fireEvent.click(screen.getByRole('button', { name: 'Item details' }));
+    expect(within(screen.getByRole('complementary', { name: 'Item details' })).getByText(/In the storage/)).toBeTruthy();
+    drag(stored(), bag(), 40 * 3 + 5, 40 * 2 + 5, 'stored to bag');
     expect(cellsOf("Hunter's Bow").length).toBeGreaterThan(0);
     expect(document.querySelector('.stored-item')).toBeNull();
-    t = dt();
-    fireEvent.dragStart(bow(), { dataTransfer: t });
-    fireEvent.drop(screen.getByRole('region', { name: 'Bin' }), { dataTransfer: t });
+    drag(bow(), screen.getByRole('region', { name: 'Bin' }), 10, 10, 'bow to bin');
     expect(cellsOf("Hunter's Bow")).toHaveLength(0);
     // Saving keeps what's stored.
     pick('Rock');
-    t = dt();
-    fireEvent.dragStart(cellsOf('Rock')[0]!, { dataTransfer: t });
-    fireEvent.drop(screen.getByRole('region', { name: 'Storage' }), { dataTransfer: t });
+    drag(cellsOf('Rock')[0], storage(), 10, 10, 'rock to storage');
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     fireEvent.click(within(screen.getByRole('dialog', { name: 'Save "bows"?' })).getByRole('button', { name: 'Save' }));
     await waitFor(async () => expect(parse((await store.readBuild('bows'))!).storage?.[0]?.item).toBe('rock'));
+  }, 30000);
+
+  it('the bin is under the bag and the storage box beside both', async () => {
+    await start();
+    const column = screen.getByRole('grid', { name: 'Backpack' }).closest('.bag-column')!;
+    expect(column.querySelector('[aria-label="Bin"]')).toBeTruthy();
+    expect(column.querySelector('[aria-label="Storage"]')).toBeNull();
+    expect(column.parentElement!.querySelector(':scope > [aria-label="Storage"]')).toBeTruthy();
+  }, 30000);
+
+  it('starting equipment in use is listed first, marked, and can be taken out', async () => {
+    await start();
+    fireEvent.click(screen.getByRole('tab', { name: /Starting equipment/ }));
+    const first = () => document.querySelector<HTMLElement>('[aria-label="Search starting equipment"]')!.closest('div')!.parentElement!.querySelector('.list .list-row')!;
+    const name = first().querySelector('.name')!.textContent!;
+    const last = [...document.querySelectorAll<HTMLElement>('.list .list-row:not(.blocked)')].at(-1)!;
+    const lastName = last.querySelector('.name')!.textContent!;
+    fireEvent.click(last);
+    expect(screen.getByLabelText('In use').textContent).toMatch(lastName);
+    expect(first().querySelector('.name')!.textContent).toBe(lastName);
+    expect(first().textContent).toMatch(/in use/);
+    fireEvent.click(screen.getByRole('button', { name: `Take ${lastName} out of the bag` }));
+    expect(screen.getByLabelText('In use').textContent).toMatch(/nothing yet/);
+    expect(name).toBeTruthy();
+  }, 30000);
+
+  it("the Build tab has no Stats box; whose bag the Bag box edits is chosen in the Bag box", async () => {
+    await start();
+    expect(screen.queryByRole('region', { name: 'Stats' })).toBeNull();
+    expect(document.querySelector('.topbar [aria-label="Whose build"]')).toBeNull();
   }, 30000);
 
   it('the bag size list is the hero class\'s', async () => {
@@ -242,7 +276,7 @@ describe('the Build tab', () => {
     expect(screen.getByRole('grid', { name: 'Backpack' }).querySelectorAll('.cell.on')).toHaveLength(32);
   }, 30000);
 
-  it('the Battle tab shows my bag and the opponent side by side, each with its setup', async () => {
+  it('the Battle tab: Arena, Raid or Chapter; my bag and the opponent side by side, each with its setup', async () => {
     await start();
     fireEvent.click(screen.getByRole('tab', { name: 'Battle' }));
     const me = screen.getByRole('region', { name: 'You' });
@@ -250,12 +284,55 @@ describe('the Build tab', () => {
     expect(within(me).getByRole('grid', { name: 'Backpack' })).toBeTruthy();
     expect(within(me).getByText('Blessings')).toBeTruthy();
     expect(within(me).getByText('Auras')).toBeTruthy();
-    const opp = screen.getByRole('region', { name: 'Opponent' });
-    fireEvent.change(within(opp).getByLabelText('Enemy'), { target: { value: '__build:bows' } });
-    await waitFor(() => expect(within(screen.getByRole('region', { name: 'Opponent' })).getByRole('grid', { name: 'Backpack' })).toBeTruthy());
+    expect(within(me).getByText('Detailed stats')).toBeTruthy();
+    const kinds = within(screen.getByRole('tablist', { name: 'Kind of battle' }));
+    // Chapter: the chapter's enemies aren't known yet (red), a stand-in is fought.
+    expect(kinds.getByRole('tab', { name: 'Chapter' }).getAttribute('aria-selected')).toBe('true');
+    const opp = () => screen.getByRole('region', { name: 'Opponent' });
+    expect(within(opp()).getByText(/Chapter 1's enemies aren't known yet/)).toBeTruthy();
+    fireEvent.change(within(opp()).getByLabelText('Chapter'), { target: { value: '35' } });
+    expect(within(opp()).getByText(/same enemies as chapter 10/)).toBeTruthy();
+    expect(within(opp()).getAllByText(/Unknown/).length).toBe(5); // a 5th chapter: 5 enemies
+    // Arena: builds only, side by side.
+    fireEvent.click(kinds.getByRole('tab', { name: 'Arena' }));
+    fireEvent.change(within(opp()).getByLabelText('Opponent build'), { target: { value: 'b:bows' } });
+    await waitFor(() => expect(within(opp()).getByRole('grid', { name: 'Backpack' })).toBeTruthy());
+    expect(within(opp()).queryByLabelText('Enemy')).toBeNull();
+    // Raid: the placeholder boss.
+    fireEvent.click(kinds.getByRole('tab', { name: 'Raid' }));
+    expect(screen.getByRole('region', { name: 'Raid boss' }).textContent).toMatch(/placeholder/i);
     expect(screen.getByRole('region', { name: 'Fight' })).toBeTruthy();
     // The Build tab has no battle box any more.
     fireEvent.click(screen.getByRole('tab', { name: 'Build' }));
     expect(screen.queryByRole('button', { name: /Run battle/ })).toBeNull();
+  }, 30000);
+
+  it('items moved in the Battle tab are a try-out: Keep puts them in the build, Undo forgets them', async () => {
+    const store = browserStore(localStorage);
+    await store.writeAccount('version: 4\nheroes: [{ id: erwen, stars: 9 }]\n');
+    await store.writeBuild('bows', "version: 4\nhero: erwen\nplacements: [{ id: b1, item: hunters_bow, x: 0, y: 0 }]\n");
+    lastBuild.set('bows');
+    render(<App store={store} />);
+    await screen.findByLabelText('Hero for this build', {}, { timeout: 10000 });
+    fireEvent.click(screen.getByRole('tab', { name: 'Battle' }));
+    const me = () => screen.getByRole('region', { name: 'You' });
+    const bag = () => within(me()).getByRole('grid', { name: 'Backpack' });
+    const cell = () => bag().querySelector<HTMLElement>('.item-cell')!;
+    const before = cell().style.left;
+    ptr(cell(), 'pointerdown', 5, 5);
+    ptr(bag(), 'pointermove', 40 * 5 + 5, 40 * 3 + 5);
+    ptr(bag(), 'pointerup', 40 * 5 + 5, 40 * 3 + 5);
+    expect(cell().style.left).not.toBe(before);
+    expect(within(me()).getByText(/not in your build yet/)).toBeTruthy();
+    fireEvent.click(within(me()).getByRole('button', { name: 'Undo' }));
+    expect(cell().style.left).toBe(before);
+    ptr(cell(), 'pointerdown', 5, 5);
+    ptr(bag(), 'pointermove', 40 * 5 + 5, 40 * 3 + 5);
+    ptr(bag(), 'pointerup', 40 * 5 + 5, 40 * 3 + 5);
+    fireEvent.click(within(me()).getByRole('button', { name: 'Keep it' }));
+    // Kept: the open build changed (not saved yet).
+    expect(screen.getByText(/Kept the new arrangement in "bows"/)).toBeTruthy();
+    fireEvent.click(screen.getByRole('tab', { name: 'Build' }));
+    expect(screen.getByText(/● unsaved/)).toBeTruthy();
   }, 30000);
 });

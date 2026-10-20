@@ -22,6 +22,8 @@ export interface MonteCarloResult {
   timeouts: number;
   duration: Distribution;
   dps: Distribution;
+  /** The damage I dealt (raids: what the result is about). */
+  damage: Distribution;
   /** My HP left, % of max, averaged. */
   playerHpLeftPct: number;
   enemyHpLeftPct: number;
@@ -73,6 +75,7 @@ export function runMonteCarlo(loadout: Loadout, enemy: EnemyInput | EnemyInput[]
     timeouts: results.filter((r) => r.reason === 'timeout').length,
     duration: distribution(results.map((r) => r.duration)),
     dps: distribution(results.map((r) => r.dps)),
+    damage: distribution(results.map((r) => r.player.damageDealt)),
     playerHpLeftPct: (results.reduce((a, r) => a + r.player.hp / r.player.maxHp, 0) / runs) * 100,
     enemyHpLeftPct: (results.reduce((a, r) => a + r.enemy.hp / r.enemy.maxHp, 0) / runs) * 100,
     warnings: [...warnings],

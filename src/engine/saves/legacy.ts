@@ -24,9 +24,9 @@ export function hasLegacy(layout: LayoutData): boolean {
 
 type Named = (kind: 'hero' | 'pet' | 'skin', id: string) => string;
 const blessingText = (b: NonNullable<Profile['heroes'][number]['blessings']>, name: (id: string) => string) =>
-  b.equipped.length ? `level ${b.level}: ${b.equipped.map((x) => `${name(x.id)} ${x.value}`).join(', ')}` : 'none';
+  b.equipped.length ? b.equipped.map((x) => `${name(x.id)} ${x.value}`).join(', ') : 'none';
 const sameBlessings = (a: Profile['heroes'][number]['blessings'], b: Profile['heroes'][number]['blessings']) =>
-  JSON.stringify(a?.equipped ?? []) === JSON.stringify(b?.equipped ?? []) && (!a?.equipped.length || a?.level === b?.level);
+  JSON.stringify(a?.equipped ?? []) === JSON.stringify(b?.equipped ?? []);
 
 export function adoptLegacy(account: Profile, layout: LayoutData, what: string, names: Named = (_k, id) => id, blessingName: (id: string) => string = (id) => id): Adopted {
   if (!hasLegacy(layout)) return { account, layout, notes: [], changed: false };

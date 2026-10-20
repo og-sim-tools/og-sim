@@ -23,17 +23,22 @@ export const EnemyBuildSchema = z
   .strict();
 export type EnemyBuild = z.infer<typeof EnemyBuildSchema>;
 
-export const IMMUNITIES = ['burn', 'poison', 'freeze', 'stun', 'weapon_attack', 'spike'] as const;
+/** execute: Execute effects do nothing; hp_based: damage worked out from its max HP does nothing (raid bosses, SPEC §7.5). */
+export const IMMUNITIES = ['burn', 'poison', 'freeze', 'stun', 'weapon_attack', 'spike', 'execute', 'hp_based'] as const;
 
 export const EnemyAttack = z
   .object({
     name: z.string().optional(),
     /** Flat damage per hit. */
-    damage: Abbrev,
+    damage: Abbrev.default(0),
+    /** Damage per hit as a % of the target's max HP, on top of `damage` (a raid boss's weak hits). */
+    pct_max_hp: z.number().nonnegative().optional(),
     cooldown: z.number().positive(),
     accuracy: z.number(),
     hits: z.number().int().positive().default(1),
     crit_chance: z.number().default(0),
+    /** Statuses each hit inflicts ("On Hit: inflict 3 Burn"). */
+    on_hit: z.array(z.object({ status: Id, stacks: z.number().positive(), duration_s: z.number().positive().optional() }).strict()).optional(),
   })
   .strict();
 
@@ -64,6 +69,10 @@ const enemyFields = {
    * Final DMG in PvP). Missing: player when it has a build, monster otherwise. */
   kind: z.enum(['monster', 'player']).optional(),
   build: EnemyBuildSchema.optional(),
+  /** Fought in raids only (left out of the chapter monster list). */
+  raid: z.boolean().optional(),
+  /** An item whose picture stands for this enemy in the Battle tab. */
+  image_item: Id.optional(),
 };
 
 export const EnemySchema = z.object({ ...enemyFields, ...provenance }).strict();

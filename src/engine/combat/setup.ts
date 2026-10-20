@@ -3,7 +3,7 @@ import { type Cell, type Rotation, buildLayout, findFirstFit, footprintOf, place
 import { activeEffects } from '../effects/resolve';
 import type { GameData, Gear, Item, Skin } from '../loader';
 import { type Loadout, buildLoadout, copyName, copyNumbers } from '../loadout';
-import type { EnemyData } from '../model';
+import { type EnemyData, ItemEffectSchema } from '../model';
 import { parseAbbrev, resolveRatio } from '../numbers';
 import { checkSkinQuest } from '../skinQuests';
 import { aggregateStats, blessingTagBonus } from '../stats';
@@ -486,7 +486,7 @@ export function buildEnemy(enemy: EnemyInput, defaultCritDmg: number, boss = ene
     side: 'enemy',
     kind: 'enemy_attack',
     tags: ['weapon'],
-    damage: { base: parseAbbrev(a.damage), typePct: 0 },
+    damage: { base: parseAbbrev(a.damage), typePct: 0, ...(a.pct_max_hp ? { pctOfFoeMaxHp: a.pct_max_hp } : {}) },
     baseCooldown: a.cooldown,
     staticHastePct: 0,
     accuracy: a.accuracy,
@@ -495,7 +495,19 @@ export function buildEnemy(enemy: EnemyInput, defaultCritDmg: number, boss = ene
     hits: a.hits ?? 1,
     maxAttacks: null,
     alwaysHit: false,
-    effects: [],
+    // "On Hit: inflict …" typed in on the attack.
+    effects: (a.on_hit ?? []).map((st, index) => ({
+      index,
+      effect: ItemEffectSchema.parse({
+        text: `On Hit: Inflict ${st.stacks} ${st.status}${st.duration_s ? ` for ${st.duration_s}s` : ''}.`,
+        trigger: 'on_hit',
+        action: 'apply_status',
+        target: 'enemy',
+        status: st.status,
+        stacks: st.stacks,
+        ...(st.duration_s ? { duration_s: st.duration_s } : {}),
+      }),
+    })),
     effectValues: {},
     dotTargets: [],
     skill: null,

@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
-import { cleanup, createEvent, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, createEvent, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { buildSynergyReport } from '../../src/engine/effects/synergy';
 import { aggregateStats } from '../../src/engine/stats';
 import { validateLoadout } from '../../src/engine/validate';
-import { BagGrid, type DragPayload, dragging, endDrag, marginFor } from '../../src/ui/components/BagGrid';
+import { BagGrid, marginFor } from '../../src/ui/components/BagGrid';
+import type { DragItem } from '../../src/ui/drag';
 import { BattlePanel } from '../../src/ui/components/BattlePanel';
 import { combatData, combatLoadout } from '../combat-fixture';
 import { ItemBrowser } from '../../src/ui/components/ItemBrowser';
@@ -14,6 +15,10 @@ import { ItemDrawer } from '../../src/ui/components/ItemDrawer';
 import { makeData, makeLoadout, makeProfile, PROFILE } from '../helpers';
 
 afterEach(cleanup);
+
+/** A pointer event at (x, y) (jsdom has no PointerEvent; React only looks at the type). */
+const ptr = (el: Element, type: string, x: number, y: number) => fireEvent(el, new MouseEvent(type, { bubbles: true, cancelable: true, clientX: x, clientY: y, button: 0 }));
+
 
 const data = makeData();
 const profile = makeProfile(data);
@@ -76,19 +81,20 @@ describe('BagGrid', () => {
     expect(props.onSelect).toHaveBeenCalledWith('g1');
   });
 
-  it('while dragging, shows where the item would land (red when it does not fit)', () => {
-    const dropTarget = vi.fn((_d: DragPayload, x: number, y: number) => ({ x, y, cells: [{ x, y }, { x, y: y + 1 }], valid: x > 0 }));
-    const { container } = renderGrid({ dropTarget });
-    dragging.current = { kind: 'item', id: 'rock', dx: 0, dy: 0, gx: 20, gy: 20 };
+  it('while an item is held, shows where it would land; Escape puts it back', () => {
+    const dropTarget = vi.fn((_d: DragItem, x: number, y: number) => ({ x, y, cells: [{ x, y }, { x, y: y + 1 }], valid: x > 0 }));
+    const { container, props } = renderGrid({ dropTarget });
+    const sword = [...container.querySelectorAll<HTMLElement>('.item-cell')].find((c) => c.title.startsWith('Sword'))!;
     const bag = container.querySelector('.bag')!;
-    const over = createEvent.dragOver(bag, { dataTransfer: { dropEffect: '' } });
+    ptr(sword, 'pointerdown', 45, 5);
     // Bag at 0,0 in jsdom with a 1-cell margin: clientX 2.5 cells = bag x 1.
-    Object.defineProperties(over, { clientX: { value: 40 * 2 + 5 }, clientY: { value: 40 + 5 } });
-    fireEvent(bag, over);
-    expect(dropTarget).toHaveBeenCalledWith(dragging.current, 1, 0);
+    ptr(bag, 'pointermove', 40 * 2 + 5, 40 + 5);
+    expect(dropTarget).toHaveBeenLastCalledWith(expect.objectContaining({ kind: 'placed', id: 'sword', item: 'sword' }), 1, 0);
     expect(container.querySelectorAll('.drop-preview')).toHaveLength(2);
-    expect(container.querySelectorAll('.drop-preview.bad')).toHaveLength(0);
-    endDrag();
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(container.querySelectorAll('.drop-preview')).toHaveLength(0);
+    ptr(bag, 'pointerup', 40 * 2 + 5, 40 + 5);
+    expect(props.onDrop).not.toHaveBeenCalled();
   });
 
   it('clicking the selected item again rotates it', () => {
@@ -182,11 +188,9 @@ describe('BattlePanel', () => {
     fireEvent.click(screen.getByText('Run battle'));
     expect(await screen.findByText(/Win after 0\.5s/)).toBeTruthy();
     expect(screen.getByText(/Event log/)).toBeTruthy();
-    // The breakdown switches between my items and the enemy's.
-    expect(screen.getByText('Sure Shot')).toBeTruthy();
-    fireEvent.click(screen.getByText('⚔ Enemy breakdown'));
-    expect(screen.getByRole('tab', { name: '⚔ Enemy breakdown' }).getAttribute('aria-selected')).toBe('true');
-    expect(screen.queryByText('Sure Shot')).toBeNull();
+    // My breakdown and the enemy's side by side.
+    expect(within(screen.getByRole('table', { name: 'My breakdown' })).getByText('Sure Shot')).toBeTruthy();
+    expect(within(screen.getByRole('table', { name: "⚔ Target's breakdown" })).queryByText('Sure Shot')).toBeNull();
     fireEvent.change(screen.getByLabelText('Runs'), { target: { value: '20' } });
     expect(onChange.mock.calls.at(-1)![0].runs).toBe(20);
   });

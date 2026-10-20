@@ -15,7 +15,10 @@ import { formatShown } from '../../engine/numbers';
 import { type Candidate, type OptimizeOptions, type OptimizeProgress, type OptimizeResult, type Opponent, optimize, optimizeMany, skinQuestGuard, withMyBaseStats } from '../../engine/optimize';
 import { checkSkinQuest } from '../../engine/skinQuests';
 import { aggregateStats } from '../../engine/stats';
-import { BagGrid, type DragPayload } from './BagGrid';
+import { BagGrid } from './BagGrid';
+import { BagPreview } from './BagPreview';
+import { type DragItem, useDragLook } from '../drag';
+import { landing, lookOf } from '../state/bagEdit';
 import { Panel } from './Panel';
 import { StatsPanel } from './StatsPanel';
 
@@ -261,11 +264,14 @@ export function OptimizePanel({ data, profile, layout, layoutName, loadout, layo
       setPicked1(null);
     } else if (action === 'cancel') setPicked1(null);
   };
-  const onBagDrop = (drag: DragPayload, x: number, y: number) => {
-    if (drag.kind !== 'placed') return; // no adding items here: that's the Build tab
-    change((ps) => ps.map((p) => (p.id === drag.id ? { ...p, ...within(p.id, x - drag.dx, y - drag.dy) } : p)));
+  const onBagDrop = (drag: DragItem, x: number, y: number) => {
+    if (drag.kind !== 'placed' || !shownLoadout) return; // no adding items here: that's the Build tab
+    const at = landing(shownLoadout, drag, x, y);
+    if (!at) return;
+    change((ps) => ps.map((p) => (p.id === drag.id ? { ...p, x: at.x, y: at.y, rotation: drag.rotation } : p)));
     setPicked1(drag.id);
   };
+  useDragLook('optimize', (d) => (shownLoadout ? lookOf(shownLoadout, d) : null));
   /** Score my edited build on the same opponents, seeds and options as the run, and add it to the list. */
   const testScore = () => {
     const cfg = lastRun.current;
@@ -308,7 +314,7 @@ export function OptimizePanel({ data, profile, layout, layoutName, loadout, layo
             <li>Tick the saved builds to test it against below, one per meta archetype.</li>
             <li>Run: it tries moves, rotations and item swaps within your coin budget, plays each try against every opponent on the same seeds, and keeps the best.</li>
           </ol>
-          <h3>Opponents (PvP)</h3>
+          <h3>1. Opponents (PvP)</h3>
           <div className="small">
             Me: <span className="muted">{myStats}</span>
           </div>
@@ -323,47 +329,56 @@ export function OptimizePanel({ data, profile, layout, layoutName, loadout, layo
               </div>
             </label>
           ))}
-          <label className="row small" style={{ marginTop: 4 }} title="Every opponent gets my base HP, ATK, Block and Stat Details; its hero, gear, pets, skins and bag stay its own">
-            <input type="checkbox" checked={opts.matchStats} onChange={(e) => set('matchStats', e.target.checked)} /> Opponents use my base stats ×
-            <input
-              type="number"
-              min={0.1}
-              step={0.1}
-              aria-label="Multiple of my base stats"
-              disabled={!opts.matchStats}
-              value={opts.statMultiple}
-              onChange={(e) => set('statMultiple', Math.max(0.1, Number(e.target.value) || 1))}
-              style={{ width: 56 }}
-            />
-            <span className="muted">(1 = a fair test of the builds; 2 = twice my HP, ATK and Block)</span>
-          </label>
-          <div className="small muted">Stats as calculated; PvP multiplies HP and Block for both sides in battle.</div>
-          <h3>Search</h3>
-          <div className="form-grid" style={{ gridTemplateColumns: '140px 1fr' }}>
-            <label title="Battles per opponent for each build tried">Seeds per opponent</label>
-            <input type="number" min={1} value={opts.seeds} onChange={(e) => set('seeds', Math.max(1, Number(e.target.value) || 1))} />
-            <label title="Builds to try after the starting one">Builds to try</label>
-            <input type="number" min={1} value={opts.iterations} onChange={(e) => set('iterations', Math.max(1, Number(e.target.value) || 1))} />
-            <label>Change items too</label>
-            <span className="row small" style={{ flexWrap: 'wrap', gap: 4 }}>
+          <div className="opt-grid small" style={{ marginTop: 6 }}>
+            <label htmlFor="opt-match">Opponents' stats</label>
+            <span className="row" title="Every opponent gets my base HP, ATK, Block and Stat Details; its hero, gear, pets, skins and bag stay its own">
               <label className="check-line">
-                <input type="checkbox" checked={opts.allowItemChanges} onChange={(e) => set('allowItemChanges', e.target.checked)} />
-                <span>replace / add shop items, value ≤</span>
+                <input id="opt-match" type="checkbox" checked={opts.matchStats} onChange={(e) => set('matchStats', e.target.checked)} />
+                <span>the same as mine ×</span>
               </label>
               <input
+                type="number"
+                min={0.1}
+                step={0.1}
+                aria-label="Multiple of my base stats"
+                disabled={!opts.matchStats}
+                value={opts.statMultiple}
+                onChange={(e) => set('statMultiple', Math.max(0.1, Number(e.target.value) || 1))}
+                style={{ width: 56 }}
+              />
+            </span>
+            <div className="help muted">1 = a fair test of the builds; 2 = twice my HP, ATK and Block. Off: each build's own stats. PvP multiplies HP and Block for both sides in battle.</div>
+          </div>
+          <h3>2. Search</h3>
+          <div className="opt-grid small">
+            <label htmlFor="opt-seeds">Seeds per opponent</label>
+            <input id="opt-seeds" type="number" min={1} value={opts.seeds} onChange={(e) => set('seeds', Math.max(1, Number(e.target.value) || 1))} style={{ width: 80 }} />
+            <div className="help muted">Battles against each opponent for every build tried (more = steadier scores, slower).</div>
+            <label htmlFor="opt-iter">Builds to try</label>
+            <input id="opt-iter" type="number" min={1} value={opts.iterations} onChange={(e) => set('iterations', Math.max(1, Number(e.target.value) || 1))} style={{ width: 80 }} />
+            <div className="help muted">How many changed builds it tries after yours.</div>
+            <label htmlFor="opt-items">Change items too</label>
+            <label className="check-line">
+              <input id="opt-items" type="checkbox" checked={opts.allowItemChanges} onChange={(e) => set('allowItemChanges', e.target.checked)} />
+              <span>replace or add shop items</span>
+            </label>
+            <label htmlFor="opt-budget">Value up to</label>
+            <span className="row">
+              <input
+                id="opt-budget"
                 type="number"
                 min={0}
                 disabled={!opts.allowItemChanges}
                 value={budget}
                 onChange={(e) => set('valueBudget', e.target.value === '' ? null : Math.max(0, Number(e.target.value) || 0))}
-                style={{ width: 64 }}
+                style={{ width: 80 }}
               />
+              <span className="muted">coins (your build: {startValue})</span>
               {opts.valueBudget !== null && (
                 <button className="small" onClick={() => set('valueBudget', null)} title="Follow the build's value again">
                   reset
                 </button>
               )}
-              <span className="muted">(now {startValue})</span>
             </span>
           </div>
           <details className="small" style={{ marginTop: 6 }}>
@@ -455,10 +470,12 @@ export function OptimizePanel({ data, profile, layout, layoutName, loadout, layo
               {w}
             </div>
           ))}
-          <div className="row" style={{ marginTop: 8 }}>
+          <h3>3. Run</h3>
+          <div className="row">
             <button className="primary" disabled={running || picked.length === 0} onClick={() => void run()}>
               Run optimization
             </button>
+            {picked.length === 0 && <span className="small muted">Tick at least one opponent first.</span>}
             {running && <button onClick={() => (stop.current = true)}>Stop</button>}
           </div>
           {error && <div className="issue error">{error}</div>}
@@ -483,6 +500,13 @@ export function OptimizePanel({ data, profile, layout, layoutName, loadout, layo
       </div>
 
       <div className="stack">
+        {!(result && shown) && (
+          <div className="panel opt-placeholder" aria-label="Where the optimized bag appears">
+            <h2 style={{ alignSelf: 'flex-start' }}>Your bag now</h2>
+            <BagPreview loadout={loadout} cell={24} />
+            <div className="small muted">{running ? 'Searching…' : 'After a run, the best bag it finds appears here, with every build it tried on the left.'}</div>
+          </div>
+        )}
         {result && shown && (
           <>
             <div className="panel">
@@ -520,6 +544,8 @@ export function OptimizePanel({ data, profile, layout, layoutName, loadout, layo
                   onHover={() => {}}
                   onToggleMask={() => {}}
                   onDrop={onBagDrop}
+                  dropTarget={(d, x, y) => (shownLoadout ? landing(shownLoadout, d, x, y) : null)}
+                  scope="optimize"
                   onKey={onBagKey}
                 />
               )}

@@ -211,6 +211,28 @@ describe('frozen version-3 saves', () => {
   });
 });
 
+describe('frozen version-4 saves', () => {
+  it('every one loads without notes, and version 3 loads the same apart from the number', () => {
+    const acc = readAccount(read('v4', 'profile.yaml'));
+    expect(acc.version).toBe(4);
+    expect(acc.notes).toEqual([]);
+    expect(acc.profile).toEqual(readAccount(read('v3', 'profile.yaml')).profile);
+    for (const f of yamls('v4', 'builds')) {
+      const r = readBuild(read('v4', 'builds', f));
+      expect(r.version, f).toBe(4);
+      expect(r.notes, f).toEqual([]);
+      if (yamls('v3', 'builds').includes(f)) expect(r.layout, f).toEqual(readBuild(read('v3', 'builds', f)).layout);
+    }
+  });
+
+  it("keep a battle's chapter and a typed-in attack's on-hit statuses and % of max HP", () => {
+    const b = readBuild(read('v4', 'builds', 'chapter and on-hit.yaml')).layout.battle!;
+    expect(b.chapter).toEqual({ number: 35, play: 'sandbox', fight: 2 });
+    const e = b.enemy as Exclude<typeof b.enemy, string | undefined>;
+    expect(e.attacks[0]).toMatchObject({ pct_max_hp: 1, on_hit: [{ status: 'burn', stacks: 3 }, { status: 'poison', stacks: 2, duration_s: 6 }] });
+  });
+});
+
 describe('older builds\' own values move into the account', () => {
   const base = readAccount(null).profile;
   const v2 = `version: 2

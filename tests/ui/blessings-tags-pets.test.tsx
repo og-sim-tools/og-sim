@@ -105,8 +105,8 @@ gear:
   });
 });
 
-describe('blessing level default', () => {
-  it('a hero ticked in the Profile tab is just owned (0★, no blessings); its blessings start at the account level (config, 9) in a build', () => {
+describe('blessings', () => {
+  it('a hero ticked in the Profile tab is just owned (0★, no blessings); every hero has 5 blessing slots, with no level to set (2026-10-20)', () => {
     expect(data.config!.blessings.default_level).toBe(9);
     const onChange = vi.fn();
     render(<ProfileEditor data={data} profile={profileWith('')} issues={[]} loadoutIssues={[]} onChange={onChange} />);
@@ -116,7 +116,9 @@ describe('blessing level default', () => {
     expect(next.heroes.find((h) => h.id === 'erwen')).toEqual({ id: 'erwen', stars: 0, links: [], skin: null });
     cleanup();
     render(<HeroEditor data={data} profile={{ ...next, active_hero: 'erwen' }} heroId="erwen" onHero={vi.fn()} update={vi.fn()} />);
-    expect((screen.getByLabelText('Blessing level') as HTMLSelectElement).value).toBe('9');
+    expect(screen.queryByLabelText('Blessing level')).toBeNull();
+    expect(screen.getByText('Blessings').closest('summary')!.textContent).toMatch(/0 \/ 5/);
+    expect(document.body.textContent).not.toMatch(/Dragon's Blessing level/);
   });
 });
 

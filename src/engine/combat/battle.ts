@@ -68,7 +68,7 @@ const ITEM_EVENTS = new Set([
   'on_skill_activation',
   'on_heal',
 ]);
-const SUPPORTED_MODES = ['stage', 'gauntlet', 'boss_rush', 'arena'];
+const SUPPORTED_MODES = ['stage', 'gauntlet', 'boss_rush', 'arena', 'raid'];
 
 const pctTag = (n: number) => Math.round(n * 10) / 10;
 
@@ -370,6 +370,12 @@ class Battle implements EffectApi {
         this.fightWinner = this.timeoutWinner();
         this.fightReason = 'timeout';
         this.emitLog({ type: 'timeout', side: 'player', detail: `Time limit reached${this.cfg.modes[this.mode]?.timeout_winner === 'hp_pct' ? `: ${this.sides[this.fightWinner].name} has more HP % left` : ''}` });
+        // Raids: when time is up I'm defeated, whatever protects me (Invincible, lethal saves).
+        if (this.cfg.modes[this.mode]?.timeout_kills) {
+          this.sides.player.hp = 0;
+          this.fightWinner = 'enemy';
+          this.emitLog({ type: 'note', side: 'enemy', detail: 'Time is up: the raid boss defeats you (nothing prevents it)' });
+        }
       }
       this.fights.push({
         enemy: this.sides.enemy.name,
@@ -911,7 +917,7 @@ class Battle implements EffectApi {
     const fromBlock =
       (att.block * (this.stat(att, 'weapon_dmg_from_block_pct') + this.bonus(it, 'block_dmg_pct'))) / 100 + (this.atkOf(att) * this.bonus(it, 'atk_dmg_pct')) / 100;
     const amount =
-      (src.damage.base * (1 + att.atkPct / 100) * this.modifier(typePct, allPct) * (crit ? 1 + critDmg / 100 : 1) * (lucky ? 1 + this.stat(att, 'weapon_crit_proc_dmg') / 100 : 1) +
+      ((src.damage.base + (src.damage.pctOfFoeMaxHp ? (def.maxHp * src.damage.pctOfFoeMaxHp) / 100 : 0)) * (1 + att.atkPct / 100) * this.modifier(typePct, allPct) * (crit ? 1 + critDmg / 100 : 1) * (lucky ? 1 + this.stat(att, 'weapon_crit_proc_dmg') / 100 : 1) +
         fromBlock) *
       (1 + this.finalPct(att, def) / 100);
     rep.hits++;
@@ -1397,6 +1403,10 @@ class Battle implements EffectApi {
   execute(owner: CombatItem) {
     const foe = this.opponent(owner);
     if (this.fightOver || foe.hp <= 0) return;
+    if (foe.immunities.has('execute')) {
+      this.warnOnce(`${foe.name} can't be executed: ${owner.name}'s Execute does nothing.`);
+      return;
+    }
     this.emitLog({ type: 'effect', side: owner.side, source: owner.id, target: foe.side, detail: `${owner.name}: executes ${foe.name}` });
     this.dealt[owner.side] += foe.hp;
     this.taken[foe.side] += foe.hp;
@@ -1693,6 +1703,16 @@ class Battle implements EffectApi {
     return best;
   }
 
+  /** The enemy's max HP for a value worked out from it (0 against a raid boss: immune to HP-based damage). */
+  private foeHpFor(owner: CombatItem, c: Combatant): number {
+    const foe = this.sides[other(c.side)];
+    if (foe.immunities.has('hp_based')) {
+      this.warnOnce(`${foe.name} is immune to damage based on its HP: ${owner.name}'s HP-based value counts as 0.`);
+      return 0;
+    }
+    return foe.maxHp;
+  }
+
   value(owner: CombatItem, effect: ItemEffect): number | null {
     const sv = typeof effect.value === 'string' ? owner.effectValues[effect.value] : effect.value;
     if (!sv) {
@@ -1701,7 +1721,7 @@ class Battle implements EffectApi {
     }
     const r = resolveRatio(sv, this.cfg.observations.display_rounding).ratio;
     const c = this.sides[owner.side];
-    const stat = sv.scales_with === 'atk' ? this.atkOf(c) : sv.scales_with === 'hp' ? c.maxHp : sv.scales_with === 'enemy_hp' ? this.sides[other(c.side)].maxHp : null;
+    const stat = sv.scales_with === 'atk' ? this.atkOf(c) : sv.scales_with === 'hp' ? c.maxHp : sv.scales_with === 'enemy_hp' ? this.foeHpFor(owner, c) : null;
     if (r === null || stat === null) {
       this.warnOnce(`${owner.name}: can't work out the effect value (unknown ratio or scaling).`);
       return null;
@@ -1715,7 +1735,7 @@ class Battle implements EffectApi {
   private scaled(owner: CombatItem, sv: ScaledValue): number | null {
     const r = resolveRatio(sv, this.cfg.observations.display_rounding).ratio;
     const c = this.sides[owner.side];
-    const stat = sv.scales_with === 'atk' ? this.atkOf(c) : sv.scales_with === 'hp' ? c.maxHp : sv.scales_with === 'enemy_hp' ? this.sides[other(c.side)].maxHp : null;
+    const stat = sv.scales_with === 'atk' ? this.atkOf(c) : sv.scales_with === 'hp' ? c.maxHp : sv.scales_with === 'enemy_hp' ? this.foeHpFor(owner, c) : null;
     if (r === null || stat === null) {
       this.warnOnce(`${owner.name}: can't work out a threshold value (unknown ratio or scaling).`);
       return null;
@@ -1874,7 +1894,7 @@ class Battle implements EffectApi {
     const n = this.bump(`growth:${owner.id}#${index}`) - 1;
     const sv = typeof effect.value === 'string' ? owner.effectValues[effect.value] : effect.value;
     const c = this.sides[owner.side];
-    const stat = sv?.scales_with === 'atk' ? this.atkOf(c) : sv?.scales_with === 'enemy_hp' ? this.sides[other(c.side)].maxHp : c.maxHp;
+    const stat = sv?.scales_with === 'atk' ? this.atkOf(c) : sv?.scales_with === 'enemy_hp' ? this.foeHpFor(owner, c) : c.maxHp;
     return (effect.value_growth ?? 0) * stat * n;
   }
 

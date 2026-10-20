@@ -107,3 +107,11 @@ Read in the browser: `https://overgearedhero.fandom.com/wiki/Special:AllPages`, 
 Unclear: the Pet Food numbers are tiny next to in-game HP (millions), so a pet's level stats are likely a small flat part, or the table is out of date; which rarity the table is for isn't shown.
 
 Nothing was extracted into the data: no data files changed. Not enough to calculate HP / ATK / Block or Power, so they stay typed in (SPEC §4.8); flagged to the user.
+
+## 2026-10-20 — looking for a combat power (CP) formula
+
+Read in the browser: the wiki search for "combat power" (`https://overgearedhero.fandom.com/wiki/Special:Search?query=combat+power&fulltext=1`) and `https://overgearedhero.fandom.com/wiki/Arena`.
+
+What's there: the Arena page says opponents' combat power is shown for the backpack they took into the Arena, and that viewing an opponent can show hero, gear, combat power, blessings, pets, chapter and tower progress. It also says an Arena backpack is made from the chosen hero, pets, gear and supplies plus items bought with a limited amount of gold (the Arena shop can have special shop and merged items), and doesn't update when the account gets stronger. **No formula for combat power** anywhere; the search found nothing else about it.
+
+Nothing was extracted into the data: no data files changed. CP isn't shown (user: only with an exact formula).

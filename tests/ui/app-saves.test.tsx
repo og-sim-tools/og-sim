@@ -59,18 +59,18 @@ describe('the app and my saved files', () => {
     expect(notice.textContent).toMatch(/Moved into your Profile from "raven".*HP 5\.29M \/ ATK 1\.61M \/ Block 1\.85M/);
     await waitFor(() => expect(parse(localStorage.getItem('og-sim/account')!).stats).toEqual({ hp: '5.29M', atk: '1.61M', initial_block: '1.85M' }), { timeout: 3000 });
     const saved = parse(localStorage.getItem('og-sim/account')!);
-    expect(saved.version).toBe(3);
+    expect(saved.version).toBe(4);
     expect(saved.pets.map((p: { id: string }) => p.id)).toEqual(expect.arrayContaining(['white_wolf_captain', 'ice_reaper']));
     // The build itself isn't changed until I save it.
     expect(parse((await store.readBuild('raven'))!).version).toBe(2);
   }, 30000);
 
-  it('saves account changes by itself, in format 3, keeping the old profile inside', async () => {
+  it("saves account changes by itself, in today's format, keeping the old profile inside", async () => {
     render(<App store={store} />);
     await heroPicker();
     fireEvent.click(screen.getByRole('tab', { name: 'Profile' }));
     fireEvent.change(screen.getByLabelText('Erwen stars'), { target: { value: '6' } });
-    await waitFor(() => expect(parse(localStorage.getItem('og-sim/account')!).version).toBe(3), { timeout: 3000 });
+    await waitFor(() => expect(parse(localStorage.getItem('og-sim/account')!).version).toBe(4), { timeout: 3000 });
     const saved = parse(localStorage.getItem('og-sim/account')!);
     expect(saved.heroes.find((h: { id: string }) => h.id === 'erwen')).toMatchObject({ id: 'erwen', stars: 6, links: [] });
     expect(saved.stats).toEqual({ hp: '5.29M', atk: '1.61M', initial_block: '1.85M' });
@@ -93,7 +93,7 @@ describe('the app and my saved files', () => {
     await waitFor(() => expect(leave()).toBe(true));
   }, 30000);
 
-  it('saves a build in format 3 (pet stars go to the account), and brings back unsaved changes after closing the tab', async () => {
+  it("saves a build in today's format (pet stars go to the account), and brings back unsaved changes after closing the tab", async () => {
     const first = render(<App store={store} />);
     const picker = await heroPicker();
     // Save is off until something changes; then it asks before replacing the saved build.
@@ -105,7 +105,7 @@ describe('the app and my saved files', () => {
     fireEvent.click(screen.getAllByRole('checkbox', { name: /active/ })[0]!);
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     fireEvent.click(within(screen.getByRole('dialog', { name: 'Save "trixie anti-raven"?' })).getByRole('button', { name: 'Save' }));
-    await waitFor(() => expect(parse(localStorage.getItem('og-sim/build/trixie anti-raven')!).version).toBe(3));
+    await waitFor(() => expect(parse(localStorage.getItem('og-sim/build/trixie anti-raven')!).version).toBe(4));
     const saved = parse(localStorage.getItem('og-sim/build/trixie anti-raven')!);
     expect(saved).toMatchObject({ hero: 'trixie', skins: [{ id: 'trixie_dream_eater', quest_done: true }] });
     expect(saved).not.toHaveProperty('blessings');

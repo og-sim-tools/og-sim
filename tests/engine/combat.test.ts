@@ -333,10 +333,11 @@ describe('enemy berserk and modes', () => {
     expect(r.log.some((e) => e.type === 'berserk')).toBe(false);
   });
 
-  it('rejects modes that come later', () => {
+  it('rejects unknown modes and the wrong number of enemies; raids are simulated (2026-10-20)', () => {
     expect(() => fight([], {}, { mode: 'gauntlet' })).toThrow(/gauntlet has 4 fights but 1 enemy was given/);
-    expect(() => fight([], {}, { mode: 'raid' })).toThrow(BattleSetupError);
     expect(() => fight([], {}, { mode: 'nope' })).toThrow(/Unknown battle mode/);
+    expect(() => fight([], {}, { mode: 'nope' })).toThrow(BattleSetupError);
+    expect(fight([], { hp: '900B' }, { mode: 'raid' }).winner).toBe('enemy');
   });
 });
 

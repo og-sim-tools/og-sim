@@ -293,7 +293,7 @@ bag:
   - **Enhanced slots** (Venom's Poison Coating, Cecilia's Instant Casting): random in game, so they're marked on the bag by hand. Each skill says in its data how many slots it enhances, their colour (Instant Casting green, Poison Coating purple; user, 2026-10-19) and what it does there; the Bag box only offers the build's hero's own (or linked) skill. Venom's Poison Coating blessing adds its value in slots.
   - **Ownership effect**: ignored (already in Stat Details).
 - **Blessings** (Dragon's Blessing) are **per hero and account-wide** (user, 2026-10-19: "you get one per hero in game"; saved in the account, edited in the Profile tab or from the Build tab's Hero box, the same in every build with that hero):
-  - Each hero has their own set of **up to 5 blessings**. (The wiki ties the slot count to Dragon's Blessing level; I just enter the blessings I have, so the simulator only enforces the maximum of 5.)
+  - Each hero has their own set of **up to 5 blessings**. (The wiki ties the slot count to Dragon's Blessing level; I just enter the blessings I have, so the simulator always offers 5 slots and doesn't ask for a level: user, 2026-10-20.)
   - **At most one of each unique blessing** per hero, at any rarity.
   - **Common blessings**: any hero. Each has a value range per rarity, Common to Mythic (e.g. All DMG: Common 1–2%, Mythic 15–20%). Some start at Uncommon.
   - **Class blessings**: tag-based (e.g. `[Sword] Weapon DMG`), Rare to Mythic, one value range for all of them. Only on heroes of that class.
@@ -363,6 +363,8 @@ Everything in this file is editable from the GUI (§8.1); the file is just where
 - **Account**: HP / ATK / Block as Stat Details shows them (`stats`; left out until entered), the heroes I own with their stars, skill links and **Dragon's Blessings**, the **pets** and **skins** I own with their stars, and auras.
 - **Build**: the hero, gear (rarity and tier), which pets it brings (and which are active), up to 2 skins (and their quests), the bag, the storage and the battle settings.
 - Migration: a version-2 account that came from version 1 takes these from the old profile kept inside it. A version-2 build keeps its own blessings, stars and HP / ATK / Block (under `legacy` when read, and they win so it plays as it did) until the app opens it: then they move into the account where the account has none yet, and where it already has other values the account's are used and a note says what the build had. Fixtures: `tests/fixtures/saves/v3/`.
+- **Version 4** (2026-10-20): only new optional settings (the battle's chapter; typed-in attacks' on-hit statuses and % of max HP), so version 3 files move up unchanged. Fixtures: `tests/fixtures/saves/v4/`.
+- **Combat power (CP)**: not shown; no formula is known (the wiki only says opponents' CP is shown in the Arena, 2026-10-20).
 - **Calculating HP / ATK / Block** from training level, gear level, pet and skin stars and gear rarity and tier (user, 2026-10-19) **isn't built**: the wiki has no training page and no stats per gear level (2026-10-19, see `data/SOURCES.md`). Until that data exists they're typed in.
 
 ### 4.9 Enemies
@@ -532,7 +534,11 @@ The maximum battle duration is set per mode in config and can be overridden in t
 | **Gauntlet** | 60 s total | 4 enemies in a row. My statuses carry over between fights. Battle-start effects trigger **only once**, at the start of the first fight. My HP and block carry over. **The 4th enemy is a boss.** |
 | **Boss Rush** | 30 s per fight, 5 fights | Chapters that are multiples of 5: 5 bosses in a row, every enemy is a boss. Each fight has its own 30 s limit (and its own Berserk timer). Same carry-over rules as Gauntlet. Bosses also appear as the 4th fight of every Gauntlet (rounds 4, 8, 12 of a chapter). [UNVERIFIED: time limit — config.] |
 | **Arena** (built 2026-10-17) | 30 s, fixed | Against another player's build; always PvP (HP and Block ×20 for both, PvP Berserk at 10 s, Final DMG in PvP). If nobody dies, whoever has the higher remaining HP % wins (user, 2026-10-17). |
-| **Raid** [LATER] | 15 s | Against an invincible boss; the result is total damage dealt. Boss final multiplier applies. The raid boss can't die, ignores Execute effects, and is immune to damage based on HP. |
+| **Raid** (built 2026-10-20) | 15 s, fixed | Against a fixed boss; the result is total damage dealt. Boss final multiplier applies. The raid boss can't die, ignores Execute effects, and is immune to damage based on HP (`immunities: [execute, hp_based]`). Its hits are weak, based on % of my max HP (no more than 5% over the fight), and when time is up I'm defeated, whatever protects me (config `timeout_kills`). **The boss is a placeholder** (`data/enemies/manual/raid.yaml`) until the real one is entered; whether raids have Berserk isn't known, so it's off. A raid bag has no shop items in game (only gear and starting equipment): the Battle tab warns. |
+
+**Chapters** (user, 2026-10-20; config `chapters`): 120 chapters; 12 enemies each, 5 in every 5th chapter (a Boss Rush); from chapter 10 the enemies repeat every 25 chapters (35 has chapter 10's enemies, with other base stats) [UNVERIFIED reading of "every 25 chapters from 10 to 120 have the same layout"]. Which enemies a chapter has isn't entered yet, so the Battle tab says so in red and a stand-in is fought (sandbox). A full playthrough is [LATER].
+
+Typed-in enemies (simple stats) can have attacks that inflict statuses on hit, and attacks that deal a % of my max HP.
 
 Battles in all modes are deterministic given the seed.
 
@@ -551,11 +557,15 @@ From my observations (not on the wiki):
 
 - **Bag grid** rendered from the mask; unavailable cells clearly greyed out.
 - **Tabs** (user, 2026-10-19): **Build** (only for building the bag), **Battle** (my bag and the opponent's side by side, each with its hero, blessings, gear rarities, pets, skins and auras under it, then the fight), Optimize, Profile, Item editor, Data.
+- **Battle tab** (user, 2026-10-20): a bar picks **Arena** (PvP against a build only: one of mine, a copy of mine, or a build file; both bags can be rearranged), **Raid** (the raid boss) or **Chapter** (pick the chapter and one of its enemies). Items moved in the Battle tab are a try-out: Keep puts them in the build, Undo forgets them. Each side folds away **Detailed stats** (HP / ATK / Block, every calculated stat, every item's final numbers with its breakdown). The results show my breakdown and the opponent's side by side. The Build tab has no Stats box.
+- **Phones** (user, 2026-10-20): one section at a time, in order (Profile → Hero & blessings → Gear → Pets → Skins → Opponent → Items & bag → Fight), with Back / Next.
 - **Build box** across the top: one dropdown of saved builds with a search box; the **temp build** first (a scratch build that isn't in the list, kept as it's edited until it's saved under a name); per build a white pencil (rename), green arrow (save over) and red bin (delete), each asking first; **Preview bag** shows each build's bag under its name, 3 to a row.
 - **Searchable item browser:** search by name, filter by class, hero, tag and kind (shop item / pet spawn); gear isn't listed (the Gear box places it). A **Sort** menu: alphabetical, value (cheapest first), rarity (common → legendary; hovering it offers one rarity only). The starting equipment tab has the same search and filters. Class and hero restrictions visible on each entry; items that still need a shape are marked.
 - **Placement:**
   - Clicking an item in a list puts it straight into the first free spot (unrotated); if there's none, a message says so.
-  - Drag and drop with the mouse; the whole item shows under the pointer and where it would land is outlined in the bag. Drop it on the storage box to set it aside, or on the bin to remove it.
+  - Drag with the mouse, a pen or a finger (the app's own dragging, not the browser's, so keys work while dragging): the whole item shows under the pointer and where it would land is outlined in the bag; **space turns it while it's held**, Escape puts it back. Drop it on the storage box (beside the bag) to set it aside, or on the bin (under the bag) to remove it. Items in the storage box have Item details too (their numbers on their own).
+  - The starting equipment list puts what's in use first, marked, with a button to take it out.
+  - Whose bag the Bag box edits (mine, or the opponent's when it has a build) is chosen in the Bag box itself.
   - Click an item in the bag to select it, click it again to rotate it. A click anywhere else in the Bag box lets go. **Item details** (a button at the top of the box) opens its stats in a compact side panel.
   - Keyboard: arrow keys move the selected item, space rotates, delete/backspace removes.
 - **Overlaps and invalid placements highlighted in red.**

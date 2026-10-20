@@ -82,25 +82,42 @@ describe('starting equipment', () => {
 });
 
 describe('dragging an item in the bag', () => {
-  it('hands over which item, which of its cells was grabbed and where it was dropped', () => {
+  const setup = () => {
     const loadout = combatLoadout(['blade']);
     const onDrop = vi.fn();
     const id = [...loadout.layout.items.keys()][0]!;
     const { container } = render(
       <BagGrid loadout={loadout} issues={[]} selected={null} hovered={null} maskEdit={false} onSelect={vi.fn()} onHover={vi.fn()} onToggleMask={vi.fn()} onDrop={onDrop} onKey={vi.fn()} />,
     );
-    const cells = container.querySelectorAll<HTMLElement>('.item-cell');
-    expect(cells[0]!.draggable).toBe(true);
-    const store: Record<string, string> = {};
-    const dataTransfer = { setData: (k: string, v: string) => (store[k] = v), getData: (k: string) => store[k] ?? '', effectAllowed: '', dropEffect: '' };
-    fireEvent.dragStart(cells[0]!, { dataTransfer });
+    return { container, onDrop, id, cell: container.querySelector<HTMLElement>('.item-cell')!, bag: container.querySelector('.bag')! };
+  };
+  // jsdom has no PointerEvent; React only looks at the event's type.
+  const ptr = (el: Element, type: string, x: number, y: number) => fireEvent(el, new MouseEvent(type, { bubbles: true, cancelable: true, clientX: x, clientY: y, button: 0 }));
+
+  it('hands over which item, which of its cells is held and where it was dropped', () => {
+    const { onDrop, id, cell, bag } = setup();
+    ptr(cell, 'pointerdown', 50, 50);
     // Bag at 0,0 in jsdom; the margin is 1 cell (40px), so clientX 4.5 cells = bag x 3.
-    // jsdom drops clientX/Y from drag events, so set them by hand.
-    const bag = container.querySelector('.bag')!;
-    const drop = createEvent.drop(bag, { dataTransfer });
-    Object.defineProperties(drop, { clientX: { value: 40 * 4 + 5 }, clientY: { value: 40 * 2 + 5 } });
-    fireEvent(bag, drop);
-    expect(onDrop).toHaveBeenCalledWith(expect.objectContaining({ kind: "placed", id, dx: 0, dy: 0 }), 3, 1);
+    ptr(bag, 'pointermove', 40 * 4 + 5, 40 * 2 + 5);
+    ptr(bag, 'pointerup', 40 * 4 + 5, 40 * 2 + 5);
+    expect(onDrop).toHaveBeenCalledWith(expect.objectContaining({ kind: 'placed', id, grab: 0, rotation: 0 }), 3, 1);
+  });
+
+  it('space turns the held item before it is dropped (user, 2026-10-20)', () => {
+    const { onDrop, cell, bag } = setup();
+    ptr(cell, 'pointerdown', 50, 50);
+    ptr(bag, 'pointermove', 40 * 4 + 5, 40 * 2 + 5);
+    fireEvent.keyDown(window, { key: ' ' });
+    fireEvent.keyDown(window, { key: ' ' });
+    ptr(bag, 'pointerup', 40 * 4 + 5, 40 * 2 + 5);
+    expect(onDrop.mock.calls[0]![0]).toMatchObject({ rotation: 180 });
+  });
+
+  it("a press that doesn't move is a click, not a drag", () => {
+    const { onDrop, cell } = setup();
+    ptr(cell, 'pointerdown', 50, 50);
+    ptr(cell, 'pointerup', 51, 50);
+    expect(onDrop).not.toHaveBeenCalled();
   });
 });
 

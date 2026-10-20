@@ -148,4 +148,11 @@ modes:
   gauntlet: { total_seconds: 60, fights: 4, boss_fights: [4] }
   boss_rush: { fight_seconds: 30, fights: 1, boss_fights: [1], fixed_time: true }   # like a stage (shop breaks between bosses), every enemy a boss, always 30 s
   arena: { fight_seconds: 30, fights: 1, fixed_time: true, pvp: true, timeout_winner: hp_pct }   # user, 2026-10-17: 30 s, Berserk at 10 s like stages, death or the higher remaining HP % at the time limit wins; always PvP
-  raid: { fight_seconds: 15, fights: 1, later: true }
+  # Raids (user, 2026-10-20): 15 s against a fixed boss; when time is up you're defeated, past Invincible.
+  # The result that matters is the damage dealt.
+  raid: { fight_seconds: 15, fights: 1, fixed_time: true, timeout_kills: true }
+
+# Chapter mode (user, 2026-10-20): 12 enemies a chapter, 5 in every 5th chapter; from chapter 10 the enemies
+# repeat every 25 chapters (35 has chapter 10's enemies, with other base stats), up to 120. Which enemies a
+# chapter has isn't entered yet.
+chapters: { count: 120, enemies: 12, boss_every: 5, boss_enemies: 5, repeat_from: 10, repeat_every: 25 }

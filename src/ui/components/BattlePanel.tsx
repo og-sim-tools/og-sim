@@ -1,6 +1,7 @@
 /**
- * Battle panel (SPEC §8, §8.1): enemy (from data/enemies or typed in), mode, time limit, seed,
- * Monte Carlo runs; run a battle and see the summary, per-item results and event log.
+ * Battle panel pieces (SPEC §8, §8.1): the opponent (a monster from data/enemies, one typed in, or one of my
+ * builds as a player) and the fight (mode, time limit, seed, Monte Carlo runs, Run battle, the results with my
+ * breakdown and the opponent's side by side, the event log).
  */
 import { type ReactNode, useMemo, useState } from 'react';
 import { BattleSetupError, runBattle } from '../../engine/combat/battle';
@@ -17,14 +18,14 @@ import { Panel } from './Panel';
 type Battle = NonNullable<LayoutData['battle']>;
 type Inline = Exclude<NonNullable<Battle['enemy']>, string>;
 
-const NEW_ENEMY: Inline = {
+export const NEW_ENEMY: Inline = {
   id: 'custom_enemy',
   name: 'Custom enemy',
   hp: '10M',
   atk: 0,
   block: 0,
   damage_reduction: 0,
-  attacks: [{ damage: '100K', cooldown: 2, accuracy: 85, hits: 1, crit_chance: 0 }],
+  attacks: [{ damage: '100K', cooldown: 2, accuracy: 85, hits: 1, crit_chance: 0, on_hit: [] }],
   boss: false,
   starting_statuses: [],
   resistances: {},
@@ -33,8 +34,13 @@ const NEW_ENEMY: Inline = {
   traits: [],
 };
 
+/** One of my builds as an opponent: a player with that bag, hero, gear, pets and blessings. */
+export const playerEnemy = (name: string, build: EnemyBuild): Inline => ({ ...structuredClone(NEW_ENEMY), id: 'player_build', name, kind: 'player', attacks: [], build });
+
 const DEFAULT_BATTLE: Battle = { mode: 'stage', seed: 1, runs: 1 };
 const fmt = (n: number) => formatShown(n);
+/** How the modes are called in the app. */
+export const MODE_NAMES: Record<string, string> = { stage: 'Stage', gauntlet: 'Gauntlet', boss_rush: 'Boss rush', arena: 'Arena', raid: 'Raid' };
 const fmtStacks = (n: number) => String(Math.round(n * 10) / 10);
 
 interface Props {
@@ -54,11 +60,23 @@ interface Props {
   part?: 'all' | 'opponent' | 'fight';
   /** Shown under the opponent picker (the opponent's bag and setup). */
   opponentExtra?: ReactNode;
+  /** Shown above the opponent picker (the chapter). */
+  opponentHead?: ReactNode;
+  /** The opponent box's title. */
+  opponentTitle?: string;
+  /** What the opponent can be (default: all of them). */
+  choices?: ('monsters' | 'builds' | 'typed')[];
+  /** The modes the fight offers (one: fixed, not shown). Default: every mode. */
+  modes?: string[];
+  /** The Gauntlet / Boss Rush list of enemies, one per fight (default shown). */
+  showFights?: boolean;
+  /** Why the battle can't be run now (the button is off and this is said instead). */
+  blocked?: string;
 }
 
 const BUILD_OPTION = '__build:';
 
-export function BattlePanel({ loadout, battle, onChange, layouts = [], myBuild, layoutAsBuild, onEditEnemy, part = 'all', opponentExtra }: Props) {
+export function BattlePanel({ loadout, battle, onChange, layouts = [], myBuild, layoutAsBuild, onEditEnemy, part = 'all', opponentExtra, opponentHead, opponentTitle, choices = ['monsters', 'builds', 'typed'], modes, showFights = true, blocked }: Props) {
   const showOpponent = part !== 'fight';
   const showFight = part !== 'opponent';
   const b = battle ?? DEFAULT_BATTLE;
@@ -80,8 +98,6 @@ export function BattlePanel({ loadout, battle, onChange, layouts = [], myBuild, 
       setError(`Battle failed: ${(e as Error).message}`);
     }
   };
-  /** Whose breakdown the results table shows. */
-  const [view, setView] = useState<'player' | 'enemy'>('player');
 
   const inline = typeof b.enemy === 'object' ? b.enemy : null;
   const fights = cfg.modes[b.mode]?.fights ?? 1;
@@ -117,8 +133,6 @@ export function BattlePanel({ loadout, battle, onChange, layouts = [], myBuild, 
     () => (single?.log ?? []).filter((e) => !logFilter || (e.detail ?? e.type).toLowerCase().includes(logFilter.toLowerCase())),
     [single, logFilter],
   );
-  const viewDealt = single ? (view === 'player' ? single.player.damageDealt : single.enemy.damageDealt) : 0;
-  const pctOf = (n: number) => (viewDealt > 0 ? `${((100 * n) / viewDealt).toFixed(1)}%` : '');
 
   const setInline = (patch: Partial<Inline>) => set({ enemy: { ...(inline ?? NEW_ENEMY), ...patch } });
 
@@ -128,7 +142,7 @@ export function BattlePanel({ loadout, battle, onChange, layouts = [], myBuild, 
     try {
       setError(null);
       const build = await layoutAsBuild(name);
-      onChange({ ...b, enemy: { ...structuredClone(NEW_ENEMY), id: 'player_build', name, kind: 'player', attacks: [], build } });
+      onChange({ ...b, enemy: playerEnemy(name, build) });
     } catch (e) {
       setError(`Couldn't load "${name}": ${(e as Error).message}`);
     }
@@ -150,15 +164,19 @@ export function BattlePanel({ loadout, battle, onChange, layouts = [], myBuild, 
           }}
         >
           <option value="">— choose —</option>
-          <optgroup label="Monsters">
-            {[...data.enemies.values()].map((en) => (
-              <option key={en.id} value={en.id}>
-                {en.name}
-                {en.boss ? ' (boss)' : ''}
-              </option>
-            ))}
-          </optgroup>
-          {layoutAsBuild && layouts.length > 0 && (
+          {choices.includes('monsters') && (
+            <optgroup label="Monsters">
+              {[...data.enemies.values()]
+                .filter((en) => !en.raid)
+                .map((en) => (
+                  <option key={en.id} value={en.id}>
+                    {en.name}
+                    {en.boss ? ' (boss)' : ''}
+                  </option>
+                ))}
+            </optgroup>
+          )}
+          {choices.includes('builds') && layoutAsBuild && layouts.length > 0 && (
             <optgroup label="My saved builds (as a player)">
               {layouts.map((n) => (
                 <option key={n} value={BUILD_OPTION + n}>
@@ -167,35 +185,43 @@ export function BattlePanel({ loadout, battle, onChange, layouts = [], myBuild, 
               ))}
             </optgroup>
           )}
-          <option value="__custom">{inline && !fromBuild ? `Typed in: ${inline.name}` : 'Type one in…'}</option>
+          {choices.includes('typed') && <option value="__custom">{inline && !fromBuild ? `Typed in: ${inline.name}` : 'Type one in…'}</option>}
+          {/* An opponent set elsewhere that this list doesn't offer (kept, not lost). */}
+          {inline && !fromBuild && !choices.includes('typed') && <option value="__custom">{inline.name}</option>}
         </select>
       </div>
       {opponentExtra}
     </>
   );
+  const modeList = Object.entries(cfg.modes).filter(([m]) => !modes || modes.includes(m));
+  const raid = b.mode === 'raid';
 
   return (
-    <Panel id={part === 'opponent' ? 'battle.opponent' : part === 'fight' ? 'battle.fight' : 'battle.battle'} title={part === 'opponent' ? 'Opponent' : part === 'fight' ? 'Fight' : 'Battle'}>
-      {part === 'all' && opponent}
-      {part === 'opponent' && opponent}
+    <Panel id={part === 'opponent' ? 'battle.opponent' : part === 'fight' ? 'battle.fight' : 'battle.battle'} title={part === 'opponent' ? (opponentTitle ?? 'Opponent') : part === 'fight' ? 'Fight' : 'Battle'}>
+      {showOpponent && opponentHead}
+      {showOpponent && opponent}
       {showFight && (
       <div className="form-grid" style={{ gridTemplateColumns: '110px 1fr', marginTop: part === 'all' ? 4 : 0 }}>
-        <label>Mode</label>
-        <select aria-label="Mode" value={b.mode} onChange={(e) => set({ mode: e.target.value })}>
-          {Object.entries(cfg.modes).map(([m, def]) => (
-            <option key={m} value={m} disabled={def.later}>
-              {m}
-              {def.later ? ' [later]' : def.fights > 1 ? ` (${def.fights} fights)` : ''}
-            </option>
-          ))}
-        </select>
+        {modeList.length > 1 && (
+          <>
+            <label>Fight type</label>
+            <select aria-label="Mode" value={b.mode} onChange={(e) => set({ mode: e.target.value })}>
+              {modeList.map(([m, def]) => (
+                <option key={m} value={m} disabled={def.later}>
+                  {MODE_NAMES[m] ?? m}
+                  {def.later ? ' [later]' : def.fights > 1 ? ` (${def.fights} fights)` : ''}
+                </option>
+              ))}
+            </select>
+          </>
+        )}
         <label>Time limit (s)</label>
         <input
           type="number"
           min={1}
           aria-label="Time limit"
           disabled={!!cfg.modes[b.mode]?.fixed_time}
-          title={cfg.modes[b.mode]?.fixed_time ? 'Always 30 s in this mode' : undefined}
+          title={cfg.modes[b.mode]?.fixed_time ? `Always ${modeDefault} s in this mode` : undefined}
           placeholder={String(modeDefault)}
           value={b.duration_s ?? ''}
           onChange={(e) => set({ duration_s: e.target.value === '' ? undefined : Math.max(1, Number(e.target.value)) })}
@@ -219,7 +245,7 @@ export function BattlePanel({ loadout, battle, onChange, layouts = [], myBuild, 
           bossFixed={b.mode === 'boss_rush'}
           kindInfo={{ playerItems: hasPlayerItems(data, inline), modePvp: !!cfg.modes[b.mode]?.pvp, mode: b.mode, auto: enemyKind(inline, data) }}
           buildTools={
-            myBuild
+            myBuild && choices.includes('builds')
               ? {
                   layouts,
                   heroName: (id) => data.heroes.get(id ?? '')?.name ?? 'no hero',
@@ -239,7 +265,7 @@ export function BattlePanel({ loadout, battle, onChange, layouts = [], myBuild, 
           }
         />
       )}
-      {showOpponent && fights > 1 && (
+      {showOpponent && showFights && fights > 1 && (
         <div className="hero-card" style={{ marginTop: 8 }}>
           <div className="small muted">Enemies, in order ({b.mode}: {fights} fights{cfg.modes[b.mode]?.boss_fights.length ? `, bosses: ${cfg.modes[b.mode]!.boss_fights.join(', ')}` : ''})</div>
           {Array.from({ length: fights }, (_, i) => {
@@ -274,10 +300,10 @@ export function BattlePanel({ loadout, battle, onChange, layouts = [], myBuild, 
 
       {showFight && (
       <div className="row" style={{ marginTop: 8 }}>
-        <button className="primary" onClick={run} disabled={running || (fights === 1 ? !b.enemy : (b.enemies?.length ?? 0) !== fights)}>
+        <button className="primary" onClick={run} disabled={!!blocked || running || (fights === 1 ? !b.enemy : (b.enemies?.length ?? 0) !== fights)}>
           {running ? 'Running…' : b.runs > 1 ? `Run ${b.runs} battles` : 'Run battle'}
         </button>
-        <span className="small muted">{fights === 1 && !b.enemy ? 'Pick an opponent first.' : 'Saved with the build.'}</span>
+        <span className="small muted">{blocked ?? (fights === 1 && !b.enemy ? 'Pick an opponent first.' : 'Saved with the build.')}</span>
       </div>
       )}
       {error && <div className="issue error" style={{ marginTop: 6 }}>{error}</div>}
@@ -285,10 +311,17 @@ export function BattlePanel({ loadout, battle, onChange, layouts = [], myBuild, 
       {showFight && mc && (
         <div style={{ marginTop: 10 }}>
           <h3>
-            Monte Carlo: win rate {(mc.winRate * 100).toFixed(1)}% ({mc.wins}/{mc.runs})
+            {raid ? `Raid: ${fmt(mc.damage.mean)} damage on average over ${mc.runs} runs` : `Monte Carlo: win rate ${(mc.winRate * 100).toFixed(1)}% (${mc.wins}/${mc.runs})`}
           </h3>
           <table className="stats">
             <tbody>
+              <tr>
+                <td>Damage dealt</td>
+                <td>mean {fmt(mc.damage.mean)}</td>
+                <td>p10 {fmt(mc.damage.p10)}</td>
+                <td>p50 {fmt(mc.damage.p50)}</td>
+                <td>p90 {fmt(mc.damage.p90)}</td>
+              </tr>
               <tr>
                 <td>Duration</td>
                 <td>mean {mc.duration.mean.toFixed(1)}s</td>
@@ -333,10 +366,16 @@ export function BattlePanel({ loadout, battle, onChange, layouts = [], myBuild, 
 
       {showFight && single && (
         <div style={{ marginTop: 10 }}>
-          <h3>
-            {single.winner === 'player' ? 'Win' : 'Loss'} after {single.duration.toFixed(1)}s{' '}
-            <span className="small muted">({single.reason === 'timeout' ? (cfg.modes[single.mode]?.timeout_winner === 'hp_pct' ? `time limit: ${single.winner === 'player' ? 'I' : 'the enemy'} had more HP % left` : 'time limit') : single.winner === 'player' ? 'enemy defeated' : 'I was defeated'})</span>
-          </h3>
+          {raid ? (
+            <h3>
+              Raid: you dealt {fmt(single.player.damageDealt)} damage in {single.duration.toFixed(1)}s <span className="small muted">({fmt(single.dps)}/s)</span>
+            </h3>
+          ) : (
+            <h3>
+              {single.winner === 'player' ? 'Win' : 'Loss'} after {single.duration.toFixed(1)}s{' '}
+              <span className="small muted">({single.reason === 'timeout' ? (cfg.modes[single.mode]?.timeout_winner === 'hp_pct' ? `time limit: ${single.winner === 'player' ? 'I' : 'the enemy'} had more HP % left` : 'time limit') : single.winner === 'player' ? 'enemy defeated' : 'I was defeated'})</span>
+            </h3>
+          )}
           {single.fights.length > 1 &&
             single.fights.map((f, i) => (
               <div key={i} className="small">
@@ -344,75 +383,11 @@ export function BattlePanel({ loadout, battle, onChange, layouts = [], myBuild, 
                 {f.boss ? ' (boss)' : ''} in {f.duration.toFixed(1)}s{f.reason === 'timeout' ? ' (time limit)' : ''}
               </div>
             ))}
-          <div className="small">
-            Me: HP {fmt(single.player.hp)} / {fmt(single.player.maxHp)}, block {fmt(single.player.block)}, dealt {fmt(single.player.damageDealt)} ({fmt(single.dps)}/s)
-          </div>
-          <div className="small">
-            Enemy: HP {fmt(single.enemy.hp)} / {fmt(single.enemy.maxHp)}, block {fmt(single.enemy.block)}, dealt {fmt(single.enemy.damageDealt)}
-          </div>
           <StatusSummary single={single} polarity={(id) => data.statuses.get(id)?.polarity} />
-          <div className="tabs" role="tablist" aria-label="Whose breakdown" style={{ marginTop: 6 }}>
-            <button role="tab" aria-selected={view === 'player'} className={view === 'player' ? 'active' : ''} onClick={() => setView('player')}>
-              My breakdown
-            </button>
-            <button role="tab" aria-selected={view === 'enemy'} className={view === 'enemy' ? 'active enemy-side' : ''} onClick={() => setView('enemy')}>
-              ⚔ Enemy breakdown
-            </button>
+          <div className="breakdowns">
+            <Breakdown single={single} side="player" title="My breakdown" />
+            <Breakdown single={single} side="enemy" title={`⚔ ${single.fights.at(-1)?.enemy ?? 'Enemy'}'s breakdown`} />
           </div>
-          <table className="stats" style={{ marginTop: 6 }}>
-            <thead>
-              <tr>
-                <th>Item</th>
-                <th title="Times the item went off on its cooldown (or was made to activate), plus its gear skill's own activations">Activations</th>
-                <th title="Times one of its effects fired">Triggers</th>
-                <th>Hits</th>
-                <th>Crit</th>
-                <th>DMG</th>
-                <th title={view === 'player' ? 'Share of all the damage I dealt' : 'Share of all the damage the enemy dealt'}>%</th>
-                <th>Other</th>
-              </tr>
-            </thead>
-            <tbody>
-              {Object.entries(single.items)
-                .filter(([, it]) => it.side === view)
-                .filter(([, it]) => it.activations || it.triggers || it.attacks || it.damage || it.healing || it.block || Object.keys(it.statuses).length || Object.keys(it.assisted ?? {}).length || Object.keys(it.spent ?? {}).length)
-                .map(([id, it]) => (
-                  <tr key={id}>
-                    <td>{it.name}</td>
-                    <td>
-                      {it.activations || ''}
-                      {it.skillActivations ? <span className="small muted">{it.activations ? ' + ' : ''}{it.skillActivations} skill</span> : null}
-                    </td>
-                    <td>{it.triggers || ''}</td>
-                    <td>{it.attacks ? `${it.hits}/${it.hits + it.misses}` : ''}</td>
-                    <td>{it.attacks ? it.crits : ''}</td>
-                    <td>{it.damage ? fmt(it.damage) : ''}</td>
-                    <td className="small">{it.damage ? pctOf(it.damage) : ''}</td>
-                    <td className="small">
-                      {[
-                        it.healing ? `${fmt(it.healing)} heal` : '',
-                        it.block ? `${fmt(it.block)} block` : '',
-                        ...Object.entries(it.spent ?? {}).map(([k, n]) => `${fmtStacks(n)} ${k} spent`),
-                        // Own stacks, then (stacks other items applied because of this one), e.g. "10 burn (6 burn)".
-                        ...[...new Set([...Object.keys(it.statuses), ...Object.keys(it.assisted ?? {})])].map((k) =>
-                          [it.statuses[k] ? `${it.statuses[k]} ${k}` : '', it.assisted?.[k] ? `(${it.assisted[k]} ${k})` : ''].filter(Boolean).join(' '),
-                        ),
-                      ]
-                        .filter(Boolean)
-                        .join(', ')}
-                    </td>
-                  </tr>
-                ))}
-              {Object.entries((view === 'player' ? single.statusDamage : single.enemyStatusDamage) ?? {}).map(([k, v]) => (
-                <tr key={k}>
-                  <td colSpan={5}>{k} damage</td>
-                  <td>{fmt(v)}</td>
-                  <td className="small">{pctOf(v)}</td>
-                  <td />
-                </tr>
-              ))}
-            </tbody>
-          </table>
           {single.warnings.map((w, i) => (
             <div key={i} className="issue warning">
               {w}
@@ -432,6 +407,89 @@ export function BattlePanel({ loadout, battle, onChange, layouts = [], myBuild, 
         </div>
       )}
     </Panel>
+  );
+}
+
+/** HP too big to matter (a raid boss that can't be beaten) is shown as ∞. */
+const hpText = (n: number) => (n >= 1e18 ? '∞' : fmt(n));
+
+/** One side's results, compact so mine and the opponent's fit side by side. */
+function Breakdown({ single, side, title }: { single: BattleResult; side: 'player' | 'enemy'; title: string }) {
+  const c = side === 'player' ? single.player : single.enemy;
+  const dealt = c.damageDealt;
+  const pctOf = (n: number) => (dealt > 0 ? `${((100 * n) / dealt).toFixed(1)}%` : '');
+  const rows = Object.entries(single.items)
+    .filter(([, it]) => it.side === side)
+    .filter(([, it]) => it.activations || it.triggers || it.attacks || it.damage || it.healing || it.block || Object.keys(it.statuses).length || Object.keys(it.assisted ?? {}).length || Object.keys(it.spent ?? {}).length);
+  const statusDamage = (side === 'player' ? single.statusDamage : single.enemyStatusDamage) ?? {};
+  return (
+    <div className="breakdown-side">
+      <h4>
+        {title}
+        <span className="small muted">
+          {' '}
+          HP {hpText(c.hp)} / {hpText(c.maxHp)} · block {fmt(c.block)} · dealt {fmt(dealt)}
+        </span>
+      </h4>
+      <table className="stats compact" aria-label={title}>
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th title="Times it went off (on its cooldown, or made to activate), its gear skill's own activations, and how often one of its effects fired">Act.</th>
+            <th title="Hits / attacks, and crits">Hits</th>
+            <th>DMG</th>
+            <th title="Share of all the damage this side dealt">%</th>
+            <th>Other</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map(([id, it]) => (
+            <tr key={id}>
+              <td>{it.name}</td>
+              <td>
+                {it.activations || ''}
+                {it.skillActivations ? <span className="muted">{it.activations ? '+' : ''}{it.skillActivations} skill</span> : null}
+                {it.triggers ? <span className="muted"> · {it.triggers} trig.</span> : null}
+              </td>
+              <td>
+                {it.attacks ? `${it.hits}/${it.hits + it.misses}` : ''}
+                {it.attacks && it.crits ? <span className="muted"> ({it.crits} crit)</span> : null}
+              </td>
+              <td>{it.damage ? fmt(it.damage) : ''}</td>
+              <td>{it.damage ? pctOf(it.damage) : ''}</td>
+              <td>
+                {[
+                  it.healing ? `${fmt(it.healing)} heal` : '',
+                  it.block ? `${fmt(it.block)} block` : '',
+                  ...Object.entries(it.spent ?? {}).map(([k, n]) => `${fmtStacks(n)} ${k} spent`),
+                  // Own stacks, then (stacks other items applied because of this one), e.g. "10 burn (6 burn)".
+                  ...[...new Set([...Object.keys(it.statuses), ...Object.keys(it.assisted ?? {})])].map((k) =>
+                    [it.statuses[k] ? `${it.statuses[k]} ${k}` : '', it.assisted?.[k] ? `(${it.assisted[k]} ${k})` : ''].filter(Boolean).join(' '),
+                  ),
+                ]
+                  .filter(Boolean)
+                  .join(', ')}
+              </td>
+            </tr>
+          ))}
+          {Object.entries(statusDamage).map(([k, v]) => (
+            <tr key={k}>
+              <td colSpan={3}>{k} damage</td>
+              <td>{fmt(v)}</td>
+              <td>{pctOf(v)}</td>
+              <td />
+            </tr>
+          ))}
+          {rows.length === 0 && Object.keys(statusDamage).length === 0 && (
+            <tr>
+              <td colSpan={6} className="muted">
+                Nothing happened.
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
@@ -584,21 +642,70 @@ function EnemyEditor({
       {!build && <h3>Attacks</h3>}
       {!build && attacks.map((a, i) => {
         const setA = (patch: Partial<(typeof attacks)[number]>) => onChange({ attacks: attacks.map((x, j) => (j === i ? { ...x, ...patch } : x)) });
+        const onHit = a.on_hit ?? [];
+        const setHit = (k: number, patch: Partial<(typeof onHit)[number]>) => setA({ on_hit: onHit.map((x, j) => (j === k ? { ...x, ...patch } : x)) });
         return (
-          <div key={i} className="row small" style={{ marginBottom: 4 }}>
-            <input aria-label="Attack damage" defaultValue={num(a.damage)} style={{ width: 70 }} onChange={(e) => ABBREV_RE.test(e.target.value.trim()) && setA({ damage: e.target.value.trim().toUpperCase() })} />
-            dmg every
-            <input type="number" step="0.1" aria-label="Attack cooldown" value={a.cooldown} style={{ width: 56 }} onChange={(e) => setA({ cooldown: Math.max(0.1, Number(e.target.value) || 0.1) })} />s acc
-            <input type="number" aria-label="Attack accuracy" value={a.accuracy} style={{ width: 56 }} onChange={(e) => setA({ accuracy: Number(e.target.value) || 0 })} />% ×
-            <input type="number" min={1} aria-label="Attack hits" value={a.hits} style={{ width: 44 }} onChange={(e) => setA({ hits: Math.max(1, Number(e.target.value) || 1) })} /> crit
-            <input type="number" aria-label="Attack crit" value={a.crit_chance} style={{ width: 50 }} onChange={(e) => setA({ crit_chance: Number(e.target.value) || 0 })} />%
-            <button aria-label="Remove attack" onClick={() => onChange({ attacks: attacks.filter((_, j) => j !== i) })}>
-              ✕
-            </button>
+          <div key={i} className="attack-card small">
+            <div className="attack-line">
+              <label>
+                DMG <input aria-label="Attack damage" defaultValue={num(a.damage)} style={{ width: 70 }} onChange={(e) => ABBREV_RE.test(e.target.value.trim()) && setA({ damage: e.target.value.trim().toUpperCase() })} />
+              </label>
+              <label>
+                every <input type="number" step="0.1" aria-label="Attack cooldown" value={a.cooldown} style={{ width: 56 }} onChange={(e) => setA({ cooldown: Math.max(0.1, Number(e.target.value) || 0.1) })} /> s
+              </label>
+              <label>
+                acc <input type="number" aria-label="Attack accuracy" value={a.accuracy} style={{ width: 56 }} onChange={(e) => setA({ accuracy: Number(e.target.value) || 0 })} /> %
+              </label>
+              <label>
+                × <input type="number" min={1} aria-label="Attack hits" value={a.hits} style={{ width: 44 }} onChange={(e) => setA({ hits: Math.max(1, Number(e.target.value) || 1) })} /> hits
+              </label>
+              <label>
+                crit <input type="number" aria-label="Attack crit" value={a.crit_chance} style={{ width: 50 }} onChange={(e) => setA({ crit_chance: Number(e.target.value) || 0 })} /> %
+              </label>
+              <button className="small" aria-label="Remove attack" onClick={() => onChange({ attacks: attacks.filter((_, j) => j !== i) })}>
+                ✕
+              </button>
+            </div>
+            <div className="attack-line">
+              <span className="muted">On hit:</span>
+              {onHit.map((st, k) => (
+                <span key={k} className="on-hit">
+                  inflict
+                  <input type="number" min={1} aria-label="On-hit stacks" value={st.stacks} style={{ width: 52 }} onChange={(e) => setHit(k, { stacks: Math.max(1, Number(e.target.value) || 1) })} />
+                  <select aria-label="On-hit status" value={st.status} onChange={(e) => setHit(k, { status: e.target.value })}>
+                    {statuses.map((x) => (
+                      <option key={x}>{x}</option>
+                    ))}
+                  </select>
+                  for
+                  <input
+                    type="number"
+                    min={0}
+                    step="0.5"
+                    aria-label="On-hit duration"
+                    placeholder="—"
+                    title="Seconds it lasts (empty: as long as the status lasts by itself)"
+                    value={st.duration_s ?? ''}
+                    style={{ width: 52 }}
+                    onChange={(e) => {
+                      const v = Number(e.target.value);
+                      setHit(k, { duration_s: e.target.value === '' || !(v > 0) ? undefined : v });
+                    }}
+                  />
+                  s
+                  <button className="small" aria-label="Remove on-hit status" onClick={() => setA({ on_hit: onHit.filter((_, j) => j !== k) })}>
+                    ✕
+                  </button>
+                </span>
+              ))}
+              <button className="small" onClick={() => setA({ on_hit: [...onHit, { status: statuses.includes('burn') ? 'burn' : (statuses[0] ?? 'burn'), stacks: 1 }] })}>
+                + status
+              </button>
+            </div>
           </div>
         );
       })}
-      {!build && <button onClick={() => onChange({ attacks: [...attacks, { damage: '100K', cooldown: 2, accuracy: 85, hits: 1, crit_chance: 0 }] })}>Add attack</button>}
+      {!build && <button onClick={() => onChange({ attacks: [...attacks, { damage: '100K', cooldown: 2, accuracy: 85, hits: 1, crit_chance: 0, on_hit: [] }] })}>Add attack</button>}
       {!isPlayer && (
         <>
       <h3>Starting statuses</h3>

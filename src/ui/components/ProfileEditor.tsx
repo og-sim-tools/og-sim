@@ -211,11 +211,11 @@ function HeroRow({ hero, owned, data, profile, update }: { hero: Hero; owned: Ow
   const edit = (fn: (h: OwnedHero) => void) => update((p) => fn(p.heroes.find((x) => x.id === hero.id)!));
   if (!owned) {
     return (
-      <div className="row small" style={{ marginBottom: 4 }}>
+      <div className="hero-row not-owned small">
         <label>
           <input type="checkbox" checked={false} onChange={() => update((p) => void p.heroes.push({ id: hero.id, stars: 0, links: [], skin: null }))} /> {hero.name}
         </label>
-        <span className="muted">{hero.rarity}</span>
+        <span className="muted">{hero.rarity} · not owned</span>
       </div>
     );
   }

@@ -1,0 +1,24 @@
+# The raid boss (user, 2026-10-20). PLACEHOLDER: the real boss isn't entered yet, so it's a stand-in that
+# can't be beaten and barely fights back. You attack for 15 s, take weak hits worth about 4.5% of your max HP
+# over the whole fight (0.3% a second), and are defeated when time is up (config modes.raid: timeout_kills).
+# What a raid result is about is the damage dealt.
+
+- id: raid_boss
+  name: Raid Boss (placeholder)
+  hp: 999999999999B
+  atk: 0
+  block: 0
+  attacks:
+    - { name: Dragon's Swipe, pct_max_hp: 0.3, cooldown: 1, accuracy: 100 }
+  # Berserk would raise its hits past the 5% the user asked for; whether raids have Berserk isn't known.
+  berserk: false
+  # SPEC §7.5: a raid boss can't die, ignores Execute and is immune to damage based on its HP; the boss
+  # Final DMG multiplier applies.
+  boss: true
+  immunities: [execute, hp_based]
+  raid: true
+  # Its picture: the Dragon item, as a placeholder.
+  image_item: dragon
+  source: manual
+  verified: false
+  notes: 'Placeholder raid boss (user, 2026-10-20: a fixed enemy, weak hits based on % of my HP, no more than 5% of my HP over a battle, and at 15 s I am killed whatever protects me). The real boss, its picture and its attacks are not entered yet. Berserk is off: not known for raids.'

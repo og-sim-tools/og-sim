@@ -98,12 +98,13 @@ function blessingHow(def: GameData['blessings'] extends Map<string, infer B> ? B
   return 'Not simulated';
 }
 
-/** A hero's Dragon's Blessing level and equipped blessings, folded to one line until opened. */
+/** A hero's equipped blessings (up to 5), folded to one line until opened. */
 export function BlessingsEditor({ hero, owned, data, update, account = false, open }: { hero: Hero; owned: OwnedHero; data: GameData; update: Update; account?: boolean; open?: boolean }) {
   const cfg = data.config!;
   const edit = (fn: (h: OwnedHero) => void) => update((p) => fn(p.heroes.find((x) => x.id === hero.id)!));
+  // Always 5 slots (user, 2026-10-20: no Dragon's Blessing level). The saved level is kept as it is.
   const level = owned.blessings?.level ?? cfg.blessings.default_level;
-  const slots = Math.min(cfg.blessings.slots_by_level[String(level)] ?? cfg.blessings.max_per_hero, cfg.blessings.max_per_hero);
+  const slots = cfg.blessings.max_per_hero;
   const equipped = owned.blessings?.equipped ?? [];
   const choices = [...data.blessings.values()].filter((b) => b.kind === 'common' || (b.kind === 'class' && b.class === hero.class) || (b.kind === 'unique' && b.hero === hero.id));
   return (
@@ -113,16 +114,6 @@ export function BlessingsEditor({ hero, owned, data, update, account = false, op
         <span className="muted"> {equipped.map((b) => data.blessings.get(b.id)?.name ?? b.id).join(' · ')}</span>
       </summary>
       {account && <div className="small muted">{hero.name}'s blessings are your account's: the same in every build with {hero.name} (also in the Profile tab).</div>}
-      <div className="row small" style={{ marginTop: 4 }}>
-        <span className="muted">Dragon's Blessing level</span>
-        <select value={level} aria-label="Blessing level" onChange={(e) => edit((h) => void (h.blessings = { level: Number(e.target.value), equipped: h.blessings?.equipped ?? [] }))}>
-          {Object.keys(cfg.blessings.slots_by_level).map((l) => (
-            <option key={l} value={l}>
-              {l}
-            </option>
-          ))}
-        </select>
-      </div>
       {equipped.map((b, i) => {
         const def = data.blessings.get(b.id);
         const range = def?.values[b.rarity];
@@ -480,7 +471,7 @@ export function SkinsEditor({ data, profile, update, account = false }: { data: 
 // ------------------------------------------------------------------ stats
 
 /** HP, ATK and Block as typed in, and every other stat as calculated from gear, blessings and auras. */
-export function BuildStats({ data, profile, update, account: mine = false }: { data: GameData; profile: Profile; update: Update; account?: boolean }) {
+export function BuildStats({ data, profile, update, account: mine = false, readOnly = false, open }: { data: GameData; profile: Profile; update: Update; account?: boolean; readOnly?: boolean; open?: boolean }) {
   const account = computeAccountStats(data, profile, profile.active_hero);
   const fmtStat = (n: number) => String(Math.round(n * 100) / 100);
   const stats = [...data.stats.values()];
@@ -495,12 +486,13 @@ export function BuildStats({ data, profile, update, account: mine = false }: { d
             const key = s.id === 'initial_block' ? 'initial_block' : (s.id as 'hp' | 'atk');
             return (
               <label key={s.id} className="muted">
-                {s.name === 'Initial Block' ? 'Block' : s.name} <AbbrevInput label={s.name} value={profile.basic_stats[key]} onCommit={(v) => update((p) => void (p.basic_stats[key] = v))} width={70} />
+                {s.name === 'Initial Block' ? 'Block' : s.name}{' '}
+                {readOnly ? <b>{String(profile.basic_stats[key])}</b> : <AbbrevInput label={s.name} value={profile.basic_stats[key]} onCommit={(v) => update((p) => void (p.basic_stats[key] = v))} width={70} />}
               </label>
             );
           })}
       </div>
-      <details style={{ marginTop: 6 }}>
+      <details style={{ marginTop: 6 }} open={open}>
         <summary className="small">
           Calculated stats <span className="muted">({shown.length}, from gear, blessings and auras)</span>
         </summary>

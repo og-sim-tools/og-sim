@@ -3,13 +3,14 @@
  * starting equipment the build's hero can bring (against its Supply Ability), with the same filters. Gear
  * isn't listed: it's put in the bag from the Gear box. Click an item to put it in the bag, or drag it.
  */
-import { type DragEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { type PointerEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { footprintOf, placeFootprint } from '../../engine/bag';
 import type { GameData, Item } from '../../engine/loader';
 import { CLASSES, RARITIES } from '../../engine/model';
 import type { AvailableSupply } from '../../engine/validate';
 import { type BrowserEntry, type BrowserFilter, type BrowserSort, EMPTY_FILTER, allTags, browserEntries, filterEntries, sortEntries } from '../state/browser';
-import { endDrag, originGrab, rarityColor, spriteOf, startDrag } from './BagGrid';
+import { rarityColor } from './BagGrid';
+import { beginDrag, dragJustEnded } from '../drag';
 import { imageUrl } from '../staticData';
 
 export interface StartingEquipment {
@@ -20,6 +21,8 @@ export interface StartingEquipment {
   /** Ids already in the bag (one of each). */
   inBag: ReadonlySet<string>;
   onAdd: (s: AvailableSupply) => void;
+  /** Take it out of the bag. */
+  onRemove?: (itemId: string) => void;
 }
 
 interface Props {
@@ -41,13 +44,9 @@ function Icon({ def, kind }: { def: BrowserEntry['def']; kind: string }) {
   return <span className="icon">{src ? <img src={imageUrl(src)} alt="" draggable={false} /> : null}</span>;
 }
 
-/** Drag an item from a list: the whole item shows under the pointer, held by its origin cell. */
-function dragFromList(ev: DragEvent, item: Item) {
-  const fp = footprintOf(item);
-  if (!fp) return;
-  const cells = placeFootprint(fp, { x: 0, y: 0, rotation: 0 }).cells;
-  startDrag(ev, { kind: 'item', id: item.id, ...originGrab(cells) }, { cells, color: rarityColor(item.rarity), sprite: spriteOf(item as Parameters<typeof spriteOf>[0]) });
-}
+/** Pick an item up from a list (held by its first cell); a press that doesn't move is a click. */
+const dragFromList = (ev: PointerEvent, item: { id: string }, supply = false) =>
+  beginDrag(ev, { kind: 'item', id: item.id, item: item.id, rotation: 0, grab: 0, inCell: { x: 0.5, y: 0.5 }, scope: 'build', ...(supply ? { supply: true } : {}) });
 
 /** The list's order and rarity filter (rarity sorts common → legendary; hovering it offers one rarity only). */
 interface Order {
@@ -213,10 +212,8 @@ export function ItemBrowser({ data, supplyIds, onPick, onEdit, showEnemyItems = 
               <div
                 key={`${e.kind}:${e.id}`}
                 className="list-row"
-                draggable={!e.needsShape}
-                onDragStart={(ev) => dragFromList(ev, e.def as Item)}
-                onDragEnd={endDrag}
-                onClick={() => (e.needsShape ? onEdit(e) : onPick(e))}
+                onPointerDown={(ev) => !e.needsShape && dragFromList(ev, e)}
+                onClick={() => !dragJustEnded() && (e.needsShape ? onEdit(e) : onPick(e))}
                 title={`${e.name}\n${'effect_text' in e.def ? e.def.effect_text || e.def.flavor : e.def.gear_effect_text}`}
               >
                 <span className="swatch" style={{ background: rarityColor(e.rarity, e.kind === 'gear') }} />
@@ -261,7 +258,7 @@ function StartingList({ s, f, set, data }: { s: StartingEquipment; f: BrowserFil
   const tags = useMemo(() => [...new Set(entries.flatMap((e) => e.tags))].sort(), [entries]);
   if (!s.heroName) return <div className="small muted">Pick the build's hero (Hero box) to see their starting equipment.</div>;
   const text = f.text.trim().toLowerCase();
-  const list = sortEntries(
+  const sorted = sortEntries(
     entries.filter(
       (e) =>
         (!text || e.name.toLowerCase().includes(text) || e.id.includes(text)) &&
@@ -271,6 +268,9 @@ function StartingList({ s, f, set, data }: { s: StartingEquipment; f: BrowserFil
     ),
     f.sort,
   );
+  // What's in the bag first.
+  const list = [...sorted.filter((e) => s.inBag.has(e.id)), ...sorted.filter((e) => !s.inBag.has(e.id))];
+  const inUse = entries.filter((e) => s.inBag.has(e.id));
   return (
     <>
       <div className="small">
@@ -279,9 +279,12 @@ function StartingList({ s, f, set, data }: { s: StartingEquipment; f: BrowserFil
       <div className={`meter${s.used > s.capacity ? ' over' : ''}`}>
         <div style={{ width: `${Math.min(100, (s.used / Math.max(1, s.capacity)) * 100)}%` }} />
       </div>
+      <div className="small in-use" aria-label="In use">
+        In use: {inUse.length ? inUse.map((e) => e.name).join(', ') : <span className="muted">nothing yet</span>}
+      </div>
       <Filters f={f} set={set} tags={tags} data={data} kinds={false} heroes={false} />
       <div className="small muted">
-        {list.length} of {entries.length}. Click one to put it in the bag.
+        {list.length} of {entries.length}. Click one to put it in the bag, or drag it.
       </div>
       <div className="list">
         {s.available.length === 0 && (
@@ -296,17 +299,31 @@ function StartingList({ s, f, set, data }: { s: StartingEquipment; f: BrowserFil
           return (
             <div
               key={a.item.id}
-              className={`list-row${blocked ? ' blocked' : ''}`}
+              className={`list-row${inBag ? ' in-bag' : blocked ? ' blocked' : ''}`}
               role="button"
               aria-disabled={!!blocked}
               title={`${a.item.name}: ${blocked ?? 'click to put it in the bag'}\nUnlocked by ${a.unlockedBy.join(', ')}`}
-              onClick={() => !blocked && s.onAdd(a)}
+              onPointerDown={(ev) => !blocked && dragFromList(ev, a.item, true)}
+              onClick={() => !blocked && !dragJustEnded() && s.onAdd(a)}
             >
               <span className="swatch" style={{ background: rarityColor(a.item.rarity, false) }} />
               <Icon def={a.item} kind="item" />
               <span className="name">{a.item.name}</span>
-              {inBag && <span className="badge">in bag</span>}
+              {inBag && <span className="badge ok">✓ in use</span>}
               <span className="small muted">{a.cost} pt</span>
+              {inBag && s.onRemove && (
+                <button
+                  className="small"
+                  aria-label={`Take ${a.item.name} out of the bag`}
+                  title="Take it out of the bag"
+                  onClick={(ev) => {
+                    ev.stopPropagation();
+                    s.onRemove!(a.item.id);
+                  }}
+                >
+                  ✕
+                </button>
+              )}
             </div>
           );
         })}

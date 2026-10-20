@@ -16,8 +16,8 @@ export interface CombatItem {
   tags: string[];
   /** Bag items: the item's rarity (gear: the equipped piece's rarity), for rarity filters. */
   rarity?: string;
-  /** Weapon damage before crits: base (ratio × ATK, or flat for enemies) and its type bonus %. */
-  damage: { base: number; typePct: number } | null;
+  /** Weapon damage before crits: base (ratio × ATK, or flat for enemies), its type bonus %, and (enemy attacks) a % of the target's max HP added to the base. */
+  damage: { base: number; typePct: number; pctOfFoeMaxHp?: number } | null;
   baseCooldown: number | null;
   /** Haste % fixed before combat (item bonuses + Item Haste from Stat Details). */
   staticHastePct: number;
@@ -61,7 +61,7 @@ export interface CombatItem {
 }
 
 export interface CombatSkill {
-  damage: { base: number; typePct: number } | null;
+  damage: { base: number; typePct: number; pctOfFoeMaxHp?: number } | null;
   hits: number;
   /** Fixed timer in ticks (not affected by haste or Freeze). */
   intervalTicks: number | null;

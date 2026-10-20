@@ -17,13 +17,16 @@ import { BagPreview } from './components/BagPreview';
 import { type AccountImport, accountArchive, downloadBytes, looksLikeBuild, readAccountArchive } from './state/accountArchive';
 import { unzipFiles } from './state/zip';
 import { safeBuildName } from '../engine/saves/names';
-import { BagGrid, type DragPayload, type DropTarget, rarityColor, spriteOf } from './components/BagGrid';
-import { Bin, STORAGE_SCALE, Storage, type StoredView } from './components/Storage';
+import { BagGrid, rarityColor, spriteOf } from './components/BagGrid';
+import { type DragItem, DragLayer, useDragLook } from './drag';
+import { type Landing, dropInBag, dropInBin, keyOnSelected, landing, lookOf, turnedCells } from './state/bagEdit';
+import { Bin, Storage, type StoredView } from './components/Storage';
 import { bagSizesFor, enhancerOf, sizeOf } from './state/bagSizes';
 import { ItemDrawer } from './components/ItemDrawer';
 import { battleStartStats } from '../engine/combat/battle';
 import { resolveEnemy } from '../engine/combat/montecarlo';
 import { BattleTab } from './components/BattleTab';
+import { playerEnemy } from './components/BattlePanel';
 import { DataPanel } from './components/DataPanel';
 import { EnemyItemEditor } from './components/EnemyItemEditor';
 import { ItemBrowser } from './components/ItemBrowser';
@@ -74,6 +77,33 @@ export const DEFAULT_PROFILE: Profile = {
 };
 
 const FULL_MASK = () => new Array(48).fill(1) as number[];
+
+/** Phones (user, 2026-10-20): one section at a time, in this order, with Back / Next. */
+const STEPS = [
+  { id: 'profile', label: 'Profile', tab: 'profile' },
+  { id: 'hero', label: 'Hero & blessings', tab: 'bag' },
+  { id: 'gear', label: 'Gear', tab: 'bag' },
+  { id: 'pets', label: 'Pets', tab: 'bag' },
+  { id: 'skins', label: 'Skins', tab: 'bag' },
+  { id: 'opponent', label: 'Opponent', tab: 'battle' },
+  { id: 'items', label: 'Items & bag', tab: 'bag' },
+  { id: 'fight', label: 'Fight', tab: 'battle' },
+] as const;
+type StepId = (typeof STEPS)[number]['id'];
+
+/** True while the screen is narrower than `query` says (phones). */
+function useMedia(query: string): boolean {
+  const get = () => (typeof window !== 'undefined' && typeof window.matchMedia === 'function' ? window.matchMedia(query).matches : false);
+  const [on, setOn] = useState(get);
+  useEffect(() => {
+    if (typeof window.matchMedia !== 'function') return;
+    const m = window.matchMedia(query);
+    const f = () => setOn(m.matches);
+    m.addEventListener?.('change', f);
+    return () => m.removeEventListener?.('change', f);
+  }, [query]);
+  return on;
+}
 type Raw = Record<string, unknown>;
 
 /** The account-wide part of a profile, normalised: HP / ATK / Block, heroes with stars, links and blessings, owned pets and skins with stars, auras. */
@@ -125,6 +155,15 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
   /** The tutorial: asking whether to start it, then running. */
   const [askTour, setAskTour] = useState(false);
   const [touring, setTouring] = useState(false);
+  const mobile = useMedia('(max-width: 820px)');
+  const [step, setStep] = useState<StepId>('profile');
+  /** On a phone, only the current step's sections show. */
+  const showIf = (ids: StepId[]) => (!mobile || ids.includes(step) ? undefined : { display: 'none' as const });
+  const goStep = (id: StepId) => {
+    setStep(id);
+    setTab(STEPS.find((x) => x.id === id)!.tab as Tab);
+    document.documentElement.scrollTop = 0;
+  };
   /** The account as the tour started: if the profile was filled in during it, the end offers a backup. */
   const tourStartAccount = useRef<string | null>(null);
   const [askBackup, setAskBackup] = useState(false);
@@ -371,6 +410,16 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadout, data, inspected !== null, layout.battle?.enemy]);
   const supplyIds = useMemo(() => new Set(loadout ? availableSupplies(loadout).map((s) => s.item.id) : []), [loadout]);
+  // Held items of the Build tab's bag and lists look like this under the pointer.
+  useDragLook('build', (d) => (loadout ? lookOf(loadout, d) : null));
+  /** An item in the storage box, for its details: on its own (it has no neighbours there). */
+  const inspectedStored = inspected ? bagLayout.storage?.find((x) => x.id === inspected) : undefined;
+  const storedAlone = useMemo(() => {
+    if (!inspectedStored || !data || !bagProfile) return null;
+    const lo = buildLoadout(data, bagProfile, { placements: [{ id: inspectedStored.id, item: inspectedStored.item, x: 0, y: 0, rotation: inspectedStored.rotation, supply: inspectedStored.supply }] });
+    return { loadout: lo, stats: aggregateStats(lo), synergy: buildSynergyReport(lo) };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inspectedStored?.id, inspectedStored?.item, inspectedStored?.rotation, data, bagProfile]);
   const profileIssues = useMemo(
     () => (data && bagProfile ? loadProfile({ path: 'profile', text: stringify(bagProfile) }, data).issues : []),
     [data, bagProfile],
@@ -472,105 +521,68 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
     focusBag();
   };
 
-  /** The cells an item would cover with its origin at (x, y), shifted so it stays within reach of the bag. */
-  const cellsAt = (itemId: string, rotation: 0 | 90 | 180 | 270, x: number, y: number) => {
-    const def = placeDef(itemId);
-    const fp = def ? footprintOf(def) : null;
-    if (!fp || !loadout) return null;
-    const cells = placeFootprint(fp, { x, y, rotation }).cells;
-    const { dx, dy } = reachShift(cells, loadout.bag);
-    return { x: x + dx, y: y + dy, cells: cells.map((c) => ({ x: c.x + dx, y: c.y + dy })) };
-  };
-  /** What a drag is: its item and rotation. */
-  const dragItem = (drag: DragPayload): { item: string; rotation: 0 | 90 | 180 | 270 } | null => {
-    if (drag.kind === 'item') return { item: drag.id, rotation: 0 };
-    const p = drag.kind === 'placed' ? bagLayout.placements.find((q) => q.id === drag.id) : bagLayout.storage?.find((q) => q.id === drag.id);
-    return p ? { item: p.item, rotation: p.rotation } : null;
-  };
-  /** Where a drag lands in the bag (its grabbed cell over x, y), kept within reach. */
-  const dropTarget = (drag: DragPayload, x: number, y: number): DropTarget | null => {
-    const it = dragItem(drag);
-    const at = it && cellsAt(it.item, it.rotation, x - drag.dx, y - drag.dy);
-    if (!at || !loadout) return null;
-    const ignore = drag.kind === 'placed' ? drag.id : undefined;
-    const valid = at.cells.every((c) => isUsable(loadout.bag, c.x, c.y) && occupantsAt(loadout.layout, c.x, c.y).every((o) => o === ignore));
-    return { ...at, valid };
-  };
+  /** Where a held item lands in the bag (its held cell over x, y), kept within reach. */
+  const dropTarget = (drag: DragItem, x: number, y: number): Landing | null => (loadout ? landing(loadout, drag, x, y) : null);
 
   const onKey = (action: KeyAction) => {
-    if (!selected) return;
-    const stored = bagLayout.storage?.find((x) => x.id === selected);
-    if (stored) {
-      if (action === 'rotate') editBag((l) => updateStored(l, selected, { rotation: rotateCw(stored.rotation) }));
-      else if (action === 'remove') {
-        editBag((l) => removeStored(l, selected));
-        setSelected(null);
-      } else if (action === 'cancel') setSelected(null);
-      return;
+    if (!selected || !loadout) return;
+    const r = keyOnSelected(bagLayout, loadout, selected, action);
+    if (!r) return;
+    if (r.layout) {
+      const next = r.layout;
+      editBag(() => next);
     }
-    const p = bagLayout.placements.find((x) => x.id === selected);
-    if (!p) return;
-    const d = moveBy(action);
-    if (d) {
-      // Never further than REACH cells outside the bag.
-      const at = cellsAt(p.item, p.rotation, p.x + d.dx, p.y + d.dy);
-      if (!at || (at.x === p.x && at.y === p.y)) return;
-      editBag((l) => updatePlacement(l, selected, { x: at.x, y: at.y }));
-    } else if (action === 'rotate') editBag((l) => updatePlacement(l, selected, { rotation: rotateCw(p.rotation) }));
-    else if (action === 'remove') {
-      editBag((l) => removePlacement(l, selected));
-      setSelected(null);
-    } else if (action === 'cancel') setSelected(null);
+    setSelected(r.selected);
+    if (!r.selected) setInspected(null);
   };
 
-  /** Dropped on the bag with its grabbed cell over (x, y). */
-  const onDrop = (drag: DragPayload, x: number, y: number) => {
+  /** Dropped on the bag with its held cell over (x, y). */
+  const onDrop = (drag: DragItem, x: number, y: number) => {
     const at = dropTarget(drag, x, y);
     if (!at) return;
-    if (drag.kind === 'placed') editBag((l) => updatePlacement(l, drag.id, { x: at.x, y: at.y }));
-    else if (drag.kind === 'stored') editBag((l) => fromStorage(l, drag.id, at.x, at.y));
-    else {
-      const { layout: next, id } = addPlacement(bagLayout, { item: drag.id, x: at.x, y: at.y, rotation: 0, supply: false });
-      editBag(() => next);
-      setSelected(id);
-      focusBag();
-      return;
-    }
-    setSelected(drag.id);
+    const r = dropInBag(bagLayout, drag, at);
+    editBag(() => r.layout);
+    setSelected(r.selected);
     focusBag();
   };
   /** Dropped in the storage box with its top-left corner at (fx, fy). */
-  const onStore = (drag: DragPayload, fx: number, fy: number) => {
-    if (drag.kind === 'placed') editBag((l) => toStorage(l, drag.id, fx, fy));
-    else if (drag.kind === 'stored') editBag((l) => updateStored(l, drag.id, { x: fx, y: fy }));
+  const onStore = (drag: DragItem, fx: number, fy: number) => {
+    if (drag.kind === 'placed') editBag((l) => updateStored(toStorage(l, drag.id, fx, fy), drag.id, { rotation: drag.rotation }));
+    else if (drag.kind === 'stored') editBag((l) => updateStored(l, drag.id, { x: fx, y: fy, rotation: drag.rotation }));
     else {
       const def = placeDef(drag.id);
       if (!def || !footprintOf(def)) return;
       const { layout: next, id } = addStored(bagLayout, drag.id, fx, fy);
-      editBag(() => next);
+      editBag(() => updateStored(next, id, { rotation: drag.rotation, supply: !!drag.supply }));
       setSelected(id);
       return;
     }
     setSelected(drag.id);
   };
   /** Dropped in the bin. */
-  const onTrash = (drag: DragPayload) => {
-    if (drag.kind === 'placed') editBag((l) => removePlacement(l, drag.id));
-    else if (drag.kind === 'stored') editBag((l) => removeStored(l, drag.id));
-    if (selected === drag.id) setSelected(null);
+  const onTrash = (drag: DragItem) => {
+    editBag((l) => dropInBin(l, drag));
+    if (selected === drag.id) {
+      setSelected(null);
+      setInspected(null);
+    }
   };
+  /** How a held item looks (the Build tab's bag and lists; the Battle tab draws its own). */
+  const lookBuild = (d: DragItem) => (loadout ? lookOf(loadout, d) : null);
 
   /** The storage box's items, drawn like the bag's. */
   const storedViews: StoredView[] = (bagLayout.storage ?? []).flatMap((st) => {
     const def = placeDef(st.item);
-    const fp = def ? footprintOf(def) : null;
-    if (!def || !fp) return [];
+    const cells = turnedCells(def, st.rotation);
+    if (!def || !cells) return [];
     const isGear = !!data?.gear.has(st.item);
     return [
       {
         id: st.id,
+        item: st.item,
         name: def.name,
-        cells: placeFootprint(fp, { x: 0, y: 0, rotation: st.rotation }).cells,
+        cells,
+        rotation: st.rotation,
         color: rarityColor('rarity' in def ? (def.rarity as string) : null, isGear),
         sprite: spriteOf(def as Parameters<typeof spriteOf>[0], st.rotation),
         x: st.x,
@@ -734,6 +746,26 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
     }
   };
 
+  /** A build file someone shared as my Arena opponent (with my account, like my own builds). */
+  const doImportOpponent = async (file: File) => {
+    try {
+      const r = readBuild(await file.text(), { v1Profile: v1Ref.current }, file.name);
+      const l = r.layout;
+      const name = (l.name || file.name.replace(/\.ya?ml$/i, '')).slice(0, 64);
+      const build: EnemyBuild = {
+        profile: applySetup(account ?? DEFAULT_PROFILE, l.setup),
+        placements: l.placements,
+        ...(l.bag ? { bag: l.bag } : {}),
+        ...(l.enhanced_cells ? { enhanced_cells: l.enhanced_cells } : {}),
+      };
+      editLayout((cur) => ({ ...cur, battle: { ...(cur.battle ?? { mode: 'arena', seed: 1, runs: 1 }), mode: 'arena', enemy: playerEnemy(name, build) } }));
+      showNotes(`Imported ${file.name}`, r.notes);
+      say(`${name} is your Arena opponent.`);
+    } catch (e) {
+      say(`Couldn't import ${file.name}: ${(e as Error).message}`, true);
+    }
+  };
+
   /** Everything (account and every saved build) as one .zip. */
   const doExportAccount = async () => {
     if (!account) return;
@@ -830,8 +862,8 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
   const bagSizes = bagSizesFor(data, heroClass);
   const bagSize = sizeOf(bagLayout.bag?.mask, bagSizes);
   const enhancer = enhancerOf(data, bagProfile, bagHeroId);
-  // The storage box: as tall as the bag (with its 1-cell border), about a third as wide.
-  const storageH = (loadout.bag.height + 2) * 40;
+  // The storage box: as tall as the bag (with its 1-cell border) and the bin under it, about a third as wide.
+  const storageH = (loadout.bag.height + 2) * 40 + 8 + 52;
   const storageW = Math.round(((loadout.bag.width + 2) * 40) / 3.5);
   const flags = buildFlags(loadout, loaded);
   const pets = petPoints(data, bagProfile);
@@ -934,6 +966,7 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
 
   return (
     <StoreContext.Provider value={store}>
+    <DragLayer />
     <div className="app">
       <div className="topbar">
         <h1>OG Backpack Simulator</h1>
@@ -951,24 +984,14 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
             <button key={t} role="tab" aria-selected={tab === t} className={tab === t ? 'active' : ''} onClick={() => {
                 if (t === 'data') setDataFocus(false);
                 setTab(t);
+                // On a phone, a tab opens its first step (or stays on the current one if it's in that tab).
+                const inTab = STEPS.filter((x) => x.tab === t);
+                if (mobile && inTab.length && !inTab.some((x) => x.id === step)) setStep(inTab[0]!.id);
               }}>
               {label}
             </button>
           ))}
         </div>
-        {enemyBuild && (
-          <div className="tabs" role="radiogroup" aria-label="Whose build" title="Which build the Build and Profile tabs edit: yours, or the enemy's (it has its own bag, hero, gear and pets)">
-            <span className="small muted" style={{ alignSelf: 'center' }}>
-              Editing
-            </span>
-            <button role="radio" aria-checked={side === 'me'} className={side === 'me' ? 'active' : ''} onClick={() => setSide('me')}>
-              My build
-            </button>
-            <button role="radio" aria-checked={side === 'enemy'} className={side === 'enemy' ? 'active enemy-side' : ''} onClick={() => setSide('enemy')}>
-              ⚔ {enemyName}
-            </button>
-          </div>
-        )}
         {message && (
           <span className={`small ${message.error ? 'field-error' : 'muted'}`}>
             <span onClick={() => setMessage(null)}>{message.text}</span>
@@ -1011,6 +1034,15 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
           </span>
         </span>
       </div>
+      {mobile && STEPS.some((x) => x.tab === tab) && (
+        <nav className="steps" aria-label="Steps">
+          {STEPS.map((x, i) => (
+            <button key={x.id} aria-current={step === x.id ? 'step' : undefined} className={step === x.id ? 'active' : ''} onClick={() => goStep(x.id)}>
+              {i + 1}. {x.label}
+            </button>
+          ))}
+        </nav>
+      )}
       {showGuide && tab === 'bag' && (
         <Guide
           empty={(account?.heroes.length ?? 0) === 0}
@@ -1144,8 +1176,10 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
 
       {tab === 'bag' && (
         <div className={`main build${editingEnemy ? ' editing-enemy' : ''}`}>
-          <div className="build-strip">{buildPanel}</div>
-          <div className="stack">
+          <div className="build-strip" style={showIf(['hero', 'gear', 'pets', 'skins', 'items'])}>
+            {buildPanel}
+          </div>
+          <div className="stack" style={showIf(['items'])}>
             <Panel id="battle.items" title="Items">
               <ItemBrowser
                 data={data}
@@ -1163,11 +1197,15 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
                   available: availableSupplies(loadout),
                   inBag: new Set([...loadout.entries.values()].filter((e) => e.supply).map((e) => e.def.id)),
                   onAdd: (s) => startPlacing(s.item.id, true),
+                  onRemove: (itemId) => {
+                    editBag((l) => ({ ...l, placements: l.placements.filter((p) => !(p.supply && p.item === itemId)) }));
+                    setSelected(null);
+                  },
                 }}
               />
             </Panel>
           </div>
-          <div className="stack">
+          <div className="stack" style={showIf(['items'])}>
             {editingEnemy && (
               <div className="issue warning">
                 Editing <b>{enemyName}</b>'s build: bag, hero, gear, pets and skins here, its heroes and auras in the Profile tab. It's saved with your build.{' '}
@@ -1184,21 +1222,35 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
                 }
               }}
             >
-            <Panel id="battle.bag" title="Bag" aside={`${mask.filter((v) => v).length} cells · ${bagLayout.placements.length} placed${bagLayout.storage?.length ? ` · ${bagLayout.storage.length} stored` : ''}`}>
+            <Panel
+              id="battle.bag"
+              title="Bag"
+              aside={`${mask.filter((v) => v).length} cells · ${bagLayout.placements.length} placed${bagLayout.storage?.length ? ` · ${bagLayout.storage.length} stored` : ''}`}
+              tools={
+                enemyBuild && (
+                  <span className="tabs whose" role="radiogroup" aria-label="Whose build" title="Which bag this box edits: yours, or your opponent's (it has its own bag, hero, gear and pets)">
+                    <button role="radio" aria-checked={side === 'me'} className={`small${side === 'me' ? ' active' : ''}`} onClick={() => setSide('me')}>
+                      My build
+                    </button>
+                    <button role="radio" aria-checked={side === 'enemy'} className={`small${side === 'enemy' ? ' active enemy-side' : ''}`} onClick={() => setSide('enemy')}>
+                      ⚔ {enemyName}
+                    </button>
+                  </span>
+                )
+              }
+            >
               <div className="bag-status small">
                 {selectedStored || selectedPlacement ? (
                   <>
                     <div className="muted">
                       {selectedStored
                         ? 'In the storage: drag it into the bag. Space or another click rotates it, Delete removes it.'
-                        : 'Arrows move it, space or another click rotates it, Delete removes it (or drag it to the bin).'}
+                        : 'Arrows move it, space or another click rotates it (space works while dragging too), Delete removes it (or drag it to the bin).'}
                     </div>
                     <div className="row bag-actions">
-                      {selectedPlacement && (
-                        <button className="primary details-button" onClick={() => setInspected(selected)} aria-pressed={inspected === selected}>
-                          Item details
-                        </button>
-                      )}
+                      <button className="primary details-button" onClick={() => setInspected(selected)} aria-pressed={inspected === selected}>
+                        Item details
+                      </button>
                       <button className="small" onClick={() => onKey('rotate')}>
                         Rotate
                       </button>
@@ -1221,39 +1273,41 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
                 )}
               </div>
               <div className="bag-and-storage">
-                <BagGrid
-                  loadout={loadout}
-                  issues={issues}
-                  selected={selected}
-                  hovered={hovered}
-                  maskEdit={maskEdit}
-                  enhanced={bagLayout.enhanced_cells ?? []}
-                  enhancedLook={enhancer}
-                  enhanceEdit={enhanceEdit}
-                  onToggleEnhanced={toggleEnhanced}
-                  onSelect={(id) => {
-                    setSelected(id);
-                    if (id === null) setInspected(null);
-                  }}
-                  onRotate={() => onKey('rotate')}
-                  onHover={setHovered}
-                  onToggleMask={toggleMask}
-                  dropTarget={dropTarget}
-                  onDrop={onDrop}
-                  onKey={onKey}
-                />
-                <div className="storage-column">
-                  <Storage
-                    items={storedViews}
-                    width={storageW}
-                    height={storageH}
+                <div className="bag-column">
+                  <BagGrid
+                    loadout={loadout}
+                    issues={issues}
                     selected={selected}
-                    onSelect={setSelected}
+                    hovered={hovered}
+                    maskEdit={maskEdit}
+                    enhanced={bagLayout.enhanced_cells ?? []}
+                    enhancedLook={enhancer}
+                    enhanceEdit={enhanceEdit}
+                    onToggleEnhanced={toggleEnhanced}
+                    onSelect={(id) => {
+                      setSelected(id);
+                      if (id === null) setInspected(null);
+                    }}
                     onRotate={() => onKey('rotate')}
-                    onDrop={onStore}
+                    onHover={setHovered}
+                    onToggleMask={toggleMask}
+                    dropTarget={dropTarget}
+                    onDrop={onDrop}
+                    onKey={onKey}
+                    acceptsNew
                   />
                   <Bin onDrop={onTrash} />
                 </div>
+                <Storage
+                  items={storedViews}
+                  width={storageW}
+                  height={storageH}
+                  selected={selected}
+                  look={lookBuild}
+                  onSelect={setSelected}
+                  onRotate={() => onKey('rotate')}
+                  onDrop={onStore}
+                />
               </div>
               <div className="row small" style={{ justifyContent: 'space-between', marginTop: 6 }}>
                 {value && (
@@ -1357,33 +1411,41 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
               }
             />
           </div>
-          <div className="stack">
+          <div className="stack" style={showIf(['hero', 'gear', 'pets', 'skins'])}>
+            <div style={showIf(['hero'])}>
             <Panel id="battle.hero" title="Hero">
               <HeroEditor data={data} profile={bagProfile} heroId={editingEnemy ? bagProfile.active_hero : (layout.hero ?? null)} onHero={(id) => (editingEnemy ? setBagProfile({ ...bagProfile, active_hero: id }) : setBuildHero(id))} update={updateBag} account={!editingEnemy} />
             </Panel>
+            </div>
+            <div style={showIf(['gear'])}>
             <Panel id="battle.gear" title="Gear">
               <GearEditor data={data} profile={bagProfile} update={updateBag} loadout={loadout} onPlace={(g) => startPlacing(g.id)} />
             </Panel>
+            </div>
+            <div style={showIf(['pets'])}>
             <Panel id="battle.pets" title="Pets" aside={`${pets.used} / ${pets.max} points`}>
               <PetsEditor data={data} profile={bagProfile} update={updateBag} account={!editingEnemy} />
             </Panel>
+            </div>
+            <div style={showIf(['skins'])}>
             <Panel id="battle.skins" title="Skins" aside={`${(bagProfile.equipped_skins ?? []).length} / 2`}>
               <SkinsEditor data={data} profile={bagProfile} update={updateBag} account={!editingEnemy} />
             </Panel>
-            <Panel id="battle.stats" title="Stats">
-              <BuildStats data={data} profile={bagProfile} update={updateBag} account={!editingEnemy} />
-              <ItemStats
-                stats={stats}
-                synergy={synergy}
-                selected={inspected}
-                onSelect={(id) => {
-                  setSelected(id);
-                  setInspected(id);
-                }}
-              />
-            </Panel>
+            </div>
           </div>
-          {inspected && stats?.items.get(inspected) && (
+          {inspected && storedAlone?.stats.items.get(inspected) && (
+            <ItemDrawer
+              s={storedAlone.stats.items.get(inspected)!}
+              syn={storedAlone.synergy.get(inspected)}
+              start={undefined}
+              names={(id) => storedAlone.stats.items.get(id)?.name ?? id}
+              image={(storedAlone.loadout.layout.items.get(inspected)?.def as { image?: string } | undefined)?.image}
+              worth={itemWorth(storedAlone.loadout, inspected)}
+              note="In the storage: its numbers on its own, without neighbours in the bag."
+              onClose={() => setInspected(null)}
+            />
+          )}
+          {inspected && !inspectedStored && stats?.items.get(inspected) && (
             <ItemDrawer
               s={stats.items.get(inspected)!}
               syn={synergy.get(inspected)}
@@ -1400,8 +1462,10 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
       {/* Kept mounted (only hidden) so a battle's results survive switching tabs. */}
       <div style={tab === 'battle' ? undefined : { display: 'none' }}>
         <BattleTab
+          only={mobile ? (step === 'fight' ? 'fight' : 'opponent') : undefined}
           data={data}
-          loadout={playerLoadout}
+          layout={layout}
+          profile={profile}
           layoutName={layoutName}
           builds={builds}
           battle={layout.battle}
@@ -1419,6 +1483,11 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
             else if (name === null) openTemp();
             else void openLayout(name);
           }}
+          onKeep={(l) => {
+            editLayout((cur) => ({ ...cur, placements: l.placements, ...(l.storage ? { storage: l.storage } : {}) }));
+            say(layoutName ? `Kept the new arrangement in "${layoutName}" (not saved yet).` : 'Kept the new arrangement in the temp build.');
+          }}
+          onImportOpponent={(f) => void doImportOpponent(f)}
         />
       </div>
       {askOpen && (
@@ -1473,7 +1542,8 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
             data={data}
             profile={bagProfile}
             issues={profileIssues}
-            loadoutIssues={issues.filter((i) => /^(gear_|pet_|blessing_|link_|hero_)/.test(i.code))}
+            // Only what's about the account (the build's own checks are in the Build tab).
+            loadoutIssues={issues.filter((i) => /^(blessing_|link_)/.test(i.code))}
             editingEnemy={editingEnemy}
             // My Profile tab is the account only: heroes, stars, links, auras. It never touches the build's setup.
             onChange={(p) => (editingEnemy ? setBagProfile(p) : setAccount(accountOf(p)))}
@@ -1522,6 +1592,26 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
         </>
       )}
 
+      {mobile && STEPS.some((x) => x.tab === tab) && (
+        <div className="step-nav">
+          {(() => {
+            const i = STEPS.findIndex((x) => x.id === step);
+            return (
+              <>
+                <button disabled={i <= 0} onClick={() => goStep(STEPS[i - 1]!.id)}>
+                  ← Back
+                </button>
+                <span className="small muted">
+                  {i + 1} / {STEPS.length}
+                </span>
+                <button className="primary" disabled={i >= STEPS.length - 1} onClick={() => goStep(STEPS[i + 1]!.id)}>
+                  {i < STEPS.length - 1 ? `Next: ${STEPS[i + 1]!.label} →` : 'Done'}
+                </button>
+              </>
+            );
+          })()}
+        </div>
+      )}
       {tab === 'data' && <DataPanel key={dataFocus ? 'build' : 'all'} result={loaded} buildRefs={buildDataRefs(playerLoadout)} focusBuild={dataFocus} />}
     </div>
     </StoreContext.Provider>

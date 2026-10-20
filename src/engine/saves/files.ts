@@ -1,5 +1,6 @@
 /**
- * The saved-file formats (version 3, 2026-10-19), and how they map to the engine's Profile and LayoutData.
+ * The saved-file formats (version 3, 2026-10-19; version 4, 2026-10-20, adds the battle's chapter and typed-in
+ * attacks' on-hit statuses and % of max HP damage), and how they map to the engine's Profile and LayoutData.
  *
  * Account (profile/profile.yaml): everything I own, the same for every build — HP / ATK / Block as the game's
  * Stat Details screen shows them, the heroes I own with their stars, skill links and Dragon's Blessings, the
@@ -23,7 +24,7 @@ import {
 } from '../model';
 import { BagMaskSchema, EnhancedCellsSchema, StoredItemSchema } from '../model/placement';
 
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;
 
 /** HP / ATK / Block before they're entered (an account with these hasn't entered its stats yet). */
 export const DEFAULT_BASIC_STATS = { hp: '1M', atk: '100K', initial_block: 0 } as { hp: z.infer<typeof Abbrev>; atk: z.infer<typeof Abbrev>; initial_block: z.infer<typeof Abbrev> };

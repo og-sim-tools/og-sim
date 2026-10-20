@@ -23,6 +23,8 @@ interface Props {
   names: (id: string) => string;
   image?: string;
   worth?: ItemWorth;
+  /** A line under the title (an item in the storage box: its numbers on its own). */
+  note?: string;
   onClose: () => void;
 }
 
@@ -49,7 +51,7 @@ function Worth({ w }: { w: ItemWorth }) {
 
 const changed = (a: number | null | undefined, b: number | null | undefined) => a != null && b != null && Math.abs(a - b) > 1e-6;
 
-export function ItemDrawer({ s, syn, start, names, image, worth, onClose }: Props) {
+export function ItemDrawer({ s, syn, start, names, image, worth, note, onClose }: Props) {
   const rows: [string, number | null | undefined, number | null | undefined, (n: number) => string][] = [
     ['DMG / hit', s.damage?.perHit, start?.damagePerHit, formatShown],
     ['Cooldown', s.cooldown?.final, start?.cooldown, (n) => `${n.toFixed(2)}s`],
@@ -70,6 +72,7 @@ export function ItemDrawer({ s, syn, start, names, image, worth, onClose }: Prop
           ✕
         </button>
       </div>
+      {note && <div className="small muted">{note}</div>}
       {worth && <Worth w={worth} />}
       {shown.length > 0 && (
         <table className="stats" style={{ marginTop: 8 }}>

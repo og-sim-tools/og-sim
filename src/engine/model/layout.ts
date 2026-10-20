@@ -42,6 +42,15 @@ export const LayoutBattleSchema = z
     enemy: z.union([Id, InlineEnemySchema]).optional(),
     /** Gauntlet / Boss Rush: the enemies in order. */
     enemies: z.array(z.union([Id, InlineEnemySchema])).optional(),
+    /** Chapter mode: which chapter, sandbox (one of its enemies) or a full playthrough [later], and which enemy (1-based). */
+    chapter: z
+      .object({
+        number: z.number().int().positive(),
+        play: z.enum(['sandbox', 'playthrough']).default('sandbox'),
+        fight: z.number().int().positive().default(1),
+      })
+      .strict()
+      .optional(),
   })
   .strict();
 

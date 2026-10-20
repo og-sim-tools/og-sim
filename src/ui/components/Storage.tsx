@@ -1,10 +1,11 @@
 /**
  * Beside the bag: a storage box to set items aside while rearranging (anywhere, not on a grid; they don't
- * fight or count), and a bin to drop items in to remove them.
+ * fight or count). Under the bag: a bin to drop items in to remove them.
  */
-import { type DragEvent, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import type { Cell } from '../../engine/bag';
-import { type DragLook, type DragPayload, SIZE, type SpriteInfo, endDrag, readDrag, spriteScale, startDrag } from './BagGrid';
+import { type DragItem, type DragLook, beginDrag, dragJustEnded, useDropTarget } from '../drag';
+import { SIZE, type SpriteInfo, spriteScale } from './BagGrid';
 import { TrashIcon } from './BuildPicker';
 
 /** Stored items are drawn smaller than in the bag, so they fit the narrow box. */
@@ -13,9 +14,11 @@ const S = SIZE * STORAGE_SCALE;
 
 export interface StoredView {
   id: string;
+  item: string;
   name: string;
-  /** Its cells as turned, relative to its placement origin. */
+  /** Its cells as turned, relative to its placement origin (in footprint order). */
   cells: Cell[];
+  rotation: 0 | 90 | 180 | 270;
   color: string;
   sprite: SpriteInfo | null;
   /** Top-left corner as shares (0–1) of the box. */
@@ -28,41 +31,40 @@ interface Props {
   width: number;
   height: number;
   selected: string | null;
+  /** The bag these items belong to. */
+  scope?: string;
+  /** How a held item looks (its cells as turned), to place its corner where it's dropped. */
+  look: (d: DragItem) => DragLook | null;
   onSelect: (id: string) => void;
   onRotate: (id: string) => void;
   /** Dropped with the item's top-left corner at (fx, fy), as shares of the box. */
-  onDrop: (drag: DragPayload, fx: number, fy: number) => void;
+  onDrop: (drag: DragItem, fx: number, fy: number) => void;
 }
 
-export function Storage({ items, width, height, selected, onSelect, onRotate, onDrop }: Props) {
+export function Storage({ items, width, height, selected, scope = 'build', look, onSelect, onRotate, onDrop }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const [over, setOver] = useState(false);
-  const drop = (e: DragEvent) => {
-    e.preventDefault();
-    setOver(false);
-    const drag = readDrag(e);
-    endDrag();
-    if (!drag) return;
-    const r = ref.current!.getBoundingClientRect();
-    const fx = (e.clientX - r.left - drag.gx * STORAGE_SCALE) / Math.max(1, r.width || width);
-    const fy = (e.clientY - r.top - drag.gy * STORAGE_SCALE) / Math.max(1, r.height || height);
-    onDrop(drag, Math.max(0, Math.min(1, fx)), Math.max(0, Math.min(1, fy)));
-  };
+  useDropTarget(ref, {
+    accepts: (d) => d.kind === 'item' || d.scope === scope,
+    over: () => setOver(true),
+    leave: () => setOver(false),
+    drop: (d, x, y) => {
+      setOver(false);
+      const r = ref.current!.getBoundingClientRect();
+      const l = look(d);
+      // The held cell is under the pointer: the item's corner is that far up and left of it.
+      const g = l?.cells[d.grab];
+      const minX = l ? Math.min(...l.cells.map((c) => c.x)) : 0;
+      const minY = l ? Math.min(...l.cells.map((c) => c.y)) : 0;
+      const offX = g ? (g.x - minX + d.inCell.x) * S : S / 2;
+      const offY = g ? (g.y - minY + d.inCell.y) * S : S / 2;
+      const fx = (x - r.left - offX) / Math.max(1, r.width || width);
+      const fy = (y - r.top - offY) / Math.max(1, r.height || height);
+      onDrop(d, Math.max(0, Math.min(1, fx)), Math.max(0, Math.min(1, fy)));
+    },
+  });
   return (
-    <div
-      ref={ref}
-      className={`storage${over ? ' over' : ''}`}
-      role="region"
-      aria-label="Storage"
-      style={{ width, height }}
-      onDragOver={(e) => {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-        setOver(true);
-      }}
-      onDragLeave={(e) => !ref.current?.contains(e.relatedTarget as Node) && setOver(false)}
-      onDrop={drop}
-    >
+    <div ref={ref} className={`storage${over ? ' over' : ''}`} role="region" aria-label="Storage" style={{ width, height }}>
       {items.length === 0 && <div className="storage-hint small muted">Storage: drop items here while you rearrange. They don't fight or count.</div>}
       {items.map((it) => {
         const minX = Math.min(...it.cells.map((c) => c.x));
@@ -72,26 +74,30 @@ export function Storage({ items, width, height, selected, onSelect, onRotate, on
         // Kept inside the box however it was dropped.
         const left = Math.max(0, Math.min(width - w, it.x * width));
         const top = Math.max(0, Math.min(height - h, it.y * height));
-        const look: DragLook = { cells: it.cells, color: it.color, sprite: it.sprite };
         return (
           <div
             key={it.id}
             className={`stored-item${it.id === selected ? ' selected' : ''}`}
             style={{ left, top, width: w, height: h }}
             title={`${it.name} (in storage)${it.id === selected ? ' · click again to rotate' : ''}`}
-            draggable
-            onDragStart={(e) => {
+            onPointerDown={(e) => {
               const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
-              const lx = e.clientX ? e.clientX - r.left : S / 2;
-              const ly = e.clientY ? e.clientY - r.top : S / 2;
-              const cx = Math.max(0, Math.min(Math.floor(lx / S), Math.round(w / S) - 1));
-              const cy = Math.max(0, Math.min(Math.floor(ly / S), Math.round(h / S) - 1));
-              startDrag(e, { kind: 'stored', id: it.id, dx: minX + cx, dy: minY + cy, gx: lx / STORAGE_SCALE, gy: ly / STORAGE_SCALE }, look);
-              onSelect(it.id);
+              const lx = (e.clientX - r.left) / S + minX;
+              const ly = (e.clientY - r.top) / S + minY;
+              // The cell under the pointer (or the nearest one).
+              let grab = 0;
+              let best = Infinity;
+              it.cells.forEach((c, i) => {
+                const dist = Math.hypot(c.x + 0.5 - lx, c.y + 0.5 - ly);
+                if (dist < best) [best, grab] = [dist, i];
+              });
+              const g = it.cells[grab]!;
+              const inCell = { x: Math.max(0, Math.min(0.99, lx - g.x)), y: Math.max(0, Math.min(0.99, ly - g.y)) };
+              beginDrag(e, { kind: 'stored', id: it.id, item: it.item, rotation: it.rotation, grab, inCell, scope });
             }}
-            onDragEnd={endDrag}
             onClick={(e) => {
               e.stopPropagation();
+              if (dragJustEnded()) return;
               if (it.id === selected) onRotate(it.id);
               else onSelect(it.id);
             }}
@@ -120,28 +126,20 @@ export function Storage({ items, width, height, selected, onSelect, onRotate, on
 }
 
 /** Drop an item here to take it out of the bag (or the storage box). */
-export function Bin({ onDrop }: { onDrop: (drag: DragPayload) => void }) {
+export function Bin({ scope = 'build', onDrop }: { scope?: string; onDrop: (drag: DragItem) => void }) {
+  const ref = useRef<HTMLDivElement>(null);
   const [over, setOver] = useState(false);
+  useDropTarget(ref, {
+    accepts: (d) => d.kind !== 'item' && d.scope === scope,
+    over: () => setOver(true),
+    leave: () => setOver(false),
+    drop: (d) => {
+      setOver(false);
+      onDrop(d);
+    },
+  });
   return (
-    <div
-      className={`bin${over ? ' over' : ''}`}
-      role="region"
-      aria-label="Bin"
-      title="Drop an item here to remove it"
-      onDragOver={(e) => {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-        setOver(true);
-      }}
-      onDragLeave={() => setOver(false)}
-      onDrop={(e) => {
-        e.preventDefault();
-        setOver(false);
-        const drag = readDrag(e);
-        endDrag();
-        if (drag) onDrop(drag);
-      }}
-    >
+    <div ref={ref} className={`bin${over ? ' over' : ''}`} role="region" aria-label="Bin" title="Drop an item here to remove it">
       <TrashIcon />
       <span className="small">Drop here to remove</span>
     </div>
