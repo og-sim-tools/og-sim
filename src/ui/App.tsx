@@ -1183,6 +1183,7 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
             <Panel id="battle.items" title="Items">
               <ItemBrowser
                 data={data}
+                heroClass={heroClass}
                 showEnemyItems={editingEnemy}
                 supplyIds={supplyIds}
                 onPick={(e) => startPlacing(e.id)}

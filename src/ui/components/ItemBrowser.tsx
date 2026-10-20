@@ -35,6 +35,8 @@ interface Props {
   showEnemyItems?: boolean;
   /** The starting equipment tab (left out: no tab). */
   starting?: StartingEquipment;
+  /** The build's hero's class: the class filter follows it until it's changed by hand (user, 2026-10-20). */
+  heroClass?: string | null;
 }
 
 const ITEM_RARITIES = RARITIES.slice(0, 5);
@@ -128,7 +130,7 @@ export function SortMenu({ value, onChange }: { value: Order; onChange: (o: Orde
 }
 
 /** Search, kind, class, tag and hero filters with the Sort menu (the starting equipment tab leaves some out). */
-function Filters({ f, set, tags, data, kinds = true, heroes = true }: { f: BrowserFilter & Order; set: (patch: Partial<BrowserFilter & Order>) => void; tags: string[]; data: GameData; kinds?: boolean; heroes?: boolean }) {
+function Filters({ f, set, tags, data, kinds = true, heroes = true }: { f: BrowserFilter & Order; set: (patch: Partial<BrowserFilter & Order> & { clsByHand?: boolean }) => void; tags: string[]; data: GameData; kinds?: boolean; heroes?: boolean }) {
   return (
     <div className="filters">
       <input placeholder="Search by name…" value={f.text} onChange={(e) => set({ text: e.target.value })} aria-label={kinds ? 'Search items' : 'Search starting equipment'} />
@@ -139,7 +141,7 @@ function Filters({ f, set, tags, data, kinds = true, heroes = true }: { f: Brows
           <option value="pet_spawn">Pet-spawned</option>
         </select>
       )}
-      <select value={f.cls} onChange={(e) => set({ cls: e.target.value })} aria-label="Class">
+      <select value={f.cls} onChange={(e) => set({ cls: e.target.value, clsByHand: true })} aria-label="Class">
         <option value="">Any class</option>
         {CLASSES.map((c) => (
           <option key={c} value={c}>
@@ -172,10 +174,17 @@ function Filters({ f, set, tags, data, kinds = true, heroes = true }: { f: Brows
 
 const START: BrowserFilter & Order = { ...EMPTY_FILTER, sort: 'name' };
 
-export function ItemBrowser({ data, supplyIds, onPick, onEdit, showEnemyItems = false, starting }: Props) {
+export function ItemBrowser({ data, supplyIds, onPick, onEdit, showEnemyItems = false, starting, heroClass = null }: Props) {
   const [tab, setTab] = useState<'items' | 'starting'>('items');
-  const [f, setF] = useState<BrowserFilter & Order>(START);
-  const [sf, setSf] = useState<BrowserFilter & Order>(START);
+  const [f, setF] = useState<BrowserFilter & Order>(() => ({ ...START, cls: heroClass ?? '' }));
+  const [sf, setSf] = useState<BrowserFilter & Order>(() => ({ ...START, cls: heroClass ?? '' }));
+  // The class filter follows the hero's class (items for any class always show) until it's picked by hand.
+  const manualCls = useRef(false);
+  useEffect(() => {
+    if (manualCls.current) return;
+    setF((x) => ({ ...x, cls: heroClass ?? '' }));
+    setSf((x) => ({ ...x, cls: heroClass ?? '' }));
+  }, [heroClass]);
   // Gear isn't listed: the Gear box puts it in the bag.
   const entries = useMemo(
     () => browserEntries(data).filter((e) => e.kind !== 'gear' && (showEnemyItems || !data.items.get(e.id)?.enemy_item)),
@@ -183,7 +192,10 @@ export function ItemBrowser({ data, supplyIds, onPick, onEdit, showEnemyItems = 
   );
   const tags = useMemo(() => allTags(entries), [entries]);
   const shown = useMemo(() => sortEntries(filterEntries(entries, f, supplyIds), f.sort), [entries, f, supplyIds]);
-  const set = (patch: Partial<BrowserFilter & Order>) => setF((x) => ({ ...x, ...patch }));
+  const set = ({ clsByHand, ...patch }: Partial<BrowserFilter & Order> & { clsByHand?: boolean }) => {
+    if (clsByHand) manualCls.current = true;
+    setF((x) => ({ ...x, ...patch }));
+  };
   const heroName = (id: string) => data.heroes.get(id)?.name ?? id;
   const onStart = tab === 'starting' && !!starting;
 
@@ -200,7 +212,15 @@ export function ItemBrowser({ data, supplyIds, onPick, onEdit, showEnemyItems = 
         </div>
       )}
       {onStart ? (
-        <StartingList s={starting} f={sf} set={(patch) => setSf((x) => ({ ...x, ...patch }))} data={data} />
+        <StartingList
+          s={starting}
+          f={sf}
+          set={({ clsByHand, ...patch }) => {
+            if (clsByHand) manualCls.current = true;
+            setSf((x) => ({ ...x, ...patch }));
+          }}
+          data={data}
+        />
       ) : (
         <>
           <Filters f={f} set={set} tags={tags} data={data} />
@@ -239,7 +259,7 @@ export function ItemBrowser({ data, supplyIds, onPick, onEdit, showEnemyItems = 
 }
 
 /** Starting equipment the hero can bring: one of each, within its Supply Ability. Same filters as the shop items. */
-function StartingList({ s, f, set, data }: { s: StartingEquipment; f: BrowserFilter & Order; set: (patch: Partial<BrowserFilter & Order>) => void; data: GameData }) {
+function StartingList({ s, f, set, data }: { s: StartingEquipment; f: BrowserFilter & Order; set: (patch: Partial<BrowserFilter & Order> & { clsByHand?: boolean }) => void; data: GameData }) {
   const entries = useMemo(
     () =>
       s.available.map((a) => ({

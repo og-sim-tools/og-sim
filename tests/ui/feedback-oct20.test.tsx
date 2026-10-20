@@ -160,3 +160,23 @@ describe('later feedback of 2026-10-20', () => {
     expect(screen.getByText(/= 12 runs/)).toBeTruthy();
   });
 });
+
+describe('the item class filter', () => {
+  it("follows the build's hero's class (items for any class stay), until it's changed by hand", async () => {
+    const { ItemBrowser } = await import('../../src/ui/components/ItemBrowser');
+    const props = { data, supplyIds: new Set<string>(), onPick: vi.fn(), onEdit: vi.fn() };
+    const { rerender, container } = render(<ItemBrowser {...props} heroClass="ranger" />);
+    const cls = () => (screen.getByLabelText('Class') as HTMLSelectElement).value;
+    const classes = () => [...container.querySelectorAll('.list-row .badge.class')].map((b) => b.textContent).filter((t) => !t!.startsWith('🔒'));
+    expect(cls()).toBe('ranger');
+    expect(classes().every((c) => c!.split('/').includes('ranger'))).toBe(true);
+    expect(container.querySelector('.list-row .name')).toBeTruthy();
+    // Universal items (no class badge) are still listed.
+    expect([...container.querySelectorAll('.list-row')].some((r) => !r.querySelector('.badge.class'))).toBe(true);
+    rerender(<ItemBrowser {...props} heroClass="wizard" />);
+    expect(cls()).toBe('wizard');
+    fireEvent.change(screen.getByLabelText('Class'), { target: { value: '' } });
+    rerender(<ItemBrowser {...props} heroClass="warrior" />);
+    expect(cls()).toBe(''); // picked by hand: stays
+  });
+});
