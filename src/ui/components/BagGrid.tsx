@@ -121,6 +121,12 @@ interface Props {
   readOnly?: boolean;
   /** Which bag this is: placed items only move within their own bag (default "build"). */
   scope?: string;
+  /** Every selected item when there are several (Shift+click, a Shift+drag box); `selected` is one of them. */
+  multi?: ReadonlySet<string>;
+  /** Shift+click on an item: add it to the selection or take it out. */
+  onShiftSelect?: (id: string) => void;
+  /** Shift+drag a box over the bag: the items it touches. */
+  onBoxSelect?: (ids: string[]) => void;
   /** Items that will be put in the bag at the start of battle (pets' spawns), drawn faintly where they'll go. */
   ghosts?: { id: string; name: string; cells: Cell[]; sprite: SpriteInfo | null; color: string }[];
   /** Items from the lists and the storage box can be dropped here (the Build tab's bag). */
@@ -163,6 +169,12 @@ export function BagGrid(p: Props) {
   const settings = useSettings();
   // The item being held isn't drawn where it was (user, 2026-10-22): only under the pointer and where it lands.
   const held = useDraggedId(scope);
+  const isSel = (id: string) => id === selected || !!p.multi?.has(id);
+  /** The item a press just selected: its click isn't a second click (that would turn it). */
+  const pressed = useRef<string | null>(null);
+  /** A Shift+drag selection box (px in the grid), and whether one just ended (its click isn't a click). */
+  const [box, setBox] = useState<{ x0: number; y0: number; x1: number; y1: number } | null>(null);
+  const boxEnded = useRef(false);
   /** Degrees each item's picture is shown at: always turning clockwise by the short way (so a turn animates). */
   const shownTurn = useRef(new Map<string, number>());
   const turnOf = (id: string, r: number) => {
@@ -302,7 +314,12 @@ export function BagGrid(p: Props) {
                 ? 'Click to toggle this bag cell'
                 : `(${x},${y})${on ? '' : ' not available'}${isEnhanced ? ` · enhanced by ${look?.skill ?? 'a hero skill'}${look ? `: ${look.label}` : ''}` : ''}`
           }
-          onClick={() => (p.enhanceEdit ? p.onToggleEnhanced?.(x, y) : p.maskEdit ? p.onToggleMask(x, y) : p.onSelect(null))}
+          onClick={(e) => {
+            if (boxEnded.current || e.shiftKey) return;
+            if (p.enhanceEdit) p.onToggleEnhanced?.(x, y);
+            else if (p.maskEdit) p.onToggleMask(x, y);
+            else p.onSelect(null);
+          }}
         />,
       );
     }
@@ -341,13 +358,13 @@ export function BagGrid(p: Props) {
         <div
           key={`i${id}${c.x},${c.y}`}
           data-item={id}
-          className={`item-cell${id === selected ? ' selected' : ''}${id === hovered ? ' hovered' : ''}${touched.has(id) ? ' touched' : ''}${invalidIds.has(id) ? ' invalid' : ''}${sprite ? ' has-sprite' : ''}`}
+          className={`item-cell${isSel(id) ? ' selected' : ''}${id === hovered ? ' hovered' : ''}${touched.has(id) ? ' touched' : ''}${invalidIds.has(id) ? ' invalid' : ''}${sprite ? ' has-sprite' : ''}`}
           style={{
             left: px(c.x),
             top: px(c.y),
             background: paint.background,
             borderStyle: 'solid',
-            borderColor: paint.edge ?? (id === selected ? 'white' : 'rgba(0,0,0,0.35)'),
+            borderColor: paint.edge ?? (isSel(id) ? 'white' : 'rgba(0,0,0,0.35)'),
             borderWidth: `${edge(0, -1)} ${edge(1, 0)} ${edge(0, 1)} ${edge(-1, 0)}`,
             zIndex: id === selected ? 2 : 1,
             // While marking enhanced cells, clicks go through to the cell underneath.
@@ -358,13 +375,25 @@ export function BagGrid(p: Props) {
           title={`${copyName(String(item.def.name ?? ''), copy)}${entry?.supply ? ' (starting equipment)' : ''}${id === selected ? ' · click again to rotate' : ''}`}
           onPointerDown={(e) => {
             if (p.readOnly || p.maskEdit || p.enhanceEdit) return;
+            // Selected on the press (user, 2026-10-22): space right away turns this one, not the one before.
+            // Pressing one of several selected keeps them all (to drag them together).
+            pressed.current = null;
+            if (!e.shiftKey && !isSel(id)) {
+              pressed.current = id;
+              p.onSelect(id);
+            }
             const at = cellUnder(e, e.currentTarget);
             beginDrag(e, { kind: 'placed', id, item: item.placement.itemId, rotation: item.placement.rotation, grab: index, inCell: at.inCell, scope });
           }}
           onClick={(e) => {
             e.stopPropagation();
             if (dragJustEnded()) return;
-            if (id === selected) p.onRotate?.(id);
+            if (e.shiftKey && p.onShiftSelect) {
+              p.onShiftSelect(id);
+              return;
+            }
+            if (pressed.current === id) pressed.current = null;
+            else if (id === selected && !p.multi) p.onRotate?.(id);
             else p.onSelect(id);
             ref.current?.focus();
           }}
@@ -387,7 +416,40 @@ export function BagGrid(p: Props) {
         aria-label="Backpack"
         style={{ width, height, ['--cell-size' as string]: `${SIZE}px`, ...(look ? { ['--enh' as string]: look.color } : {}) }}
         onKeyDown={onKeyDown}
+        onPointerDown={(e) => {
+          // Shift+drag on the bag (not on an item): a box, and the items it touches are selected.
+          if (!e.shiftKey || !p.onBoxSelect || p.readOnly || p.maskEdit || p.enhanceEdit || (e.target as HTMLElement).closest('.item-cell')) return;
+          e.preventDefault();
+          const r = ref.current!.getBoundingClientRect();
+          const x0 = e.clientX - r.left;
+          const y0 = e.clientY - r.top;
+          setBox({ x0, y0, x1: x0, y1: y0 });
+          const move = (ev: PointerEvent) => setBox({ x0, y0, x1: ev.clientX - r.left, y1: ev.clientY - r.top });
+          const up = (ev: PointerEvent) => {
+            window.removeEventListener('pointermove', move);
+            window.removeEventListener('pointerup', up);
+            setBox(null);
+            const x1 = ev.clientX - r.left;
+            const y1 = ev.clientY - r.top;
+            const cx0 = Math.floor(Math.min(x0, x1) / SIZE) - MARGIN;
+            const cx1 = Math.floor(Math.max(x0, x1) / SIZE) - MARGIN;
+            const cy0 = Math.floor(Math.min(y0, y1) / SIZE) - MARGIN;
+            const cy1 = Math.floor(Math.max(y0, y1) / SIZE) - MARGIN;
+            const ids = [...layout.items.entries()].filter(([, it]) => it.cells.some((c) => c.x >= cx0 && c.x <= cx1 && c.y >= cy0 && c.y <= cy1)).map(([id]) => id);
+            boxEnded.current = true;
+            setTimeout(() => (boxEnded.current = false), 0);
+            p.onBoxSelect!(ids);
+          };
+          window.addEventListener('pointermove', move);
+          window.addEventListener('pointerup', up);
+        }}
       >
+        {box && (
+          <div
+            className="box-select"
+            style={{ left: Math.min(box.x0, box.x1), top: Math.min(box.y0, box.y1), width: Math.abs(box.x1 - box.x0), height: Math.abs(box.y1 - box.y0) }}
+          />
+        )}
         {bgCells}
         {itemCells}
         {sprites}

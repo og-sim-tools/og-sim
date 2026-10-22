@@ -228,3 +228,85 @@ describe('Fight from the Build tab', () => {
     expect(screen.getAllByLabelText(/new seed each run/).length).toBeGreaterThan(0);
   }, 30000);
 });
+
+describe('feedback of 2026-10-22, later', () => {
+  it('copying with no room puts the copy right over the original (no warning)', async () => {
+    await start('version: 4\nheroes: [{ id: erwen, stars: 9 }]\n', 'version: 4\nhero: erwen\nbag: { mask: [1,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0] }\nplacements: [{ id: "rock#1", item: rock, x: 0, y: 0 }]\n');
+    fireEvent.click(cellsOf('Rock')[0]!);
+    key('d');
+    expect(cellsOf('Rock')).toHaveLength(2);
+    expect(cellsOf('Rock').map((c) => c.style.left)).toEqual([cellsOf('Rock')[0]!.style.left, cellsOf('Rock')[0]!.style.left]);
+    expect(document.body.textContent).not.toMatch(/No room for/);
+  }, 30000);
+
+  it('pressing another item selects it at once: space then turns that one', async () => {
+    await start();
+    pick('Rock');
+    pick("Hunter's Bow");
+    const rock = cellsOf('Rock')[0]!;
+    ptr(rock, 'pointerdown', 5, 5);
+    expect(cellsOf('Rock')[0]!.className).toMatch(/selected/);
+    // Its click after the press doesn't turn it too.
+    ptr(rock, 'pointerup', 5, 5);
+    fireEvent.click(rock);
+    expect(cellsOf('Rock')[0]!.className).toMatch(/selected/);
+    const bowTurn = cellsOf("Hunter's Bow").map((c) => c.style.left).join();
+    fireEvent.keyDown(screen.getByRole('grid', { name: 'Backpack' }), { key: ' ' });
+    expect(cellsOf("Hunter's Bow").map((c) => c.style.left).join()).toBe(bowTurn);
+  }, 30000);
+
+  it('gear goes in even with no room: a swap keeps the old spot, Place overlaps (no warning)', async () => {
+    const one = 'bag: { mask: [1,1,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0] }\n';
+    await start('version: 4\nheroes: [{ id: erwen, stars: 9 }]\n', `version: 4\nhero: erwen\n${one}placements: [{ id: "rock#1", item: rock, x: 0, y: 0 }, { id: "rock#2", item: rock, x: 1, y: 0 }]\n`);
+    fireEvent.change(screen.getByLabelText('weapon 1'), { target: { value: 'spiral_spear' } });
+    fireEvent.click(within(document.querySelector<HTMLElement>('[data-tour="battle.gear"]')!).getByRole('button', { name: 'Place' }));
+    expect(cellsOf('Spiral Spear').length).toBeGreaterThan(0);
+    expect(document.body.textContent).not.toMatch(/No room for/);
+    const spot = cellsOf('Spiral Spear').map((c) => `${c.style.left},${c.style.top}`)[0];
+    fireEvent.change(screen.getByLabelText('weapon 1'), { target: { value: 'elderwood_bow' } });
+    await waitFor(() => expect(cellsOf('Elderwood Bow').length).toBeGreaterThan(0));
+    expect(cellsOf('Spiral Spear')).toHaveLength(0);
+    expect(cellsOf('Elderwood Bow').map((c) => `${c.style.left},${c.style.top}`)).toContain(spot);
+    expect(document.body.textContent).not.toMatch(/No room for/);
+  }, 30000);
+
+  it('Shift+click adds items to the selection; they move, copy and go together', async () => {
+    await start();
+    pick('Rock');
+    pick("Hunter's Bow");
+    fireEvent.click(cellsOf('Rock')[0]!, { shiftKey: true });
+    expect(screen.getByText(/2 items selected/)).toBeTruthy();
+    expect(cellsOf('Rock')[0]!.className).toMatch(/selected/);
+    expect(cellsOf("Hunter's Bow")[0]!.className).toMatch(/selected/);
+    key('d');
+    expect(cellsOf('Rock')).toHaveLength(2);
+    expect(cellsOf("Hunter's Bow").length).toBeGreaterThan(2);
+    key('x');
+    expect(cellsOf('Rock')).toHaveLength(1);
+    // Shift+click again takes one out.
+    fireEvent.click(cellsOf('Rock')[0]!);
+    fireEvent.click(cellsOf("Hunter's Bow")[0]!, { shiftKey: true });
+    fireEvent.click(cellsOf("Hunter's Bow")[0]!, { shiftKey: true });
+    expect(screen.queryByText(/items selected/)).toBeNull();
+  }, 30000);
+
+  it('Shift+drag a box over the bag selects the items it touches', async () => {
+    await start();
+    pick('Rock');
+    pick("Hunter's Bow");
+    const grid = screen.getByRole('grid', { name: 'Backpack' });
+    fireEvent(grid, new MouseEvent('pointerdown', { bubbles: true, cancelable: true, shiftKey: true, clientX: 0, clientY: 0, button: 0 }));
+    expect(grid.querySelector('.box-select')).toBeTruthy();
+    act(() => void window.dispatchEvent(new MouseEvent('pointerup', { clientX: 40 * 9, clientY: 40 * 7 })));
+    expect(screen.getByText(/2 items selected/)).toBeTruthy();
+  }, 30000);
+
+  it('typing anywhere goes to the item search, replacing what was there', async () => {
+    await start();
+    const box = screen.getByLabelText('Search items') as HTMLInputElement;
+    fireEvent.change(box, { target: { value: 'bow' } });
+    act(() => void document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'r', bubbles: true })));
+    expect(box.value).toBe('r');
+    expect(document.activeElement).toBe(box);
+  }, 30000);
+});

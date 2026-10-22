@@ -54,6 +54,7 @@ export function Storage({ items, width, height, selected, scope = 'build', look,
   const [over, setOver] = useState(false);
   const settings = useSettings();
   const held = useDraggedId(scope);
+  const pressed = useRef<string | null>(null);
   useDropTarget(ref, {
     accepts: (d) => d.kind === 'item' || d.scope === scope,
     over: () => setOver(true),
@@ -104,6 +105,12 @@ export function Storage({ items, width, height, selected, scope = 'build', look,
             style={{ left, top, width: w, height: h }}
             title={`${it.name} (in storage)${it.id === selected ? ' · click again to rotate' : ''}`}
             onPointerDown={(e) => {
+              // Selected on the press, as in the bag (space then turns this one).
+              pressed.current = null;
+              if (it.id !== selected) {
+                pressed.current = it.id;
+                onSelect(it.id);
+              }
               const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
               const lx = (e.clientX - r.left) / S + minX;
               const ly = (e.clientY - r.top) / S + minY;
@@ -121,7 +128,8 @@ export function Storage({ items, width, height, selected, scope = 'build', look,
             onClick={(e) => {
               e.stopPropagation();
               if (dragJustEnded()) return;
-              if (it.id === selected) onRotate(it.id);
+              if (pressed.current === it.id) pressed.current = null;
+              else if (it.id === selected) onRotate(it.id);
               else onSelect(it.id);
               ref.current?.focus();
             }}

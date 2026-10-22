@@ -142,6 +142,11 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
   const [layoutName, setLayoutName] = useState('');
   const [layoutDirty, setLayoutDirty] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
+  /** More selected items besides `selected` (Shift+click, Shift+drag a box; user, 2026-10-22). */
+  const [extra, setExtra] = useState<string[]>([]);
+  useEffect(() => {
+    if (!selected) setExtra([]);
+  }, [selected]);
   /** Clear all: asking first. */
   const [askClear, setAskClear] = useState(false);
   /** The Fight button was pressed: the Battle tab runs as soon as it can (0 = nothing asked). */
@@ -463,6 +468,8 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
   const history = useRef<UiLayout[]>([]);
   useEffect(() => void (history.current = []), [layoutName]);
   const editLayout = (fn: (l: UiLayout) => UiLayout, record = true) => {
+    // A warning about the bag as it was is out of date once it changes (user, 2026-10-22).
+    setMessage((m) => (m?.error ? null : m));
     setLayout((l) => {
       const next = fn(l);
       if (record && next !== l && history.current.at(-1) !== l) {
@@ -571,38 +578,92 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
     focusBag();
   };
 
-  /** Ctrl+C / Ctrl+D: another of the selected item, in the first free spot (user, 2026-10-22). */
+  /**
+   * Ctrl+C / Ctrl+D: another of each selected item, in the first free spot; with no room, right over the one it
+   * copies (user, 2026-10-22: no warning, they can be moved apart). Gear isn't copied.
+   */
   const duplicateSelected = () => {
-    const it = bagLayout.placements.find((x) => x.id === selected) ?? bagLayout.storage?.find((x) => x.id === selected);
-    if (!it) return;
-    if (data?.gear.has(it.item)) return say("Gear can't be copied: equip another piece in the Gear box.", true);
-    startPlacing(it.item, !!it.supply);
+    if (!data || !bagProfile) return;
+    let l = bagLayout;
+    const made: string[] = [];
+    let gear = 0;
+    for (const id of [selected, ...extra]) {
+      const placedIt = l.placements.find((x) => x.id === id);
+      const it = placedIt ?? l.storage?.find((x) => x.id === id);
+      if (!it) continue;
+      if (data.gear.has(it.item)) {
+        gear++;
+        continue;
+      }
+      const def = placeDef(it.item);
+      const fp = def ? footprintOf(def) : null;
+      if (!fp) continue;
+      const free = findFirstFit(buildLoadout(data, bagProfile, l).layout, fp, 0);
+      const at = free ? { ...free, rotation: 0 as const } : placedIt ? { x: placedIt.x, y: placedIt.y, rotation: placedIt.rotation } : { x: 0, y: 0, rotation: 0 as const };
+      const r = addPlacement(l, { item: it.item, x: at.x, y: at.y, rotation: at.rotation, supply: !!it.supply });
+      l = r.layout;
+      made.push(r.id);
+    }
+    if (gear && !made.length) return say("Gear can't be copied: equip another piece in the Gear box.", true);
+    if (!made.length) return;
+    editBag(() => l);
+    setSelected(made[0]!);
+    setExtra(made.slice(1));
   };
-  /** A different gear piece in a slot: it takes the old one's place in the bag (where it fits), or is taken out. */
+  /** Shift+click: add an item to the selection, or take it out. */
+  const shiftSelect = (id: string) => {
+    const all = [selected, ...extra].filter((x): x is string => !!x);
+    if (all.includes(id)) {
+      const rest = all.filter((x) => x !== id);
+      setSelected(rest[0] ?? null);
+      setExtra(rest.slice(1));
+    } else {
+      setSelected(id);
+      setExtra(all);
+    }
+    setInspected(null);
+  };
+  /** Shift+drag a box: those items are selected. */
+  const boxSelect = (ids: string[]) => {
+    setSelected(ids[0] ?? null);
+    setExtra(ids.slice(1));
+    setInspected(null);
+  };
+  /**
+   * A different gear piece in a slot: it takes the old one's place in the bag, turned the same way, even if it
+   * overlaps there (user, 2026-10-22: no "no room" warning; move it after). Cleared: the old piece is taken out.
+   */
   const swapGear = (from: string, to: string | null) => {
-    if (!loadout || !data) return;
     const old = bagLayout.placements.find((x) => x.item === from);
     if (!old) return;
     const rest = removePlacement(bagLayout, old.id);
-    const def = to ? placeDef(to) : undefined;
-    const fp = def ? footprintOf(def) : null;
-    if (!to || !fp) {
+    if (!to || !placeDef(to) || !footprintOf(placeDef(to)!)) {
       editBag(() => rest);
       return;
     }
-    const cells = placeFootprint(fp, { x: old.x, y: old.y, rotation: old.rotation }).cells;
-    const fits = cells.every((c) => isUsable(loadout.bag, c.x, c.y) && occupantsAt(loadout.layout, c.x, c.y).every((o) => o === old.id));
-    const at = fits ? { x: old.x, y: old.y, rotation: old.rotation } : (() => {
-      const free = findFirstFit(buildLoadout(data, bagProfile!, rest).layout, fp, 0);
-      return free ? { ...free, rotation: 0 as const } : null;
-    })();
-    if (!at) {
-      editBag(() => rest);
-      say(`No room for ${def!.name} where ${defOf(from)?.name ?? from} was, or anywhere else: place it from the Gear box.`, true);
-      return;
-    }
-    const r = addPlacement(rest, { item: to, x: at.x, y: at.y, rotation: at.rotation, supply: false });
+    const r = addPlacement(rest, { item: to, x: old.x, y: old.y, rotation: old.rotation, supply: false });
     editBag(() => r.layout);
+    setSelected(r.id);
+  };
+  /** Put an item in the first free spot; with no room, over the first bag cell anyway (it shows red: move it). */
+  const placeForced = (itemId: string, supply = false, fallback?: { x: number; y: number; rotation: 0 | 90 | 180 | 270 }) => {
+    if (!loadout) return null;
+    const def = placeDef(itemId);
+    const fp = def ? footprintOf(def) : null;
+    if (!fp) {
+      say(`${def?.name ?? itemId} has no shape yet. Enter it in the item editor.`, true);
+      return null;
+    }
+    const free = findFirstFit(loadout.layout, fp, 0);
+    const first = (() => {
+      for (let y = 0; y < loadout.bag.height; y++) for (let x = 0; x < loadout.bag.width; x++) if (isUsable(loadout.bag, x, y)) return { x, y, rotation: 0 as const };
+      return { x: 0, y: 0, rotation: 0 as const };
+    })();
+    const at = free ? { ...free, rotation: 0 as const } : (fallback ?? first);
+    const r = addPlacement(bagLayout, { item: itemId, x: at.x, y: at.y, rotation: at.rotation, supply });
+    editBag(() => r.layout);
+    setSelected(r.id);
+    return r.id;
   };
   /** A hero of another class: a class bag (x26, x32, x38) becomes that class's bag of the same size. */
   const reclassBag = (heroId: string | null) => {
@@ -627,6 +688,20 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
 
   const onKey = (action: KeyAction) => {
     if (!selected || !loadout) return;
+    // Several selected: each moves, turns or goes.
+    if (extra.length && action !== 'cancel' && action !== 'place') {
+      let l = bagLayout;
+      for (const id of [selected, ...extra]) {
+        const r = keyOnSelected(l, loadout, id, action);
+        if (r?.layout) l = r.layout;
+      }
+      editBag(() => l);
+      if (action === 'remove') {
+        setSelected(null);
+        setInspected(null);
+      }
+      return;
+    }
     const r = keyOnSelected(bagLayout, loadout, selected, action);
     if (!r) return;
     if (r.layout) {
@@ -663,14 +738,33 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
     window.addEventListener('keydown', onDown);
     return () => window.removeEventListener('keydown', onDown);
   }, [tab, selected]);
+  // Typing anywhere on the Build tab goes to the item search (user, 2026-10-22), replacing what's there; not
+  // while typing in another field, and not keys that do something in the bag (space, arrows, Delete …).
+  useEffect(() => {
+    if (tab !== 'bag') return;
+    const onType = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey || e.altKey || e.key.length !== 1 || e.key === ' ') return;
+      const t = e.target as HTMLElement | null;
+      if (t?.closest?.('input, textarea, select, [contenteditable="true"]') || document.querySelector('.dialog-backdrop')) return;
+      const box = document.querySelector<HTMLInputElement>('.main.build .items-box input[placeholder="Search by name…"]');
+      if (!box) return;
+      e.preventDefault();
+      box.focus();
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(box, e.key);
+      box.dispatchEvent(new Event('input', { bubbles: true }));
+      box.setSelectionRange(1, 1);
+    };
+    window.addEventListener('keydown', onType);
+    return () => window.removeEventListener('keydown', onType);
+  }, [tab]);
   // A click anywhere off the selected item lets go of it (user, 2026-10-22): in the bag box or anywhere else,
   // except on its details, the bag's own controls and dialogs.
   useEffect(() => {
     if (tab !== 'bag' || !selected) return;
     const onClickAway = (e: MouseEvent) => {
-      if (dragJustEnded()) return;
+      if (dragJustEnded() || e.shiftKey) return;
       const t = e.target as HTMLElement | null;
-      if (!t?.closest || t.closest('.item-cell, .stored-item, .bag-actions, [role="complementary"], .dialog-backdrop, .topbar')) return;
+      if (!t?.closest || t.closest('.item-cell, .stored-item, .bag-actions, .list-row, button, select, input, label, [role="complementary"], .dialog-backdrop, .topbar')) return;
       setSelected(null);
       setInspected(null);
     };
@@ -682,9 +776,23 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
   const onDrop = (drag: DragItem, x: number, y: number) => {
     const at = dropTarget(drag, x, y);
     if (!at) return;
+    const others = drag.kind === 'placed' && extra.length && (drag.id === selected || extra.includes(drag.id)) ? [selected!, ...extra].filter((id) => id !== drag.id) : [];
+    const old = bagLayout.placements.find((p) => p.id === drag.id);
     const r = dropInBag(bagLayout, drag, at);
-    editBag(() => r.layout);
+    let next = r.layout;
+    // Dragging one of several selected items moves them all by as much.
+    if (others.length && old) {
+      const dx = at.x - old.x;
+      const dy = at.y - old.y;
+      for (const id of others) {
+        const p = next.placements.find((q) => q.id === id);
+        if (p) next = updatePlacement(next, id, { x: p.x + dx, y: p.y + dy });
+      }
+    }
+    editBag(() => next);
     setSelected(r.selected);
+    if (others.length) setExtra(others);
+    else setExtra([]);
     focusBag();
   };
   /** Dropped in the storage box with its top-left corner at (fx, fy). */
@@ -1415,7 +1523,11 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
               }
             >
               <div className="bag-status small">
-                {selectedStored || selectedPlacement ? (
+                {extra.length > 0 ? (
+                  <div className="muted">
+                    <b>{extra.length + 1} items selected</b> (Shift+click adds or takes one out). Drag one to move them all; arrows move, space turns, Delete or Ctrl+X removes, Ctrl+D copies them.
+                  </div>
+                ) : selectedStored || selectedPlacement ? (
                   <>
                     <div className="muted">
                       {selectedStored
@@ -1455,8 +1567,12 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
                     onToggleEnhanced={toggleEnhanced}
                     onSelect={(id) => {
                       setSelected(id);
+                      setExtra([]);
                       if (id === null) setInspected(null);
                     }}
+                    multi={extra.length ? new Set([selected!, ...extra]) : undefined}
+                    onShiftSelect={shiftSelect}
+                    onBoxSelect={boxSelect}
                     onRotate={() => onKey('rotate')}
                     onHover={setHovered}
                     onToggleMask={toggleMask}
@@ -1473,7 +1589,10 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
                   height={storageH}
                   selected={selected}
                   look={lookBuild}
-                  onSelect={setSelected}
+                  onSelect={(id) => {
+                    setSelected(id);
+                    setExtra([]);
+                  }}
                   onRotate={() => onKey('rotate')}
                   onKey={onKey}
                   onDrop={onStore}
@@ -1607,7 +1726,7 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
             </div>
             <div style={showIf(['gear'])}>
             <Panel id="battle.gear" title="Gear">
-              <GearEditor data={data} profile={bagProfile} update={updateBag} loadout={loadout} onPlace={(g) => startPlacing(g.id)} onSwap={swapGear} />
+              <GearEditor data={data} profile={bagProfile} update={updateBag} loadout={loadout} onPlace={(g) => void placeForced(g.id)} onSwap={swapGear} />
             </Panel>
             </div>
             <div style={showIf(['pets'])}>

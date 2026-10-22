@@ -271,7 +271,7 @@ describe('later still', () => {
     const spy = vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(240);
     try {
       const { container } = render(<FitBagPreview loadout={lo} />);
-      expect((container.querySelector('.bag-preview') as HTMLElement).style.width).toBe(`${Math.floor((240 * 0.8) / lo.bag.width) * lo.bag.width}px`);
+      expect((container.querySelector('.bag-preview') as HTMLElement).style.width).toBe(`${Math.min(18, Math.floor((240 * 0.7) / lo.bag.width)) * lo.bag.width}px`);
     } finally {
       spy.mockRestore();
     }
