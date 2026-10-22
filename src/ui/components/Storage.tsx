@@ -4,7 +4,7 @@
  */
 import { type KeyboardEvent, useLayoutEffect, useRef, useState } from 'react';
 import type { Cell } from '../../engine/bag';
-import { type DragItem, type DragLook, beginDrag, dragJustEnded, playDrop, useDropTarget } from '../drag';
+import { type DragItem, type DragLook, beginDrag, dragJustEnded, playDrop, useDraggedId, useDropTarget } from '../drag';
 import { type KeyAction, keyAction } from '../state/layoutOps';
 import { useSettings } from '../settings';
 import { SIZE, type SpriteInfo, rarityPaint, spriteScale } from './BagGrid';
@@ -53,6 +53,7 @@ export function Storage({ items, width, height, selected, scope = 'build', look,
   const ref = useRef<HTMLDivElement>(null);
   const [over, setOver] = useState(false);
   const settings = useSettings();
+  const held = useDraggedId(scope);
   useDropTarget(ref, {
     accepts: (d) => d.kind === 'item' || d.scope === scope,
     over: () => setOver(true),
@@ -84,7 +85,7 @@ export function Storage({ items, width, height, selected, scope = 'build', look,
   return (
     <div ref={ref} className={`storage${over ? ' over' : ''}`} role="region" aria-label="Storage" tabIndex={-1} onKeyDown={onKeyDown} style={{ width, height, marginTop: offsetTop }}>
       {items.length === 0 && <div className="storage-hint small muted">Storage: drop items here while you rearrange. They don't fight or count.</div>}
-      {items.map((it) => {
+      {items.filter((it) => it.id !== held).map((it) => {
         const minX = Math.min(...it.cells.map((c) => c.x));
         const minY = Math.min(...it.cells.map((c) => c.y));
         const w = (Math.max(...it.cells.map((c) => c.x)) - minX + 1) * S;

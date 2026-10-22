@@ -15,6 +15,8 @@ export interface Landing {
   x: number;
   y: number;
   cells: Cell[];
+  /** Its dots there (to show what it would touch). */
+  dots?: Cell[];
   valid: boolean;
 }
 
@@ -54,7 +56,11 @@ export function landing(loadout: Loadout, d: DragItem, x: number, y: number): La
   const moved = abs.map((c) => ({ x: c.x + dx, y: c.y + dy }));
   const ignore = d.kind === 'placed' ? d.id : undefined;
   const valid = moved.every((c) => isUsable(loadout.bag, c.x, c.y) && occupantsAt(loadout.layout, c.x, c.y).every((o) => o === ignore));
-  return { x: x - g.x + dx, y: y - g.y + dy, cells: moved, valid };
+  const ox = x - g.x + dx;
+  const oy = y - g.y + dy;
+  const fp = footprintOf(defFor(loadout, d)!);
+  const dots = fp ? placeFootprint(fp, { x: ox, y: oy, rotation: d.rotation }).dots : [];
+  return { x: ox, y: oy, cells: moved, dots, valid };
 }
 
 /** Drop a held item into the bag: moved (and turned), out of the storage, or new. Returns the layout and the item now selected. */

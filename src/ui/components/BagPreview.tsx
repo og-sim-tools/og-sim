@@ -18,7 +18,8 @@ export function FitBagPreview({ loadout, cell = 14 }: { loadout: Loadout; cell?:
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
-  const fit = width > 0 ? Math.max(6, Math.floor(width / loadout.bag.width)) : cell;
+  // A bit under the full width (user, 2026-10-22: less packed), with room round it.
+  const fit = width > 0 ? Math.max(6, Math.floor((width * 0.8) / loadout.bag.width)) : cell;
   return (
     <div ref={ref} className="bag-preview-fit">
       <BagPreview loadout={loadout} cell={fit} />

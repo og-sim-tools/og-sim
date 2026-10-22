@@ -14,6 +14,7 @@ import type { EnemyBuild, LayoutData, Profile } from '../../engine/model';
 import { formatShown } from '../../engine/numbers';
 import { type Candidate, type OptimizeOptions, type RunPlan, optimizeStaged, type OptimizeProgress, type OptimizeResult, type Opponent, optimize, optimizeMany, skinQuestGuard, withMyBaseStats } from '../../engine/optimize';
 import { checkSkinQuest } from '../../engine/skinQuests';
+import { freshSeed } from '../../engine/rng';
 import { aggregateStats } from '../../engine/stats';
 import { BagGrid } from './BagGrid';
 import { BagPreview } from './BagPreview';
@@ -63,9 +64,11 @@ interface Props {
   onApply: (placements: LayoutData['placements']) => void;
   /** The Build tab's build panel (load / save / new), shared so builds are set up the same way. */
   setup?: ReactNode;
+  /** Force a skin's quest on (its skill works whatever the bag holds), as in the Build tab's Skins box. */
+  onForceSkin?: (skinId: string, on: boolean) => void;
 }
 
-export function OptimizePanel({ data, profile, layout, layoutName, loadout, layouts, layoutAsBuild, onApply, setup }: Props) {
+export function OptimizePanel({ data, profile, layout, layoutName, loadout, layouts, layoutAsBuild, onApply, setup, onForceSkin }: Props) {
   const startValue = useMemo(() => buildValue(loadout).total, [loadout]);
   const inline = layout.battle && typeof layout.battle.enemy === 'object' ? layout.battle.enemy : null;
   const [picked, setPicked] = useState<string[]>(() => {
@@ -448,7 +451,12 @@ export function OptimizePanel({ data, profile, layout, layoutName, loadout, layo
             <label title="Early on, a change may be kept even if the score drops by up to this much (it shrinks to 0); helps escape dead ends">Temperature</label>
             <input type="number" min={0} value={opts.temperature} onChange={(e) => set('temperature', Math.max(0, Number(e.target.value) || 0))} />
             <label title="Search seed: a different one tries different changes">Search seed</label>
-            <input type="number" value={opts.searchSeed} onChange={(e) => set('searchSeed', Number(e.target.value) || 0)} />
+            <span className="row">
+              <input type="number" aria-label="Search seed" value={opts.searchSeed} onChange={(e) => set('searchSeed', Number(e.target.value) || 0)} />
+              <button className="small" title="A new random search seed" aria-label="New random search seed" onClick={() => set('searchSeed', freshSeed())}>
+                🎲
+              </button>
+            </span>
             <label htmlFor="opt-plan" title="Run the search several times, with the seed above, +1, +2 …, and keep every build in one list">Several runs</label>
             <span className="row small" style={{ flexWrap: 'wrap', gap: 4 }}>
               <select id="opt-plan" aria-label="Several runs" value={opts.runPlan} onChange={(e) => set('runPlan', e.target.value as typeof opts.runPlan)}>
@@ -524,6 +532,17 @@ export function OptimizePanel({ data, profile, layout, layoutName, loadout, layo
               {w}
             </div>
           ))}
+          {onForceSkin &&
+            (profile.equipped_skins ?? []).map((id) => {
+              const skin = data.skins.get(id);
+              if (!skin?.skill || !skin.quest_check || skin.quest_check.type === 'run') return null;
+              return (
+                <label key={id} className="check-line small" style={{ marginTop: 4 }} title="Its skill works whatever the bag holds (the quest was met earlier in the run)">
+                  <input type="checkbox" aria-label={`${skin.name} forced on`} checked={(profile.skin_quests_forced ?? []).includes(id)} onChange={(e) => onForceSkin(id, e.target.checked)} /> Force {skin.skill.name} ({skin.name})
+                  on
+                </label>
+              );
+            })}
           <h3>3. Run</h3>
           <div className="row">
             <button className="primary" disabled={running || picked.length === 0} onClick={() => (unsaved ? setConfirmRun(true) : void run())}>

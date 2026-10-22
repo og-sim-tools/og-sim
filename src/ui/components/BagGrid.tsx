@@ -11,7 +11,7 @@ import type { Loadout, LoadoutIssue } from '../../engine/loadout';
 import { copyName, copyNumbers } from '../../engine/loadout';
 import { type KeyAction, keyAction } from '../state/layoutOps';
 import { imageUrl } from '../staticData';
-import { type DragItem, beginDrag, cellUnder, dragJustEnded, heldCellPoint, playDrop, useDropTarget } from '../drag';
+import { type DragItem, beginDrag, cellUnder, dragJustEnded, heldCellPoint, playDrop, useDraggedId, useDropTarget } from '../drag';
 import { type Settings, getSettings, useSettings } from '../settings';
 
 /** Most cells drawn around the bag for out-of-bag item cells and dots (items can't go further out: layoutOps REACH). */
@@ -84,6 +84,8 @@ export interface Landing {
   x: number;
   y: number;
   cells: Cell[];
+  /** Its dots there. */
+  dots?: Cell[];
   valid: boolean;
 }
 
@@ -119,6 +121,8 @@ interface Props {
   readOnly?: boolean;
   /** Which bag this is: placed items only move within their own bag (default "build"). */
   scope?: string;
+  /** Items that will be put in the bag at the start of battle (pets' spawns), drawn faintly where they'll go. */
+  ghosts?: { id: string; name: string; cells: Cell[]; sprite: SpriteInfo | null; color: string }[];
   /** Items from the lists and the storage box can be dropped here (the Build tab's bag). */
   acceptsNew?: boolean;
 }
@@ -157,6 +161,8 @@ export function BagGrid(p: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const scope = p.scope ?? 'build';
   const settings = useSettings();
+  // The item being held isn't drawn where it was (user, 2026-10-22): only under the pointer and where it lands.
+  const held = useDraggedId(scope);
   /** Degrees each item's picture is shown at: always turning clockwise by the short way (so a turn animates). */
   const shownTurn = useRef(new Map<string, number>());
   const turnOf = (id: string, r: number) => {
@@ -180,8 +186,8 @@ export function BagGrid(p: Props) {
   }, [issues]);
   const invalidIds = useMemo(() => new Set(issues.filter((i) => i.level === 'error').flatMap((i) => i.instanceIds ?? [])), [issues]);
 
-  // Dots of the focused item: hovered, else selected.
-  const focus = hovered ?? selected;
+  // Dots of the focused item: hovered, else selected (not while it's held: its dots show where it would land).
+  const focus = (hovered ?? selected) === held ? null : (hovered ?? selected);
   const dots = useMemo(() => markRepeats(dotsRaw()), [focus, layout, bag, loadout]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   function dotsRaw(): { cell: Cell; status: string; target?: string }[] {
@@ -235,6 +241,40 @@ export function BagGrid(p: Props) {
 
   // A dropped item slides into place: a moved one keeps its id, a new one is selected.
   useLayoutEffect(() => playDrop(ref.current, scope, (d) => (d.kind === 'item' ? selected : d.id)));
+  // With turning shown, the focused item's dots swing round with it instead of jumping (user, 2026-10-22).
+  const lastTurn = useRef<{ id: string; rotation: number; cx: number; cy: number } | null>(null);
+  useLayoutEffect(() => {
+    const it = focus ? layout.items.get(focus) : undefined;
+    const prev = lastTurn.current;
+    if (!it) {
+      lastTurn.current = null;
+      return;
+    }
+    const xs = it.cells.map((c) => c.x);
+    const ys = it.cells.map((c) => c.y);
+    const cx = px((Math.min(...xs) + Math.max(...xs) + 1) / 2);
+    const cy = px((Math.min(...ys) + Math.max(...ys) + 1) / 2);
+    lastTurn.current = { id: focus!, rotation: it.placement.rotation, cx, cy };
+    if (!prev || prev.id !== focus || prev.rotation === it.placement.rotation || !settings.animateRotation || settings.rotationMs <= 0) return;
+    const turn = ((((it.placement.rotation - prev.rotation) % 360) + 360) % 360) * (Math.PI / 180);
+    const STEPS = 8;
+    for (const el of ref.current?.querySelectorAll<HTMLElement>('[data-dot]') ?? []) {
+      if (typeof el.animate !== 'function') return;
+      const x = parseFloat(el.style.left);
+      const y = parseFloat(el.style.top);
+      const rx = x - cx;
+      const ry = y - cy;
+      const frames = Array.from({ length: STEPS + 1 }, (_, k) => {
+        const f = k / STEPS;
+        const a = -turn * (1 - f);
+        // Round the centre as it moves from where it was to where it is, a quarter turn back to none.
+        const mx = prev.cx + (cx - prev.cx) * f + rx * Math.cos(a) - ry * Math.sin(a);
+        const my = prev.cy + (cy - prev.cy) * f + rx * Math.sin(a) + ry * Math.cos(a);
+        return { transform: `translate(${mx - x}px, ${my - y}px) translate(-50%, -50%)` };
+      });
+      el.animate(frames, { duration: settings.rotationMs, easing: 'ease-in-out' });
+    }
+  });
 
   const onKeyDown = (e: KeyboardEvent) => {
     const action = keyAction(e.key);
@@ -272,6 +312,7 @@ export function BagGrid(p: Props) {
   const sprites: ReactElement[] = [];
   const copies = copyNumbers(layout);
   for (const [id, item] of layout.items) {
+    if (id === held) continue;
     const entry = loadout.entries.get(id);
     const copy = copies.get(id);
     const base = spriteOf(item.def as Parameters<typeof spriteOf>[0], item.placement.rotation);
@@ -353,12 +394,25 @@ export function BagGrid(p: Props) {
         {preview?.cells.filter(drawn).map((c) => (
           <div key={`p${c.x},${c.y}`} className={`drop-preview${preview.valid ? '' : ' bad'}`} style={{ left: px(c.x), top: px(c.y) }} />
         ))}
+        {/* Where the held item's dots would be: on an item (filled), on an empty cell, or off the bag (user, 2026-10-22). */}
+        {preview?.dots?.filter(drawn).map((c, i) => {
+          const on = occupantsAt(layout, c.x, c.y).filter((o) => o !== held);
+          const status = !isUsable(bag, c.x, c.y) ? 'outside' : on.length ? 'touches' : 'empty';
+          return <div key={`pd${i}`} className={`dot ${status} drop-dot`} style={{ left: px(c.x) + SIZE / 2, top: px(c.y) + SIZE / 2 }} />;
+        })}
+        {p.ghosts?.flatMap((g) => [
+          ...g.cells.filter(drawn).map((c) => (
+            <div key={`g${g.id}${c.x},${c.y}`} className="spawn-ghost" style={{ left: px(c.x), top: px(c.y), borderColor: g.color }} title={`${g.name}: put here at the start of battle`} />
+          )),
+          ...(g.sprite ? [<Sprite key={`gs${g.id}`} s={g.sprite} cells={g.cells} px={px} size={SIZE} z={1} item={`ghost:${g.id}`} />] : []),
+        ])}
         {redCells.map((c) => (
           <div key={`r${c.x},${c.y}`} className="red-cell" style={{ left: px(c.x), top: px(c.y) }} />
         ))}
         {dots.filter((d) => drawn(d.cell)).map((d, i) => (
           <div
             key={`d${i}`}
+            data-dot={i}
             className={`dot ${d.status}`}
             style={{ left: px(d.cell.x) + SIZE / 2, top: px(d.cell.y) + SIZE / 2 }}
             title={d.status === 'outside' ? 'Outside the bag: does nothing' : d.status === 'masked' ? 'Unavailable cell: does nothing' : d.status === 'repeat' ? 'Already touched by another dot: counts once' : undefined}

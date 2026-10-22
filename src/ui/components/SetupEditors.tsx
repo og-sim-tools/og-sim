@@ -236,7 +236,22 @@ const SLOTS = [
 ] as const;
 
 /** The 6 gear slots, each with its rarity and tier and a button to put it in the bag. */
-export function GearEditor({ data, profile, update, loadout, onPlace }: { data: GameData; profile: Profile; update: Update; loadout: Loadout; onPlace: (g: Gear) => void }) {
+export function GearEditor({
+  data,
+  profile,
+  update,
+  loadout,
+  onPlace,
+  onSwap,
+}: {
+  data: GameData;
+  profile: Profile;
+  update: Update;
+  loadout: Loadout;
+  onPlace: (g: Gear) => void;
+  /** Another piece picked for a slot whose old piece is in the bag: the new one takes its place (user, 2026-10-22). */
+  onSwap?: (from: string, to: string | null) => void;
+}) {
   const cfg = data.config!;
   // Count copies, so with two identical rings placing one still leaves the other to place.
   const placed = new Map<string, number>();
@@ -270,7 +285,12 @@ export function GearEditor({ data, profile, update, loadout, onPlace }: { data: 
                 aria-label={`${slot} ${idx + 1}`}
                 value={ref?.id ?? ''}
                 style={{ flex: 1, minWidth: 0 }}
-                onChange={(e) => set(e.target.value ? { id: e.target.value, rarity: ref?.rarity ?? 'common', tier: 0, level: ref?.level ?? 1 } : null)}
+                onChange={(e) => {
+                  const to = e.target.value || null;
+                  set(to ? { id: to, rarity: ref?.rarity ?? 'common', tier: 0, level: ref?.level ?? 1 } : null);
+                  // Its old piece in the bag (this copy of it) makes way for the new one.
+                  if (ref && ref.id !== to && (placed.get(ref.id) ?? 0) > copy) onSwap?.(ref.id, to);
+                }}
               >
                 <option value="">— {slot} —</option>
                 {[...data.gear.values()]

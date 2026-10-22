@@ -3,9 +3,11 @@
  * builds as a player) and the fight (mode, time limit, seed, Monte Carlo runs, Run battle, the results with my
  * breakdown and the opponent's side by side, the event log).
  */
-import { type ReactNode, useMemo, useState } from 'react';
+import { useEffect, type ReactNode, useMemo, useState } from 'react';
 import { BattleSetupError, runBattle } from '../../engine/combat/battle';
 import { type MonteCarloResult, resolveEnemies, runMonteCarlo, runSeed } from '../../engine/combat/montecarlo';
+import { freshSeed } from '../../engine/rng';
+import { setSettings, useSettings } from '../settings';
 import { IMMUNITIES } from '../../engine/model';
 import type { BattleResult } from '../../engine/combat/types';
 import type { Loadout } from '../../engine/loadout';
@@ -72,11 +74,39 @@ interface Props {
   showFights?: boolean;
   /** Why the battle can't be run now (the button is off and this is said instead). */
   blocked?: string;
+  /** A run asked for from elsewhere (the Build tab's Fight button): changes to a new number each time (0 = none). */
+  runRequest?: number;
+  onRunRequestHandled?: () => void;
+  /** The asked-for run waits for an opponent (true), or got one (false). */
+  onNeedEnemy?: (waiting: boolean) => void;
+  /** A battle run started. */
+  onRun?: () => void;
 }
 
 const BUILD_OPTION = '__build:';
 
-export function BattlePanel({ loadout, battle, onChange, layouts = [], myBuild, layoutAsBuild, onEditEnemy, part = 'all', opponentExtra, opponentHead, opponentTitle, choices = ['monsters', 'builds', 'typed'], modes, showFights = true, blocked }: Props) {
+export function BattlePanel({
+  loadout,
+  battle,
+  onChange,
+  layouts = [],
+  myBuild,
+  layoutAsBuild,
+  onEditEnemy,
+  part = 'all',
+  opponentExtra,
+  opponentHead,
+  opponentTitle,
+  choices = ['monsters', 'builds', 'typed'],
+  modes,
+  showFights = true,
+  blocked,
+  runRequest = 0,
+  onRunRequestHandled,
+  onNeedEnemy,
+  onRun,
+}: Props) {
+  const settings = useSettings();
   const showOpponent = part !== 'fight';
   const showFight = part !== 'opponent';
   const b = battle ?? DEFAULT_BATTLE;
@@ -103,23 +133,28 @@ export function BattlePanel({ loadout, battle, onChange, layouts = [], myBuild, 
   const fights = cfg.modes[b.mode]?.fights ?? 1;
   const modeDefault = cfg.modes[b.mode]?.fight_seconds ?? cfg.modes[b.mode]?.total_seconds ?? 30;
 
+  const ready = !blocked && (fights === 1 ? !!b.enemy : (b.enemies?.length ?? 0) === fights);
   const run = () => {
     setError(null);
     setRunning(true);
+    onRun?.();
+    // A new seed every run (setting): picked now, saved with the battle, and used for this run.
+    const seed = settings.autoSeed ? freshSeed() : b.seed;
+    if (seed !== b.seed) set({ seed });
     // Let the "Running…" state paint before a long Monte Carlo.
     setTimeout(() => {
       try {
         const enemy = resolveEnemies(data, b);
-        const opts = { mode: b.mode, durationS: b.duration_s, seed: b.seed };
+        const opts = { mode: b.mode, durationS: b.duration_s, seed };
         if (b.runs <= 1) {
           setSingle(runBattle(loadout, enemy, { ...opts, log: true }));
-          setShownSeed(b.seed);
+          setShownSeed(seed);
           setMc(null);
         } else {
           const r = runMonteCarlo(loadout, enemy, b.runs, opts);
           setMc(r);
           setSingle(runBattle(loadout, enemy, { ...opts, log: true }));
-          setShownSeed(b.seed);
+          setShownSeed(seed);
         }
       } catch (e) {
         setError(e instanceof BattleSetupError ? e.message : `Battle failed: ${(e as Error).message}`);
@@ -128,6 +163,26 @@ export function BattlePanel({ loadout, battle, onChange, layouts = [], myBuild, 
       }
     }, 10);
   };
+
+  // The Build tab's Fight button: run now, or as soon as an opponent is picked (user, 2026-10-22).
+  const [waiting, setWaiting] = useState(false);
+  useEffect(() => {
+    if (!runRequest || !showFight) return;
+    onRunRequestHandled?.();
+    if (ready) run();
+    else {
+      setWaiting(true);
+      onNeedEnemy?.(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [runRequest]);
+  useEffect(() => {
+    if (!waiting || !ready || running) return;
+    setWaiting(false);
+    onNeedEnemy?.(false);
+    run();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [waiting, ready]);
 
   const log = useMemo(
     () => (single?.log ?? []).filter((e) => !logFilter || (e.detail ?? e.type).toLowerCase().includes(logFilter.toLowerCase())),
@@ -227,7 +282,15 @@ export function BattlePanel({ loadout, battle, onChange, layouts = [], myBuild, 
           onChange={(e) => set({ duration_s: e.target.value === '' ? undefined : Math.max(1, Number(e.target.value)) })}
         />
         <label>Seed</label>
-        <input aria-label="Seed" value={String(b.seed)} onChange={(e) => set({ seed: /^-?\d+$/.test(e.target.value) ? Number(e.target.value) : e.target.value })} />
+        <span className="row">
+          <input aria-label="Seed" value={String(b.seed)} onChange={(e) => set({ seed: /^-?\d+$/.test(e.target.value) ? Number(e.target.value) : e.target.value })} />
+          <button className="small" title="A new random seed" aria-label="New random seed" onClick={() => set({ seed: freshSeed() })}>
+            🎲
+          </button>
+          <label className="check-line small" title="Every run picks a new seed by itself">
+            <input type="checkbox" checked={settings.autoSeed} onChange={(e) => setSettings({ autoSeed: e.target.checked })} /> new seed each run
+          </label>
+        </span>
         <label>Runs</label>
         <span className="row">
           <input type="number" min={1} max={100000} aria-label="Runs" value={b.runs} onChange={(e) => set({ runs: Math.max(1, Number(e.target.value) || 1) })} />

@@ -414,7 +414,7 @@ class Battle implements EffectApi {
           it.accuracy === null
             ? null
             : it.accuracy + this.bonus(it, 'accuracy_pct') + statusPct(me, this.defs, 'accuracy_bonus') + (this.stat(me, 'accuracy_bonus') - (me.stats.accuracy_bonus ?? 0)),
-        critChancePct: Math.min(this.cfg.combat.crit_rate_cap_pct, it.critChancePct + this.bonus(it, 'crit_chance_pct')),
+        critChancePct: Math.min(this.cfg.combat.crit_rate_cap_pct ?? Infinity, it.critChancePct + this.bonus(it, 'crit_chance_pct')),
         critDamagePct: it.critDamagePct + this.bonus(it, 'crit_damage_pct'),
         damagePerHit: it.damage ? hit(it.damage.base, it.damage.typePct + this.bonus(it, 'damage_pct')) : null,
         skillDamagePerHit: it.skill?.damage ? hit(it.skill.damage.base, it.skill.damage.typePct + this.bonus(it, 'skill_damage_pct')) : null,
@@ -657,7 +657,7 @@ class Battle implements EffectApi {
       if (s.effect.condition && !this.conditionHolds(s.owner, s.effect.condition)) continue;
       const over = s.effect.amount_from?.accuracy_over;
       if (s.effect.amount_from?.target_crit && stat !== 'crit_chance_pct') {
-        const a = Math.min(this.cfg.combat.crit_rate_cap_pct, it.critChancePct + this.bonus(it, 'crit_chance_pct')) * s.effect.amount_from.factor;
+        const a = Math.min(this.cfg.combat.crit_rate_cap_pct ?? Infinity, it.critChancePct + this.bonus(it, 'crit_chance_pct')) * s.effect.amount_from.factor;
         total += s.effect.amount_from.max !== undefined ? Math.min(s.effect.amount_from.max, a) : a;
       } else if (over !== undefined) {
         // Adrenaline: the target's own accuracy above the threshold (never below 0).
@@ -954,7 +954,7 @@ class Battle implements EffectApi {
     }
 
     const critChance = Math.min(
-      c.crit_rate_cap_pct,
+      c.crit_rate_cap_pct ?? Infinity,
       (isSkill ? it.skill!.critChancePct : it.critChancePct) + this.bonus(it, 'crit_chance_pct') - this.stat(att, 'crit_rate_reduction'),
     );
     const crit = (it.autoCritWhen !== undefined && this.conditionHolds(it, it.autoCritWhen)) || this.rng.chance(critChance);
@@ -1160,7 +1160,7 @@ class Battle implements EffectApi {
     const from = this.sides[owner.side];
     const allPct = this.stat(from, 'all_dmg_increase') + this.berserk(from).dmgPct;
     // Pet attacks crit with my Crit Rate (+ their own bonus) and my Crit DMG.
-    const crit = !!canCrit && this.rng.chance(Math.min(this.cfg.combat.crit_rate_cap_pct, this.stat(from, 'crit_rate') + canCrit.bonusPct - this.stat(from, 'crit_rate_reduction')));
+    const crit = !!canCrit && this.rng.chance(Math.min(this.cfg.combat.crit_rate_cap_pct ?? Infinity, this.stat(from, 'crit_rate') + canCrit.bonusPct - this.stat(from, 'crit_rate_reduction')));
     const critMult = crit ? 1 + (from.stats.crit_dmg ?? this.cfg.combat.default_crit_damage_pct) / 100 : 1;
     if (crit) this.reports[owner.id]!.crits++;
     this.damage(from, target, amount * this.modifier(0, allPct) * critMult * (1 + this.finalPct(from, target) / 100), type, owner, { crit });
@@ -1351,10 +1351,10 @@ class Battle implements EffectApi {
     const typePct = this.stat(dealer, `${status}_dmg_increase`);
     const allPct = this.stat(dealer, 'all_dmg_increase') + this.berserk(dealer).dmgPct;
     // Status crits: the dealer's Crit Rate + the status's own Crit Rate (Archwizard's Ring: Burn Crit
-    // Rate, itself capped at 100%); anything at or over 100% always crits.
-    const statusRate = Math.min(this.cfg.combat.status_crit_rate_cap_pct, this.stat(dealer, `${status}_crit_rate`));
+    // Rate; no cap unless config says so); anything at or over 100% always crits, once.
+    const statusRate = Math.min(this.cfg.combat.status_crit_rate_cap_pct ?? Infinity, this.stat(dealer, `${status}_crit_rate`));
     const rawChance = this.stat(dealer, 'crit_rate') + (def.crit_chance_pct ?? 0) + statusRate - this.stat(dealer, 'crit_rate_reduction');
-    const crit = this.rng.chance(Math.min(this.cfg.combat.crit_rate_cap_pct, rawChance));
+    const crit = this.rng.chance(Math.min(this.cfg.combat.crit_rate_cap_pct ?? Infinity, rawChance));
     const critDmg =
       (dealer.stats.crit_dmg ?? this.cfg.combat.default_crit_damage_pct) +
       (def.crit_damage_pct ?? 0) +

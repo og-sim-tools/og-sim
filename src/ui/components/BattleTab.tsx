@@ -16,10 +16,12 @@ import type { GameData } from '../../engine/loader';
 import { buildLoadout } from '../../engine/loadout';
 import type { EnemyBuild, LayoutData, Profile } from '../../engine/model';
 import { parseAbbrev } from '../../engine/numbers';
-import { validateLoadout } from '../../engine/validate';
+import { availableSupplies, validateLoadout } from '../../engine/validate';
+import { findFirstFit, footprintOf } from '../../engine/bag';
 import { useDragLook, dragJustEnded } from '../drag';
 import { dropInBag, keyOnSelected, landing, lookOf } from '../state/bagEdit';
-import { type KeyAction, type UiLayout, withIds } from '../state/layoutOps';
+import { type KeyAction, type UiLayout, addPlacement, withIds } from '../state/layoutOps';
+import { ItemBrowser } from './ItemBrowser';
 import { imageUrl } from '../staticData';
 import { BagGrid } from './BagGrid';
 import { BattlePanel, playerEnemy } from './BattlePanel';
@@ -52,6 +54,11 @@ interface Props {
   onImportOpponent?: (file: File) => void;
   /** Phones: one part at a time. */
   only?: 'me' | 'opponent' | 'fight';
+  /** The tab is showing (it's kept mounted while hidden). */
+  visible?: boolean;
+  /** The Build tab's Fight button (a new number each press; 0 = none). */
+  runRequest?: number;
+  onRunRequestHandled?: () => void;
 }
 
 const TEMP = '\u0000temp';
@@ -78,6 +85,22 @@ export function BattleTab(p: Props) {
   useEffect(() => setMyEdit(null), [layoutName]);
 
   const myLoadout = useMemo(() => buildLoadout(data, profile, mine), [data, profile, mine]);
+  // The item browser for my bag here (user, 2026-10-22): closes when a battle runs or the tab is left.
+  const [browsing, setBrowsing] = useState(false);
+  useEffect(() => {
+    if (!p.visible) setBrowsing(false);
+  }, [p.visible]);
+  /** The Fight button found no opponent: the opponent box is marked until one is picked (then it runs). */
+  const [needEnemy, setNeedEnemy] = useState(false);
+  const supplyIds = useMemo(() => new Set(availableSupplies(myLoadout).map((s) => s.item.id)), [myLoadout]);
+  /** An item from the browser into my bag here, in the first free spot (a try-out like moves). */
+  const addToMine = (itemId: string) => {
+    const def = data.items.get(itemId) ?? data.gear.get(itemId);
+    const fp = def ? footprintOf(def) : null;
+    const at = fp ? findFirstFit(myLoadout.layout, fp, 0) : null;
+    if (!at) return;
+    setMyEdit({ base: layout, layout: addPlacement(mine, { item: itemId, x: at.x, y: at.y, rotation: 0, supply: false }).layout });
+  };
   const fightBattle: Battle = foeChanged && inline ? { ...b, enemy: { ...inline, build: foe! } } : b;
 
   const setKind = (k: BattleKind) => {
@@ -134,7 +157,18 @@ export function BattleTab(p: Props) {
           {layoutName && !builds.includes(layoutName) && <option value={layoutName}>{layoutName} (not saved)</option>}
         </select>
       </label>
-      <EditableBag data={data} profile={profile} layout={mine} scope="battle-me" onChange={(l) => setMyEdit({ base: layout, layout: l })} />
+      <EditableBag data={data} profile={profile} layout={mine} scope="battle-me" acceptsNew={browsing} onChange={(l) => setMyEdit({ base: layout, layout: l })} />
+      <div className="row small" style={{ marginTop: 4 }}>
+        <button className={browsing ? 'primary small' : 'small'} aria-pressed={browsing} onClick={() => setBrowsing((v) => !v)} title="Add items to this bag here (a try-out, like moving them)">
+          Edit
+        </button>
+        {browsing && <span className="muted">Click an item to add it, or drag it into the bag. Closes when you run a battle.</span>}
+      </div>
+      {browsing && (
+        <div className="battle-browser">
+          <ItemBrowser data={data} heroClass={myLoadout.hero?.class ?? null} supplyIds={supplyIds} onPick={(e) => addToMine(e.id)} onEdit={() => {}} />
+        </div>
+      )}
       <TryOutBar
         changed={myChanged}
         what="your build"
@@ -198,7 +232,7 @@ export function BattleTab(p: Props) {
     </div>
   );
 
-  const opponent =
+  const opponentBox =
     kind === 'arena' ? (
       <ArenaOpponent {...p} b={b} inline={inline}>
         {foeSide}
@@ -232,6 +266,16 @@ export function BattleTab(p: Props) {
         }
       />
     );
+  const opponent = (
+    <div className={needEnemy ? 'need-enemy' : undefined}>
+      {needEnemy && (
+        <div className="issue need-enemy-note small" role="alert">
+          <b>No enemy selected.</b> Pick one and the fight starts right away.
+        </div>
+      )}
+      {opponentBox}
+    </div>
+  );
 
   const playthrough = kind === 'chapter' && b.chapter?.play === 'playthrough';
   const fight = (
@@ -248,6 +292,13 @@ export function BattleTab(p: Props) {
         onEditEnemy={p.onEditEnemy}
         modes={kind === 'chapter' ? CHAPTER_MODES : [b.mode]}
         showFights={kind === 'chapter'}
+        runRequest={p.runRequest}
+        onRunRequestHandled={p.onRunRequestHandled}
+        onNeedEnemy={setNeedEnemy}
+        onRun={() => {
+          setBrowsing(false);
+          setNeedEnemy(false);
+        }}
         blocked={playthrough ? 'A full playthrough isn\'t built yet: use Sandbox for now.' : undefined}
       />
     </div>
@@ -294,8 +345,8 @@ function TryOutBar({ changed, what, onKeep, onUndo }: { changed: boolean; what: 
   );
 }
 
-/** A bag whose items can be moved, turned and removed here (nothing new is added). */
-function EditableBag({ data, profile, layout, scope, onChange }: { data: GameData; profile: Profile; layout: UiLayout; scope: string; onChange: (l: UiLayout) => void }) {
+/** A bag whose items can be moved, turned and removed here (new ones dropped in from the item browser while it's open). */
+function EditableBag({ data, profile, layout, scope, onChange, acceptsNew = false }: { data: GameData; profile: Profile; layout: UiLayout; scope: string; onChange: (l: UiLayout) => void; acceptsNew?: boolean }) {
   const lo = useMemo(() => buildLoadout(data, profile, layout), [data, profile, layout]);
   const issues = useMemo(() => validateLoadout(lo), [lo]);
   const [sel, setSel] = useState<string | null>(null);
@@ -327,6 +378,7 @@ function EditableBag({ data, profile, layout, scope, onChange }: { data: GameDat
         onHover={setHov}
         onToggleMask={() => {}}
         dropTarget={(d, x, y) => landing(lo, d, x, y)}
+        acceptsNew={acceptsNew}
         onDrop={(d, x, y) => {
           const at = landing(lo, d, x, y);
           if (!at) return;

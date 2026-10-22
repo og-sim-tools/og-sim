@@ -286,8 +286,23 @@ export function playDrop(root: HTMLElement | null, scope: string, idOf: (d: { ki
   requestAnimationFrame(() => els.forEach((e) => (e.style.transition = '')));
 }
 
-/** The bag cell the held cell is over (the pointer may be off that cell after turning around the centre). */
-export const heldCellPoint = (d: DragItem, x: number, y: number) => ({ clientX: x - Math.floor(d.inCell.x) * SIZE, clientY: y - Math.floor(d.inCell.y) * SIZE });
+/**
+ * The middle of the held cell as it's drawn under the pointer: the bag cell under it is where that cell lands,
+ * so the item goes into the tiles nearest to where it's shown (user, 2026-10-22), wherever in the cell it's held.
+ */
+export const heldCellPoint = (d: DragItem, x: number, y: number) => ({ clientX: x - (d.inCell.x - 0.5) * SIZE, clientY: y - (d.inCell.y - 0.5) * SIZE });
+
+/** The placed or stored item being held from this bag, if any (it isn't drawn where it was while held). */
+export function useDraggedId(scope: string): string | null {
+  return useSyncExternalStore(
+    (l) => {
+      listeners.add(l);
+      return () => listeners.delete(l);
+    },
+    () => (state && state.kind !== 'item' && state.scope === scope ? state.id : null),
+    () => null,
+  );
+}
 
 /** Let held items be dropped on this element. */
 export function useDropTarget(ref: RefObject<HTMLElement | null>, target: DropTarget) {

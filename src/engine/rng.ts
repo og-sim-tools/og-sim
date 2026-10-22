@@ -73,3 +73,10 @@ export class Rng {
     return out;
   }
 }
+
+let freshCount = 0;
+/** A new battle seed for the UI's dice button (from the clock and a counter, through Rng: no Math.random). */
+export function freshSeed(): number {
+  freshCount++;
+  return 1 + Math.floor(new Rng(`fresh:${Date.now()}:${freshCount}`).next() * 999_999);
+}

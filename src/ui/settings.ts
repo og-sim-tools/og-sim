@@ -39,12 +39,18 @@ export interface Settings {
   gearLook: RarityLook;
   gearOpacity: number;
   gearSelectedOpacity: number;
+  /** Show where pets' spawned items (Spider Egg Sacks …) will be put, over the bag. */
+  showSpawns: boolean;
+  /** Every battle run picks a new seed by itself. */
+  autoSeed: boolean;
 }
 
 // In the bag an item has always kept its top-left corner when turned.
 export const DEFAULT_SETTINGS: Settings = { animateRotation: false, rotationMs: 150, animatePlacing: true, placeMs: 120, squarePivot: 'cursor', otherPivot: 'cursor', placedSquarePivot: 'top-left', placedOtherPivot: 'top-left',
   // Pictures have always sat on a 55% background, full when selected.
   itemLook: 'full', itemOpacity: 55, itemSelectedOpacity: 100, gearLook: 'full', gearOpacity: 55, gearSelectedOpacity: 100,
+  showSpawns: false,
+  autoSeed: false,
 };
 
 const KEY = 'og-sim/settings';
@@ -72,6 +78,8 @@ function load(): Settings {
       gearLook: look(raw.gearLook),
       gearOpacity: pct(raw.gearOpacity, DEFAULT_SETTINGS.gearOpacity),
       gearSelectedOpacity: pct(raw.gearSelectedOpacity, DEFAULT_SETTINGS.gearSelectedOpacity),
+      showSpawns: raw.showSpawns === true,
+      autoSeed: raw.autoSeed === true,
     };
   } catch {
     return { ...DEFAULT_SETTINGS };

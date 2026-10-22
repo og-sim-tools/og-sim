@@ -22,7 +22,7 @@ The game wiki may be outdated or badly translated, so I need to monitor everythi
 - Append each fetch to `data/SOURCES.md`: date, URL, what was extracted, and which data files changed.
 
 ## Pushing
-- Whenever I ask you to push a patch, finish your reply with brief patch notes I can post on my community Discord: short, player-facing bullet points (what changed and how to use it), no code or file names.
+- Whenever I ask you to push a patch, finish your reply with brief patch notes I can post on my community Discord: short, player-facing bullet points (what changed and how to use it), no code or file names, under 2000 characters (one Discord message), in a code block so the formatting copies.
 
 ## Commands
 - Dev server: `npm run dev`

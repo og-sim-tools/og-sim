@@ -133,7 +133,22 @@ export function SortMenu({ value, onChange }: { value: Order; onChange: (o: Orde
 function Filters({ f, set, tags, data, kinds = true, heroes = true }: { f: BrowserFilter & Order; set: (patch: Partial<BrowserFilter & Order> & { clsByHand?: boolean }) => void; tags: string[]; data: GameData; kinds?: boolean; heroes?: boolean }) {
   return (
     <div className="filters">
-      <input placeholder="Search by name…" value={f.text} onChange={(e) => set({ text: e.target.value })} aria-label={kinds ? 'Search items' : 'Search starting equipment'} />
+      <input
+        placeholder="Search by name…"
+        value={f.text}
+        onChange={(e) => set({ text: e.target.value })}
+        aria-label={kinds ? 'Search items' : 'Search starting equipment'}
+        // Entering the box selects what's there, so typing replaces it (user, 2026-10-22).
+        onFocus={(e) => {
+          e.currentTarget.select();
+          e.currentTarget.dataset.justFocused = '1';
+        }}
+        onMouseUp={(e) => {
+          // The click that focused it would put the caret down and drop the selection.
+          if (e.currentTarget.dataset.justFocused) e.preventDefault();
+          delete e.currentTarget.dataset.justFocused;
+        }}
+      />
       {kinds && (
         <select value={f.kind === 'supply' ? '' : f.kind} onChange={(e) => set({ kind: e.target.value as BrowserFilter['kind'] })} aria-label="Kind">
           <option value="">All kinds</option>

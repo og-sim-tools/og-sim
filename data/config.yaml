@@ -89,10 +89,10 @@ timing:
 combat:
   hit_chance_floor_pct: 25
   hit_chance_cap_pct: 100
-  crit_rate_cap_pct: 100
+  crit_rate_cap_pct: null                        # user, 2026-10-22: no cap; at or over 100% every hit crits (once), but what scales with Crit Rate keeps growing
   default_crit_damage_pct: 100
-  status_crit_rate_cap_pct: 100                  # Burn Crit Rate gained (Archwizard's Ring) caps at 100%
-  status_crit_dmg_per_rate_from: bonus           # [UNVERIFIED] Archwizard's Ring mythic "2 times the Burn Crit Rate": bonus = only the (capped) Burn Crit Rate gained, so up to +200%; total = Crit Rate + Burn Crit Rate
+  status_crit_rate_cap_pct: null                 # user, 2026-10-22: no cap on Burn Crit Rate & co. (Archwizard's Ring mythic scales with all of it)
+  status_crit_dmg_per_rate_from: bonus           # [UNVERIFIED] Archwizard's Ring mythic "2 times the Burn Crit Rate": bonus = only the Burn Crit Rate gained; total = Crit Rate + Burn Crit Rate
   damage_taken_floor_pct: 25
   all_dmg_mode: separate                         # [UNVERIFIED] separate: (1+type%)×(1+all%); additive: (1+type%+all%)
   additional_damage_gets_final_multiplier: true  # [UNVERIFIED]

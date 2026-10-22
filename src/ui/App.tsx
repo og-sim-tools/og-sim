@@ -21,12 +21,13 @@ import { BagGrid, marginFor, rarityColor, spriteOf } from './components/BagGrid'
 import { TrashIcon } from './components/BuildPicker';
 import { useDragState } from './drag';
 import { ANCHORS, RARITY_LOOKS, type RarityLook, type Settings, setSettings, useSettings } from './settings';
-import { type DragItem, DragLayer, dragUnder, nearestBox, useDragLook, useDropElsewhere, useDropTarget } from './drag';
+import { type DragItem, DragLayer, dragJustEnded, dragUnder, nearestBox, useDragLook, useDropElsewhere, useDropTarget } from './drag';
 import { type Landing, dropInBag, dropInBin, keyOnSelected, landing, lookOf, turnedCells } from './state/bagEdit';
 import { Storage, type StoredView } from './components/Storage';
 import { bagSizesFor, enhancerOf, sizeOf } from './state/bagSizes';
 import { ItemDrawer } from './components/ItemDrawer';
 import { battleStartStats } from '../engine/combat/battle';
+import { withPetSpawns } from '../engine/combat/setup';
 import { resolveEnemy } from '../engine/combat/montecarlo';
 import { BattleTab } from './components/BattleTab';
 import { playerEnemy } from './components/BattlePanel';
@@ -141,6 +142,10 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
   const [layoutName, setLayoutName] = useState('');
   const [layoutDirty, setLayoutDirty] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
+  /** Clear all: asking first. */
+  const [askClear, setAskClear] = useState(false);
+  /** The Fight button was pressed: the Battle tab runs as soon as it can (0 = nothing asked). */
+  const [runRequest, setRunRequest] = useState(0);
   /** The item whose side panel is open: only set by clicking it. */
   const [inspected, setInspected] = useState<string | null>(null);
   const [hovered, setHovered] = useState<string | null>(null);
@@ -401,6 +406,18 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
     [editingEnemy, data, bagProfile, bagLayout, playerLoadout],
   );
   const issues = useMemo(() => (loadout ? validateLoadout(loadout) : []), [loadout]);
+  // Where pets' (and skins') spawned items land at the start of battle, to show over the bag.
+  const spawned = useMemo(() => {
+    if (!loadout) return [];
+    try {
+      const r = withPetSpawns(loadout);
+      return [...r.loadout.layout.items.entries()]
+        .filter(([id]) => id.startsWith('spawn:'))
+        .map(([id, it]) => ({ id, name: String(it.def.name ?? ''), cells: it.cells, sprite: spriteOf(it.def as Parameters<typeof spriteOf>[0], it.placement.rotation), color: rarityColor('rarity' in it.def ? (it.def.rarity as string) : null) }));
+    } catch {
+      return [];
+    }
+  }, [loadout]);
   const value = useMemo(() => (loadout ? buildValue(loadout) : null), [loadout]);
   const stats = useMemo(() => (loadout ? aggregateStats(loadout) : null), [loadout]);
   const synergy = useMemo(() => (loadout ? buildSynergyReport(loadout) : new Map()), [loadout]);
@@ -442,9 +459,28 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
   const defOf = (id: string): Item | Gear | undefined => data?.items.get(id) ?? data?.gear.get(id);
 
   // ---------------------------------------------------------------- layout edits
-  const editLayout = (fn: (l: UiLayout) => UiLayout) => {
-    setLayout((l) => fn(l));
+  /** Earlier versions of the open build, newest last, for Ctrl+Z (user, 2026-10-22). Battle settings aren't kept. */
+  const history = useRef<UiLayout[]>([]);
+  useEffect(() => void (history.current = []), [layoutName]);
+  const editLayout = (fn: (l: UiLayout) => UiLayout, record = true) => {
+    setLayout((l) => {
+      const next = fn(l);
+      if (record && next !== l && history.current.at(-1) !== l) {
+        history.current.push(l);
+        if (history.current.length > 100) history.current.shift();
+      }
+      return next;
+    });
     setLayoutDirty(true);
+  };
+  /** Back to the build as it was before the last change. */
+  const undo = () => {
+    const prev = history.current.pop();
+    if (!prev) return say('Nothing to undo.');
+    setLayout(prev);
+    setLayoutDirty(true);
+    setSelected(null);
+    setInspected(null);
   };
 
   /** Edit the bag being shown: mine, or the enemy build's. */
@@ -535,6 +571,57 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
     focusBag();
   };
 
+  /** Ctrl+C / Ctrl+D: another of the selected item, in the first free spot (user, 2026-10-22). */
+  const duplicateSelected = () => {
+    const it = bagLayout.placements.find((x) => x.id === selected) ?? bagLayout.storage?.find((x) => x.id === selected);
+    if (!it) return;
+    if (data?.gear.has(it.item)) return say("Gear can't be copied: equip another piece in the Gear box.", true);
+    startPlacing(it.item, !!it.supply);
+  };
+  /** A different gear piece in a slot: it takes the old one's place in the bag (where it fits), or is taken out. */
+  const swapGear = (from: string, to: string | null) => {
+    if (!loadout || !data) return;
+    const old = bagLayout.placements.find((x) => x.item === from);
+    if (!old) return;
+    const rest = removePlacement(bagLayout, old.id);
+    const def = to ? placeDef(to) : undefined;
+    const fp = def ? footprintOf(def) : null;
+    if (!to || !fp) {
+      editBag(() => rest);
+      return;
+    }
+    const cells = placeFootprint(fp, { x: old.x, y: old.y, rotation: old.rotation }).cells;
+    const fits = cells.every((c) => isUsable(loadout.bag, c.x, c.y) && occupantsAt(loadout.layout, c.x, c.y).every((o) => o === old.id));
+    const at = fits ? { x: old.x, y: old.y, rotation: old.rotation } : (() => {
+      const free = findFirstFit(buildLoadout(data, bagProfile!, rest).layout, fp, 0);
+      return free ? { ...free, rotation: 0 as const } : null;
+    })();
+    if (!at) {
+      editBag(() => rest);
+      say(`No room for ${def!.name} where ${defOf(from)?.name ?? from} was, or anywhere else: place it from the Gear box.`, true);
+      return;
+    }
+    const r = addPlacement(rest, { item: to, x: at.x, y: at.y, rotation: at.rotation, supply: false });
+    editBag(() => r.layout);
+  };
+  /** A hero of another class: a class bag (x26, x32, x38) becomes that class's bag of the same size. */
+  const reclassBag = (heroId: string | null) => {
+    if (!data || !heroId) return;
+    const from = loadout?.hero?.class;
+    const to = data.heroes.get(heroId)?.class;
+    if (!from || !to || from === to) return;
+    const name = sizeOf(bagLayout.bag?.mask, bagSizesFor(data, from));
+    if (!name || name === 'Full') return;
+    const size = bagSizesFor(data, to).find((s) => s.name === name);
+    if (size?.mask) editBag((l) => ({ ...l, bag: { mask: size.mask! } }));
+  };
+  /** The Fight button: to the Battle tab, running the battle as set there (or asking for an opponent first). */
+  const fightNow = () => {
+    setRunRequest((n) => n + 1);
+    if (mobile) goStep('fight');
+    else setTab('battle');
+  };
+
   /** Where a held item lands in the bag (its held cell over x, y), kept within reach. */
   const dropTarget = (drag: DragItem, x: number, y: number): Landing | null => (loadout ? landing(loadout, drag, x, y) : null);
 
@@ -549,6 +636,47 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
     setSelected(r.selected);
     if (!r.selected) setInspected(null);
   };
+
+  // Ctrl+C / D copies the selected item, Ctrl+X removes it, Ctrl+Z undoes (user, 2026-10-22): the left hand stays
+  // round Ctrl. Not while typing in a field (those keys are the field's own there).
+  const shortcuts = useRef({ undo, duplicateSelected, onKey });
+  shortcuts.current = { undo, duplicateSelected, onKey };
+  useEffect(() => {
+    if (tab !== 'bag') return;
+    const onDown = (e: KeyboardEvent) => {
+      if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey) return;
+      if ((e.target as HTMLElement | null)?.closest?.('input, textarea, select, [contenteditable="true"]')) return;
+      const k = e.key.toLowerCase();
+      if (k === 'z') {
+        e.preventDefault();
+        shortcuts.current.undo();
+      } else if ((k === 'c' || k === 'd') && selected) {
+        // Copying text on the page stays a copy.
+        if (k === 'c' && window.getSelection?.()?.toString()) return;
+        e.preventDefault();
+        shortcuts.current.duplicateSelected();
+      } else if (k === 'x' && selected) {
+        e.preventDefault();
+        shortcuts.current.onKey('remove');
+      }
+    };
+    window.addEventListener('keydown', onDown);
+    return () => window.removeEventListener('keydown', onDown);
+  }, [tab, selected]);
+  // A click anywhere off the selected item lets go of it (user, 2026-10-22): in the bag box or anywhere else,
+  // except on its details, the bag's own controls and dialogs.
+  useEffect(() => {
+    if (tab !== 'bag' || !selected) return;
+    const onClickAway = (e: MouseEvent) => {
+      if (dragJustEnded()) return;
+      const t = e.target as HTMLElement | null;
+      if (!t?.closest || t.closest('.item-cell, .stored-item, .bag-actions, [role="complementary"], .dialog-backdrop, .topbar')) return;
+      setSelected(null);
+      setInspected(null);
+    };
+    window.addEventListener('click', onClickAway);
+    return () => window.removeEventListener('click', onClickAway);
+  }, [tab, selected]);
 
   /** Dropped on the bag with its held cell over (x, y). */
   const onDrop = (drag: DragItem, x: number, y: number) => {
@@ -1201,6 +1329,28 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
         </Dialog>
       )}
 
+      {askClear && (
+        <Dialog
+          title="Clear the bag?"
+          onCancel={() => setAskClear(false)}
+          actions={[
+            {
+              label: 'Clear all',
+              kind: 'danger',
+              onClick: () => {
+                setAskClear(false);
+                editBag((l) => ({ ...l, placements: [] }));
+                setSelected(null);
+                setInspected(null);
+              },
+            },
+          ]}
+        >
+          <p className="small">
+            All {bagLayout.placements.length} item(s) are taken out of the bag (the storage keeps its items). Ctrl+Z brings them back.
+          </p>
+        </Dialog>
+      )}
       {tab === 'bag' && (
         <div className={`main build${editingEnemy ? ' editing-enemy' : ''}`}>
           <div className="build-strip" style={showIf(['hero', 'gear', 'pets', 'skins', 'items'])}>
@@ -1246,13 +1396,6 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
             <div
               ref={bagBoxRef}
               className="bag-box"
-              // A click anywhere in the box that isn't on an item or a control lets go of the selected item.
-              onClick={(e) => {
-                if (!(e.target as HTMLElement).closest('.item-cell, .stored-item, button, input, select, label, a, summary, .cell')) {
-                  setSelected(null);
-                  setInspected(null);
-                }
-              }}
             >
             <Panel
               id="battle.bag"
@@ -1276,18 +1419,12 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
                   <>
                     <div className="muted">
                       {selectedStored
-                        ? 'In the storage: drag it into the bag. Space or another click rotates it, Delete removes it.'
-                        : 'Arrows move it, space or another click rotates it (space works while dragging too), Delete removes it (or drag it out of this box).'}
+                        ? 'In the storage: drag it into the bag. Space or another click rotates it, Delete removes it. Ctrl+D copies it.'
+                        : 'Arrows move it, space or another click rotates it (space works while dragging too), Delete or Ctrl+X removes it (or drag it out of this box). Ctrl+D copies it, Ctrl+Z undoes.'}
                     </div>
                     <div className="row bag-actions">
                       <button className="primary details-button" onClick={() => setInspected(selected)} aria-pressed={inspected === selected}>
                         Item details
-                      </button>
-                      <button className="small" onClick={() => onKey('rotate')}>
-                        Rotate
-                      </button>
-                      <button className="small" onClick={() => onKey('remove')}>
-                        Remove
                       </button>
                       <b className="selected-name">{selectedName}</b>
                       {selectedPlacement?.supply && <span className="badge">starting equipment</span>}
@@ -1327,6 +1464,7 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
                     onDrop={onDrop}
                     onKey={onKey}
                     acceptsNew
+                    ghosts={settings.showSpawns ? spawned : undefined}
                   />
                 </div>
                 <Storage
@@ -1341,6 +1479,19 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
                   onDrop={onStore}
                   top={bagMargin * 40}
                 />
+              </div>
+              <div className="row small bag-tools" style={{ marginTop: 6 }}>
+                <button className="primary" onClick={fightNow} title="Go to the Battle tab and run the battle as it's set there">
+                  ⚔ Fight
+                </button>
+                <button className="small" disabled={bagLayout.placements.length === 0} onClick={() => setAskClear(true)}>
+                  Clear all
+                </button>
+                {spawned.length > 0 && (
+                  <label className="check-line" title="Where your pets' and skins' items (Spider Egg Sacks …) will be put at the start of battle">
+                    <input type="checkbox" checked={settings.showSpawns} onChange={(e) => setSettings({ showSpawns: e.target.checked })} /> Show pet spawns ({spawned.length})
+                  </label>
+                )}
               </div>
               <div className="row small" style={{ justifyContent: 'space-between', marginTop: 6 }}>
                 {value && (
@@ -1447,12 +1598,16 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
           <div className="stack build-setup" style={showIf(['hero', 'gear', 'pets', 'skins'])}>
             <div style={showIf(['hero'])}>
             <Panel id="battle.hero" title="Hero">
-              <HeroEditor data={data} profile={bagProfile} heroId={editingEnemy ? bagProfile.active_hero : (layout.hero ?? null)} onHero={(id) => (editingEnemy ? setBagProfile({ ...bagProfile, active_hero: id }) : setBuildHero(id))} update={updateBag} account={!editingEnemy} />
+              <HeroEditor data={data} profile={bagProfile} heroId={editingEnemy ? bagProfile.active_hero : (layout.hero ?? null)} onHero={(id) => {
+                  reclassBag(id);
+                  if (editingEnemy) setBagProfile({ ...bagProfile, active_hero: id });
+                  else setBuildHero(id);
+                }} update={updateBag} account={!editingEnemy} />
             </Panel>
             </div>
             <div style={showIf(['gear'])}>
             <Panel id="battle.gear" title="Gear">
-              <GearEditor data={data} profile={bagProfile} update={updateBag} loadout={loadout} onPlace={(g) => startPlacing(g.id)} />
+              <GearEditor data={data} profile={bagProfile} update={updateBag} loadout={loadout} onPlace={(g) => startPlacing(g.id)} onSwap={swapGear} />
             </Panel>
             </div>
             <div style={showIf(['pets'])}>
@@ -1495,6 +1650,9 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
       {/* Kept mounted (only hidden) so a battle's results survive switching tabs. */}
       <div style={tab === 'battle' ? undefined : { display: 'none' }}>
         <BattleTab
+          visible={tab === 'battle'}
+          runRequest={runRequest}
+          onRunRequestHandled={() => setRunRequest(0)}
           only={mobile ? (step === 'fight' ? 'fight' : 'opponent') : undefined}
           data={data}
           layout={layout}
@@ -1502,7 +1660,7 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
           layoutName={layoutName}
           builds={builds}
           battle={layout.battle}
-          onChange={(b) => editLayout((l) => ({ ...l, battle: b }))}
+          onChange={(b) => editLayout((l) => ({ ...l, battle: b }), false)}
           myBuild={myBuild}
           layoutAsBuild={layoutAsBuild}
           onEditEnemy={() => {
@@ -1554,6 +1712,12 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
           layouts={builds}
           layoutAsBuild={layoutAsBuild}
           setup={tab === 'optimize' ? buildPanel : null}
+          onForceSkin={(id, on) => {
+            const p = structuredClone(playerLoadout.profile);
+            const list = (p.skin_quests_forced ?? []).filter((x) => x !== id);
+            p.skin_quests_forced = on ? [...list, id] : list;
+            editMyProfile(p);
+          }}
           onApply={(placements) => {
             editLayout((l) => ({ ...l, placements: placements.map((p, i) => ({ ...p, id: p.id ?? `${p.item}#${i + 1}` })) }));
             setSide('me');

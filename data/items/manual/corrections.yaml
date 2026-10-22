@@ -342,3 +342,9 @@
   footprint: "## / oo"
   source: observed
   verified: true
+
+# Widow Spider is ## / ## / oo (user, 2026-10-22; the wiki shows oo / ##).
+- id: widow_spider
+  footprint: "## / ## / oo"
+  source: observed
+  verified: true

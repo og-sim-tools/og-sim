@@ -265,13 +265,13 @@ describe('later still', () => {
     expect(within(hero).getAllByLabelText(/Link slot \d/).length).toBeGreaterThan(0);
   }, 30000);
 
-  it('build previews fill the width of their card', async () => {
+  it('build previews fill most of the width of their card, with room round them', async () => {
     const { FitBagPreview } = await import('../../src/ui/components/BagPreview');
     const lo = buildLoadout(data, profile, LayoutSchema.parse({ placements: [] }));
     const spy = vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(240);
     try {
       const { container } = render(<FitBagPreview loadout={lo} />);
-      expect((container.querySelector('.bag-preview') as HTMLElement).style.width).toBe(`${Math.floor(240 / lo.bag.width) * lo.bag.width}px`);
+      expect((container.querySelector('.bag-preview') as HTMLElement).style.width).toBe(`${Math.floor((240 * 0.8) / lo.bag.width) * lo.bag.width}px`);
     } finally {
       spy.mockRestore();
     }

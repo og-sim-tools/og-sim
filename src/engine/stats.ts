@@ -253,7 +253,7 @@ export function aggregateStats(loadout: Loadout): StatsResult {
         ...global('crit_rate'),
         ...got.crit_chance_pct,
       ]);
-      result.critChance = { ...crit, capped: Math.min(crit.total, config.combat.crit_rate_cap_pct) };
+      result.critChance = { ...crit, capped: Math.min(crit.total, config.combat.crit_rate_cap_pct ?? Infinity) };
       const itemCritDmg = entry.kind === 'item' ? (entry.def as Item).stats.crit_damage : undefined;
       result.critDamage = pct([
         ...global('crit_dmg'),

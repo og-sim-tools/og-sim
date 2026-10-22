@@ -56,18 +56,22 @@ describe('burn crits', () => {
     expect(plain.at(-1)).toBeCloseTo(1.8);
   });
 
-  it('Burn Crit DMG grows with the Burn Crit Rate gained (not the base Crit Rate), up to +200%', () => {
+  it('Burn Crit DMG grows with the Burn Crit Rate gained (not the base Crit Rate), with no cap', () => {
     const burns = (items: string[]) =>
       burnEvents(items, 'crit_rate: 100, crit_dmg: 100', 150)
         .log.filter((e) => e.type === 'damage' && e.detail?.includes('(burn)'))
         .map((e) => e.amount!);
     // Base Crit Rate alone doesn't feed it.
     expect(burns(['burnstart', 'igniter', 'scaler'])[0]! / burns(['burnstart', 'igniter'])[0]!).toBeCloseTo(1);
-    // With the ring each burn adds 3% Burn Crit Rate → +6% Crit DMG per burn, capped at 100% → +200%.
+    // With the ring each burn adds 3% Burn Crit Rate → +6% Crit DMG per burn, with no cap (user, 2026-10-22):
+    // past 100% Burn Crit Rate it keeps growing (beyond +200%).
     const withRing = burns(['burnstart', 'igniter', 'scaler', 'crit_ring']);
     const plain = burns(['burnstart', 'igniter', 'crit_ring']);
     expect(withRing[1]! / plain[1]!).toBeCloseTo((2 + 0.06) / 2);
-    expect(withRing.at(-1)! / plain.at(-1)!).toBeCloseTo((2 + 2) / 2);
+    const last = withRing.length - 1;
+    expect(last).toBeGreaterThan(34); // more than 100% Burn Crit Rate by then
+    expect(withRing.at(-1)! / plain.at(-1)!).toBeCloseTo((2 + 0.06 * last) / 2);
+    expect(withRing.at(-1)! / plain.at(-1)!).toBeGreaterThan(2);
   });
 });
 
@@ -88,5 +92,27 @@ describe('build setup', () => {
     expect(setup.detailed_stats).toBeUndefined();
     const back = applySetup(combatProfile(), setup);
     expect(back.basic_stats).toEqual(p.basic_stats);
+  });
+});
+
+describe('no Crit Rate cap (user, 2026-10-22)', () => {
+  const crit = combatData([
+    {
+      path: 'items/manual/critcap.yaml',
+      text: `
+- { id: c100, name: C100, rarity: common, tags: [weapon], footprint: "#", stats: { damage: { ratio: 1, scales_with: atk }, cooldown: 1, accuracy: 1000, crit_chance: 100 }, effects: [{ trigger: passive, target: self_item, action: add_stat_pct, stat: crit_damage_pct, amount: 0, amount_from: { target_crit: true, factor: 1 } }], ${P} }
+- { id: c150, name: C150, rarity: common, tags: [weapon], footprint: "#", stats: { damage: { ratio: 1, scales_with: atk }, cooldown: 1, accuracy: 1000, crit_chance: 150 }, effects: [{ trigger: passive, target: self_item, action: add_stat_pct, stat: crit_damage_pct, amount: 0, amount_from: { target_crit: true, factor: 1 } }], ${P} }
+`,
+    },
+  ]);
+  const hits = (id: string) =>
+    runBattle(combatLoadout([id], 'crit_rate: 0', crit), ENEMY({ hp: '100B', attacks: [], traits: ['short_time_limit'] }), { durationS: 5.05, log: true, seed: 2 }).log.filter((e) => e.type === 'damage' && e.side === 'player');
+  it('over 100% every hit crits once, and what scales with Crit Rate keeps growing past 100%', () => {
+    const a = hits('c100');
+    const b = hits('c150');
+    expect(b.length).toBe(a.length);
+    expect(b.every((e) => e.crit)).toBe(true);
+    // Crit DMG + its Crit Rate: 150% gives more than 100% did.
+    expect(b[0]!.amount!).toBeGreaterThan(a[0]!.amount!);
   });
 });

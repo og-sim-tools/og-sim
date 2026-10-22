@@ -85,9 +85,11 @@ export const ConfigSchema = z
       .object({
         hit_chance_floor_pct: nonneg,
         hit_chance_cap_pct: nonneg,
-        crit_rate_cap_pct: nonneg,
+        /** Highest Crit Rate that counts (null = no cap: over 100% still crits once per hit, but what scales with Crit Rate keeps growing). */
+        crit_rate_cap_pct: nonneg.nullable(),
         default_crit_damage_pct: nonneg,
-        status_crit_rate_cap_pct: nonneg.default(100),
+        /** Highest status Crit Rate (Burn Crit Rate …) that counts (null = no cap). */
+        status_crit_rate_cap_pct: nonneg.nullable().default(null),
         status_crit_dmg_per_rate_from: z.enum(['total', 'bonus']).default('bonus'),
         damage_taken_floor_pct: nonneg,
         /** [UNVERIFIED] separate: (1 + type%) × (1 + all%); additive: (1 + type% + all%). */
