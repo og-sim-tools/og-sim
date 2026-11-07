@@ -185,7 +185,7 @@ describe('real skin data', () => {
   it('has the wiki skins, the Summer enemy skins and the upcoming ones', () => {
     expect([...d.skins.keys()].sort()).toEqual(
       [
-        'bjorn_little_valcan', 'rebecca_red_sun', 'erwen_romantic_date', 'venom_missha_karlstein', 'lua_summer_vacation', 'cecilia_arua_raven', 'feline_mage_cool_splash',
+        'bjorn_little_valcan', 'rebecca_red_sun', 'erwen_romantic_date', 'venom_missha_karlstein', 'lua_summer_vacation', 'cecilia_arua_raven', 'meow_mage_cool_splash',
         'rose_summer', 'darkan_summer', 'talin_summer', 'trixie_summer', 'raven_apostle_of_death', 'rose_eternal_red_moon', 'trixie_dream_eater',
       ].sort(),
     );

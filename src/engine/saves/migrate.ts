@@ -16,6 +16,8 @@
  * Version 6 (2026-10-20): a typed-in attack's on-hit status can be gained by the attacker (self). Nothing older changes.
  * Version 7 (2026-11-06): the account can hold Combat Training and calculate HP / ATK / Block from it (stat_mode).
  * Left out = typed in, as before, so nothing older changes.
+ * Version 8 (2026-11-06): Feline Mage is called Meow Mage in game, so its ids are renamed (the hero, its
+ * blessings and its skin). Nothing else changes.
  */
 import { DEFAULT_BASIC_STATS } from './files';
 import type { SaveNote } from './salvage';
@@ -183,4 +185,27 @@ export function v5toV6(raw: Raw): Raw {
 /** v6 → v7 (account or build): new optional account settings (training, stat_mode), so nothing to change but the number. */
 export function v6toV7(raw: Raw): Raw {
   return { ...raw, version: 7 };
+}
+
+// ------------------------------------------------------------------ v7 → v8
+
+/** Ids renamed in version 8 (user, 2026-11-06: the wiki's "Feline Mage" is "Meow Mage" in game). */
+export const RENAMED_IDS_V8: Readonly<Record<string, string>> = {
+  feline_mage: 'meow_mage',
+  feline_mage_meow: 'meow_mage_meow',
+  feline_mage_item_haste: 'meow_mage_item_haste',
+  feline_mage_cool_splash: 'meow_mage_cool_splash',
+};
+
+/** Every string (and key) that is exactly an old id gets the new one, wherever it is in the file. */
+function renameIds(v: unknown, map: Readonly<Record<string, string>>): unknown {
+  if (typeof v === 'string') return map[v] ?? v;
+  if (Array.isArray(v)) return v.map((x) => renameIds(x, map));
+  if (isObj(v)) return Object.fromEntries(Object.entries(v).map(([k, x]) => [map[k] ?? k, renameIds(x, map)]));
+  return v;
+}
+
+/** v7 → v8 (account or build): Feline Mage's ids become Meow Mage's. */
+export function v7toV8(raw: Raw): Raw {
+  return { ...(renameIds(raw, RENAMED_IDS_V8) as Raw), version: 8 };
 }

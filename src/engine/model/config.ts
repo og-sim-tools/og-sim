@@ -71,9 +71,14 @@ export const ConfigSchema = z
       .object({
         /** [UNVERIFIED] */
         tick_seconds: pos,
-        min_cooldown_seconds: pos,
-        /** [UNVERIFIED] ticks between hits of a multi-hit attack (0 = same tick). */
-        multi_hit_spacing_ticks: int,
+        /** null = no minimum (user, 2026-11-06); an item still acts at most once a tick. */
+        min_cooldown_seconds: pos.nullable(),
+        /**
+         * The hit queue (user, 2026-11-06, measured on Primal Flame only): seconds between the steps of one sequence
+         * (multi-hit, "Activates Burn N times", crit repeats) and between activations of a weapon that come at once
+         * (0 = all in the same tick). Rounded to whole ticks, at least one.
+         */
+        hit_queue_seconds: nonneg,
         status_timer_seconds: pos,
         /** Max times a trigger fires per tick; triggers not listed are unlimited. */
         trigger_rate_limits: z.record(z.string(), int),
@@ -112,8 +117,6 @@ export const ConfigSchema = z
           .object({
             /** Confirmed (user, 2026-10-20): a recast is a spell activation too, so the hats roll on it again (true); false = only the spell's own activation rolls them. */
             chain: z.boolean(),
-            /** Confirmed 1 (user, 2026-10-20): a weapon spell's recasts queue, each this many ticks after the previous one (0 = all in the same tick). */
-            weapon_spacing_ticks: z.number().int().nonnegative(),
             /** User, 2026-10-20: a spell that reads statuses (Instant Freeze's Freeze, Charm's buffs) acts once per tick; its extra activations that tick are wasted (watchers such as Witch's Mirror still see them). */
             status_reading_once_per_tick: z.boolean(),
             /** On-activation actions that count as reading statuses (besides a condition on a status). */

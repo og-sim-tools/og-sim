@@ -66,7 +66,7 @@ describe('enemy builds', () => {
         gear: { weapon: { id: 'primal_flame', rarity: 'epic', tier: 0, level: 1 }, shield: null, rings: [], gloves: [] },
       }),
       '',
-      8.05,
+      9.25, // 8 s timer + Primal Flame's 1.2 s cast
     );
     expect(r.items['enemy:w']!.skillActivations).toBe(1);
     expect(r.log.some((e) => e.type === 'status' && e.target === 'player' && e.detail?.includes('burn'))).toBe(true);

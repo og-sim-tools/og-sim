@@ -135,8 +135,7 @@ class Battle implements EffectApi {
   private readonly bumps = new Map<string, number>();
   private rateCounts = new Map<string, number>();
   private readonly hpArmed = new Map<string, boolean>();
-  /** Recasts ("activate again"): the tick each weapon spell's next queued recast goes, and recasts per item this tick. */
-  private readonly recastAt = new Map<string, number>();
+  /** Recasts ("activate again") per item this tick (weapon spells' recasts wait in the hit queue, weaponSlot). */
   private recastCounts = { tick: -1, counts: new Map<string, number>() };
   /** The tick each status-reading spell last acted (it acts once per tick). */
   private readonly actedAt = new Map<string, number>();
@@ -145,6 +144,10 @@ class Battle implements EffectApi {
   private actMode: { recast: boolean; muted: CombatItem | null } = { recast: false, muted: null };
   /** Work queued for a later tick: the next hit of a multi-hit, the next activation of "Activates Burn 9 times", a crit repeat. */
   private scheduled: { tick: number; run: () => void }[] = [];
+  /** The hit queue (config timing.hit_queue_seconds) in ticks: 0 = everything in the same tick. */
+  private readonly queueTicks: number;
+  /** Each weapon's hit queue: the last tick it has an activation (or a hit of one) booked for. */
+  private weaponSlot = new Map<string, number>();
   private readonly timedBonuses: { item: CombatItem; stat: ItemStatPct; amount: number; until: number }[] = [];
   private readonly untilHit: { item: CombatItem; stat: ItemStatPct; amount: number }[] = [];
   private perStatus: PerStatusBonus[] = [];
@@ -203,6 +206,7 @@ class Battle implements EffectApi {
     this.defs = input.data.statuses;
     this.rng = new Rng(opts.seed ?? 1);
     this.tickS = cfg.timing.tick_seconds;
+    this.queueTicks = cfg.timing.hit_queue_seconds > 0 ? Math.max(1, Math.round(cfg.timing.hit_queue_seconds / this.tickS)) : 0;
     this.logOn = opts.log ?? false;
 
     this.mode = opts.mode ?? 'stage';
@@ -695,7 +699,7 @@ class Battle implements EffectApi {
     const div = 1 + haste / 100;
     if (div <= 0) return Infinity;
     const freeze = 1 + statusPct(owner, this.defs, 'slow') / 100;
-    return Math.max(this.cfg.timing.min_cooldown_seconds, (it.baseCooldown / div) * freeze);
+    return Math.max(this.cfg.timing.min_cooldown_seconds ?? 0, (it.baseCooldown / div) * freeze);
   }
 
   private advance(it: CombatItem) {
@@ -727,8 +731,33 @@ class Battle implements EffectApi {
 
   // ---------------------------------------------------------------- activations, attacks, skills
 
-  activate(it: CombatItem, depth: number, own = false, extra = false, recast = false) {
+  /**
+   * The weapon hit queue (user, 2026-11-06): a weapon activated again while it still has hits to send (this tick,
+   * or queued) waits its turn, config timing.hit_queue_seconds after the last. True = queued, run later.
+   */
+  private queueWeapon(it: CombatItem, run: () => void): boolean {
+    if (!it.damage || this.queueTicks <= 0) return false;
+    const last = this.weaponSlot.get(it.id);
+    if (last === undefined || last < this.tick) {
+      this.weaponSlot.set(it.id, this.tick);
+      return false;
+    }
+    const at = last + this.queueTicks;
+    this.weaponSlot.set(it.id, at);
+    this.later(at - this.tick, run);
+    return true;
+  }
+
+  /** A weapon's attack takes its queue slots for all its hits, so the next activation's hits come after them. */
+  private bookHits(it: CombatItem, hits: number) {
+    if (this.queueTicks <= 0 || hits <= 1) return;
+    this.weaponSlot.set(it.id, Math.max(this.weaponSlot.get(it.id) ?? -Infinity, this.tick + (hits - 1) * this.queueTicks));
+  }
+
+  activate(it: CombatItem, depth: number, own = false, extra = false, recast = false, fromQueue = false) {
     if (this.fightOver || this.sealed(it) || this.dead(it.side)) return;
+    if (!fromQueue && this.queueWeapon(it, () => this.activate(it, 0, own, extra, recast, true))) return;
+    if (fromQueue) this.weaponSlot.set(it.id, Math.max(this.weaponSlot.get(it.id) ?? -Infinity, this.tick));
     if (depth > this.cfg.combat.max_chain_depth) {
       this.warnOnce(`Simulator bug: an endless loop of activations (${it.name}) was cut off after ${this.cfg.combat.max_chain_depth} steps. This isn't a game rule; please report the build.`);
       return;
@@ -761,7 +790,7 @@ class Battle implements EffectApi {
       const n = Math.floor(this.rng.next() * (it.randomExtraHits + 1));
       if (n > 0) {
         this.emitLog({ type: 'note', side: it.side, source: it.id, detail: `${it.name} attacks ${n} more time${n > 1 ? 's' : ''}` });
-        this.later(this.cfg.timing.multi_hit_spacing_ticks, () =>
+        this.later(this.queueTicks, () =>
           this.sequence(n, () => {
             this.activate(it, depth, false, true);
             return 1;
@@ -774,7 +803,7 @@ class Battle implements EffectApi {
   /**
    * "Activate [dot] Spell" from an effect: right away, or after the activation that caused it. A recast
    * ("activate again", one per hat that rolls it) of a tool spell acts again in the same tick; a weapon spell's
-   * recasts queue, each config combat.recast.weapon_spacing_ticks after the last.
+   * recasts go in its hit queue (config timing.hit_queue_seconds apart).
    */
   triggerActivation(it: CombatItem, depth: number, recast = false) {
     if (recast) {
@@ -786,11 +815,13 @@ class Battle implements EffectApi {
         this.warnOnce(`${it.name} was activated again more than ${rc.max_per_tick} times in one tick; the rest were cut off (a simulator guard, not a game rule).`);
         return;
       }
-      if (it.damage && rc.weapon_spacing_ticks > 0) {
-        const at = Math.max(this.tick + rc.weapon_spacing_ticks, (this.recastAt.get(it.id) ?? -Infinity) + rc.weapon_spacing_ticks);
-        this.recastAt.set(it.id, at);
-        // A new tick: the chain starts over (it isn't a loop inside one tick).
-        this.later(at - this.tick, () => this.activate(it, 0, false, false, true));
+      if (it.damage && this.queueTicks > 0) {
+        // Behind whatever the weapon already has queued (it acted this tick: it caused this recast). A new tick:
+        // the chain starts over (it isn't a loop inside one tick).
+        const last = Math.max(this.weaponSlot.get(it.id) ?? -Infinity, this.tick);
+        const at = last + this.queueTicks;
+        this.weaponSlot.set(it.id, at);
+        this.later(at - this.tick, () => this.activate(it, 0, false, false, true, true));
         return;
       }
     }
@@ -822,13 +853,26 @@ class Battle implements EffectApi {
     it.nextExtraHits = 0;
     this.emitLog({ type: 'attack', side: it.side, source: it.id, detail: `${it.name} attacks${hits > 1 ? ` (${hits} hits)` : ''}` });
     this.emit('on_attack', it.side, it, depth);
+    this.bookHits(it, hits);
     this.sequence(hits, () => {
       this.resolveHit(it, 'weapon', depth);
       return 1;
     });
   }
 
+  /** A gear skill activates: with a cast time (config-free, per skill: Primal Flame 1.2 s) it goes off that much later. */
   activateSkill(it: CombatItem, depth: number) {
+    const s = it.skill;
+    if (!s || this.fightOver || this.sealed(it) || this.dead(it.side)) return;
+    if (s.castTicks > 0) {
+      this.emitLog({ type: 'note', side: it.side, source: it.id, detail: `${it.name}: skill casting (${Math.round(s.castTicks * this.tickS * 1000) / 1000} s)` });
+      this.later(s.castTicks, () => this.releaseSkill(it, 0));
+      return;
+    }
+    this.releaseSkill(it, depth);
+  }
+
+  private releaseSkill(it: CombatItem, depth: number) {
     const s = it.skill;
     if (!s || this.fightOver || this.sealed(it) || this.dead(it.side)) return;
     s.activations++;
@@ -863,12 +907,12 @@ class Battle implements EffectApi {
   }
 
   /**
-   * `times` steps one after another (config timing.multi_hit_spacing_ticks apart): the first now.
+   * `times` steps one after another (config timing.hit_queue_seconds apart): the first now.
    * A step returns how many damage events it took (a crit Burn dealt twice = 2), and the next step
    * waits that many spacings. Stops when a step returns 0 or the fight ends.
    */
   sequence(times: number, step: (i: number) => number) {
-    const spacing = this.cfg.timing.multi_hit_spacing_ticks;
+    const spacing = this.queueTicks;
     const run = (i: number) => {
       if (i >= times || this.fightOver) return;
       const used = step(i);

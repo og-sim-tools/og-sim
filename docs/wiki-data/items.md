@@ -224,7 +224,7 @@ Only available to Wizard heroes.
 | Fusion Magic: Firestorm | Epic | Weapon, Spell, Lightning, Flame | DMG 1.5x ATK<br>Accuracy 90% | Attack 0 ~ 2 more time(s). Hits as Critical Hit on enemies with over 40 Burn | `#. / ## / .#` | 16 | Ultimate Magic: Apocalypse | Advanced Magic: Thunderstrike, Intermediate Magic: Ignite |
 | Beginner Magic: Energy Bolt | Common | Weapon, Spell | DMG 1.5x ATK<br>Accuracy 85% | _Place near a Wand to activate_ | `##` | 3 | Intermediate Magic: Magic Missile | — |
 | Intermediate Magic: Magic Missile | Uncommon | Weapon, Spell | DMG 1.8x ATK<br>Accuracy 85% | On Hit: 45% chance to activate again. | `#. / ##` | 6 | Spell Thief | Beginner Magic: Energy Bolt, Beginner Magic: Energy Bolt |
-| Meow Missile 🔒Feline Mage | Epic | Weapon, Spell | DMG 2.5x ATK<br>Accuracy 85% | On Hit: 75% chance to activate again. | `#. / ##` | 0 (wiki: ?) | — | Intermediate Magic: Magic Missile, Magic Stone |
+| Meow Missile 🔒Meow Mage | Epic | Weapon, Spell | DMG 2.5x ATK<br>Accuracy 85% | On Hit: 75% chance to activate again. | `#. / ##` | 0 (wiki: ?) | — | Intermediate Magic: Magic Missile, Magic Stone |
 | Transformation Magic: Instant Freeze | Uncommon | Weapon, Spell, Ice |  | On Activation: After inflicting 3 Freeze, spend 25 Freeze for 0.25s to Stun. | `# / #` | 5 | Frozen Dog, Advanced Magic: Crystal Fall, Frost Mage's Hat | — |
 | Intermediate Magic: Ignite | Uncommon | Weapon, Spell, Ice |  | On Activation: Inflict 10 Burn for 1s. | `##` | 6 | Blazing Hound, Flame Mage's Hat, Lavafield Flask, Fusion Magic: Firestorm | — |
 | Transformation Magic: Charm 🔒Trixie | Rare | Weapon, Spell |  | On Activation: Remove 3 random buff(s) from the enemy. | `##` | 0 (wiki: ?) | Witch's Mirror | — |

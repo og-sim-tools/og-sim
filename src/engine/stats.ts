@@ -238,8 +238,9 @@ export function aggregateStats(loadout: Loadout): StatsResult {
     if (st.cooldown !== undefined) {
       const haste = pct([...global('item_haste'), ...got.haste_pct]);
       const div = 1 + haste.total / 100;
-      const min = config.timing.min_cooldown_seconds;
-      const base = Math.max(min, st.cooldown + (cooldownShift.get(id) ?? 0));
+      // No minimum cooldown (user, 2026-11-06: min_cooldown_seconds null); a base cooldown never goes below one tick.
+      const min = config.timing.min_cooldown_seconds ?? 0;
+      const base = Math.max(min || config.timing.tick_seconds, st.cooldown + (cooldownShift.get(id) ?? 0));
       const raw = div > 0 ? base / div : Infinity;
       result.cooldown = { base, haste, final: Math.max(raw, min), clamped: raw < min };
       if (div <= 0) issues.push({ level: 'warning', code: 'haste_below_minus_100', message: `${entry.def.name} has ${haste.total}% haste and never activates.`, instanceIds: [id] });

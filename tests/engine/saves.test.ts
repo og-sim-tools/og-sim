@@ -49,9 +49,12 @@ function outcome(profile: Profile, layout: LayoutData) {
   return { winner: r.winner, duration: r.duration, dealt: Math.round(r.player.damageDealt), taken: Math.round(r.enemy.damageDealt), hp: Math.round(r.player.hp), hero: lo.hero?.id ?? null };
 }
 
+/** Version 8 renamed Feline Mage's ids to Meow Mage's (user, 2026-11-06): old files are compared with that applied. */
+const v8Ids = <T,>(x: T): T => JSON.parse(JSON.stringify(x).replace(/"feline_mage/g, '"meow_mage')) as T;
+
 describe('version-1 saves (the real files as of 2026-10-18)', () => {
   const v1ProfileText = read('v1', 'profile.yaml');
-  const v1Profile = ProfileSchema.parse(parse(v1ProfileText));
+  const v1Profile = v8Ids(ProfileSchema.parse(parse(v1ProfileText)));
   const account = readAccount(v1ProfileText);
 
   it('the account migrates without warnings and takes everything account-wide from the old profile', () => {
@@ -70,13 +73,13 @@ describe('version-1 saves (the real files as of 2026-10-18)', () => {
     expect(account.profile.gear.weapon).toBeNull();
     expect(account.profile.pets).toEqual([]);
     expect(account.profile.equipped_skins).toEqual([]);
-    expect(account.migratedFromV1).toEqual(parse(v1ProfileText));
+    expect(account.migratedFromV1).toEqual(v8Ids(parse(v1ProfileText)));
   });
 
   for (const f of yamls('v1', 'builds')) {
     it(`"${f}" loads and plays exactly as in version 1`, () => {
       const text = read('v1', 'builds', f);
-      const before = LayoutSchema.parse(parse(text));
+      const before = v8Ids(LayoutSchema.parse(parse(text)));
       const after = readBuild(text, { v1Profile: account.migratedFromV1 });
       expect(after.version).toBe(1);
       expect(after.notes.filter((n) => n.level === 'warning')).toEqual([]);

@@ -26,6 +26,7 @@ export const COMBAT_ITEMS = `
 - { id: staff, name: Staff, rarity: common, tags: [weapon, staff], footprint: "#o", ${W(0.5, 2)}, effects: [{ trigger: on_attack, uses_dots: true, target: items_under_dots, filter: { tags_any: [spell] }, action: activate_item }], ${P} }
 - { id: bolt, name: Bolt, rarity: common, tags: [weapon, spell], footprint: "#", ${W(2, null)}, ${P} }
 - { id: echo, name: Echo, rarity: common, tags: [weapon, spell], footprint: "#", ${W(1, null)}, effects: [{ trigger: on_hit, target: self_item, action: activate_item }], ${P} }
+- { id: looper, name: Looper, rarity: common, tags: [tool, spell], footprint: "#", stats: { cooldown: 1 }, effects: [{ trigger: on_activation, target: self_item, action: activate_item }], ${P} }
 - { id: burner, name: Burner, rarity: common, tags: [weapon], footprint: "#", ${W(1, 1)}, effects: [{ trigger: on_hit, target: enemy, action: apply_status, status: burn, stacks: 1.5 }], ${P} }
 - { id: froster, name: Froster, rarity: common, tags: [tool], footprint: "#", effects: [{ trigger: battle_start, target: enemy, action: apply_status, status: freeze, stacks: 100 }], ${P} }
 - { id: poisoner, name: Poisoner, rarity: common, tags: [tool], footprint: "#", effects: [{ trigger: battle_start, target: enemy, action: apply_status, status: poison, stacks: 10 }], ${P} }

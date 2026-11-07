@@ -77,7 +77,8 @@
   notes: 'Gear effects batch 1. Legendary read as 50% → 100% of DMG dealt (not 50% × 1.5). Mythic: any of my items crits, including Deathrattle itself.'
 
 - id: primal_flame
-  skill: { damage: { ratio: 3.0, scales_with: atk }, interval_s: 8 }
+  # cast_s: user, 2026-11-06 (in game): the skill hit lands 1.2 s after the 8 s timer (9.2 s, 17.2 s …).
+  skill: { damage: { ratio: 3.0, scales_with: atk }, interval_s: 8, cast_s: 1.2 }
   effects:
     - { text: "On Skill Hit: Activates Burn 9 times.", trigger: on_skill_hit, target: enemy, action: trigger_status, status: burn, count: 9 }
     - { text: "On Basic Attack Hit: Inflict 1 Burn.", trigger: on_hit, target: enemy, action: apply_status, status: burn, stacks: 1 }

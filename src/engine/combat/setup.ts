@@ -362,6 +362,7 @@ function buildSkill(gear: { skill?: Gear['skill'] }, loadout: Loadout, atk: numb
     hits: s.hits ?? 1,
     intervalTicks: s.interval_s !== undefined ? Math.max(1, Math.round(s.interval_s / tickS)) : null,
     gauge: s.gauge ?? false,
+    castTicks: s.cast_s ? Math.max(1, Math.round(s.cast_s / tickS)) : 0,
     accuracy: s.accuracy ?? basicAcc,
     critChancePct: s.crit_chance !== undefined ? s.crit_chance + critRate : basicCrit,
     alwaysHit: s.always_hit ?? false,

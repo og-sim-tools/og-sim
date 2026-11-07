@@ -1029,7 +1029,7 @@
     - spell
   class_restriction:
     - wizard
-  hero_exclusive: feline_mage
+  hero_exclusive: meow_mage
   footprint: "#. / ##"
   stats:
     damage:

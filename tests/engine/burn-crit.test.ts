@@ -44,16 +44,16 @@ describe('burn crits', () => {
     expect(two).toBe(one * 2);
   });
 
-  it('"Activates Burn 9 times" with crit repeat: 18 damage events, one tick each (Primal Flame mythic)', () => {
+  it('"Activates Burn 9 times" with crit repeat: 18 damage events, 0.02 s apart (Primal Flame mythic)', () => {
     const events = (items: string[], stats: string) =>
       burnEvents(items, stats, 4).log.filter((e) => e.type === 'damage' && e.detail?.includes('(burn)')).map((e) => e.t);
     const all = events(['burnstart', 'flamer', 'twice'], 'crit_rate: 100');
     expect(all).toHaveLength(18);
-    all.forEach((t, i) => expect(t).toBeCloseTo(1 + i * 0.1));
-    // Without crits: 9 events, still one tick apart.
+    all.forEach((t, i) => expect(t).toBeCloseTo(1 + i * 0.02));
+    // Without crits: 9 events, still 0.02 s apart.
     const plain = events(['burnstart', 'flamer', 'twice'], 'crit_rate: 0');
     expect(plain).toHaveLength(9);
-    expect(plain.at(-1)).toBeCloseTo(1.8);
+    expect(plain.at(-1)).toBeCloseTo(1.16);
   });
 
   it('Burn Crit DMG grows with the Burn Crit Rate gained (not the base Crit Rate), with no cap', () => {

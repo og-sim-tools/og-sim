@@ -156,9 +156,9 @@
   observed_with: { hp: "5.53M", atk: "1.65M" }
   notes: "the extra damage for each debuff stack Sunspot Sphere removes isn't known, so it's left out (base hit only: 30x ATK, 49.64M at 1.65M ATK; 74.47/99.29/124.1/173.7/248.2M at 1★–5★ from the user). The name Arua Raven is correct (a collab with the manhwa Rafdonia; user, 2026-10-17)."
 
-- id: feline_mage_cool_splash
+- id: meow_mage_cool_splash
   name: Cool Splash Meow Mage
-  hero: feline_mage
+  hero: meow_mage
   rarity: legendary
   obtainable: Tropical Island Event
   skill:

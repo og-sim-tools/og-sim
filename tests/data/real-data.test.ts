@@ -64,7 +64,7 @@ describe('real game data', () => {
     expect(rain.merges_into).toEqual([]);
     expect(rain.tags).toEqual(['tool', 'spell']);
     expect(d.items.get('transformation_magic_drizzle')!.merges_into).toEqual(['transformation_magic_heavy_rain']);
-    expect(d.heroes.get('feline_mage')!.supplies.find((s) => s.stars === 7)!.item).toBe('transformation_magic_heavy_rain');
+    expect(d.heroes.get('meow_mage')!.supplies.find((s) => s.stars === 7)!.item).toBe('transformation_magic_heavy_rain');
   });
 
   it('applies the other confirmed fixes', () => {

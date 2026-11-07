@@ -57,7 +57,7 @@ Item effects and status effects are separate systems. Item effects are triggers 
 
 ## 3. The clock
 
-- The battle runs in **ticks of 0.1s**. [config: `tick_seconds`, unconfirmed: real frame timing may vary per item]
+- The battle runs in **ticks of 0.02s** (0.1s until 2026-11-06). [config: `tick_seconds`, unconfirmed: real frame timing may vary per item]
 - Inside a tick, your side is processed first [config: `side_order`; `random` = a seeded coin flip each tick and at the start of battle]. A fighter who reaches 0 HP stops acting **at once**: no more attacks, effects or damage that tick, so the first killing blow wins. [you] [config: `death_timing: immediate`]
 
 ### 3.1 Start of battle (tick 0)
@@ -94,7 +94,7 @@ All start-of-battle and passive actions run in priority order, lower first [conf
 
 ## 4. Cooldowns and activations
 
-- **Cooldown** = base ÷ (1 + haste%) × (1 + Freeze stacks ÷ 100), never below 0.1s.
+- **Cooldown** = base ÷ (1 + haste%) × (1 + Freeze stacks ÷ 100), with no minimum since 2026-11-06 (an item still acts at most once per tick).
   - **Haste** = Item Haste + haste from effects + Swift stacks (+1% each) + Berserk haste.
   - **Freeze** slows only bag items, not gear skill timers. It has no cap.
 - An item fills its cooldown each tick. When full it activates. At most **one activation per tick**, and leftover progress carries over to the next cooldown.
@@ -106,7 +106,7 @@ All start-of-battle and passive actions run in priority order, lower first [conf
   1. The `on_activation` / "On Use" effects fire.
   2. If the item has damage, it attacks.
   3. Items with "attacks N times per battle" stop after N.
-- "Attack 0 ~ N more time(s)" (Intermediate Magic: Spark, Thunderstrike, Lightning Storm, Firestorm, Thunder Dragon): after each activation, 0 to N more activations at random, one tick apart. Each extra attack is an activation of its own, so On Activation effects and dot watchers (Witch's Mirror, Wizard's Hat, "On Spell Activation") see it again (user, 2026-10-17).
+- "Attack 0 ~ N more time(s)" (Intermediate Magic: Spark, Thunderstrike, Lightning Storm, Firestorm, Thunder Dragon): after each activation, 0 to N more activations at random, 0.02s apart (the hit queue). Each extra attack is an activation of its own, so On Activation effects and dot watchers (Witch's Mirror, Wizard's Hat, "On Spell Activation") see it again (user, 2026-10-17).
 - "Activate an item" effects can chain, with no limit (user, 2026-10-17: the game has no chain cap). An item that another activation sets off (Lightning Rod's "On Enemy Stun: Activate [dot] Spell") activates after that activation finishes all of its own effects, in the same tick. So Instant Freeze spends its 25 Freeze before the Stun's Rod activation fires it again, and the Rod → Stun → Instant Freeze chain stops by itself once the enemy has under 25 Freeze.
 - The only cut-off is a simulator guard against a hang (`combat.max_chain_depth`, 400 steps). It's not a game rule, and hitting it shows as "Simulator bug".
 - Spending stacks ("spend 25 Freeze") is a cost, not removing a buff. Steal-on-remove (Trixie) and Witch's Mirror's "If removed" don't see it, and only buffs can be stolen.
@@ -116,9 +116,9 @@ All start-of-battle and passive actions run in priority order, lower first [conf
 
 ## 5. Multi-hits and sequences
 
-**New from 2026-10-16, from you: every step of a sequence takes its own tick**, one tick apart. [config: `multi_hit_spacing_ticks: 1`] This covers:
+**Every step of a sequence goes out of the hit queue, 0.02s apart** (user, 2026-11-06, measured on Primal Flame; was one 0.1s tick apart). [config: `hit_queue_seconds: 0.02`] This covers:
 
-- the hits of a multi-hit weapon attack ("attacks 3 times" = hits at t, t+0.1, t+0.2)
+- the hits of a multi-hit weapon attack ("attacks 3 times" = hits at t, t+0.02, t+0.04)
 - the hits of a gear skill
 - "Activates Burn N times": each activation is its own tick, and each uses the Burn stacks there are **at that moment**
 - **crit repeats**: a crit Burn under Primal Flame mythic deals its damage twice, the second time one tick later, and the next activation waits for it
@@ -399,7 +399,7 @@ Gauntlet notes:
 
 Each of these is a guess you can change in `data/config.yaml`:
 
-- **Tick length** is 0.1s.
+- **Tick length** is 0.02s (measured hit spacing on Primal Flame; other items not yet).
 - **All DMG** multiplies type DMG separately: (1 + type) × (1 + all), not added to it.
 - **Who acts first inside a tick**: your side (`side_order: player_first`). With immediate deaths this decides close fights.
 - **Burn's 50% chance** per weapon hit comes from the wiki's status page (`data/statuses/wiki`), not from you.

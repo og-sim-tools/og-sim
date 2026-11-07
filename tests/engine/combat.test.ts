@@ -97,9 +97,10 @@ describe('timing and cooldowns', () => {
     expect(times(fight(['froster'], { attacks: atk }, { durationS: 4 }).log, 'attack')).toEqual([2, 4]);
   });
 
-  it('clamps cooldowns to 0.1 s: at most one attack per tick', () => {
+  it('no minimum cooldown (user, 2026-11-06): still at most one attack per tick (0.02 s)', () => {
+    expect(DATA_.config!.timing.min_cooldown_seconds).toBeNull();
     const r = fight(['blade'], {}, { durationS: 1, stats: 'item_haste: 100000' });
-    expect(r.items.blade0!.attacks).toBe(10);
+    expect(r.items.blade0!.attacks).toBe(50);
   });
 
   it('stops items that attack once per battle', () => {
@@ -170,10 +171,10 @@ describe('damage pipeline (SPEC §7.3)', () => {
     close(r.enemy.hp, 950_000);
   });
 
-  it('lands the hits of a multi-hit attack one tick apart', () => {
+  it('lands the hits of a multi-hit attack one hit-queue step (0.02 s) apart', () => {
     const r = fight(['triple'], {}, { durationS: 2.3 });
     expect(r.items.triple0!).toMatchObject({ attacks: 1, hits: 3 });
-    expect(times(r.log, 'hit')).toEqual([2, 2.1, 2.2]);
+    expect(times(r.log, 'hit')).toEqual([2, 2.02, 2.04]);
   });
 
   it('ends the battle when someone dies', () => {
@@ -199,9 +200,17 @@ describe('spell activation', () => {
   });
 
   it('cuts off a truly endless activation loop (a simulator guard) and reports it as a bug', () => {
-    const r = fight(['staff@0,0', 'echo@1,0'], {}, { durationS: 2 });
-    expect(r.items.echo1!.attacks).toBe(DATA_.config!.combat.max_chain_depth);
+    // A tool spell that activates itself acts again in the same tick, without end.
+    const r = fight(['looper'], {}, { durationS: 1 });
+    expect(r.items.looper0!.activations).toBe(DATA_.config!.combat.max_chain_depth + 1);
     expect(r.warnings.some((w) => /Simulator bug: an endless loop/.test(w))).toBe(true);
+  });
+
+  it('a weapon that activates itself on hit queues: one attack every 0.02 s, no endless loop in one tick', () => {
+    const r = fight(['staff@0,0', 'echo@1,0'], {}, { durationS: 2.2, log: true });
+    const at = r.log.filter((e) => e.type === 'attack' && e.source === 'echo1').map((e) => e.t);
+    expect(at.slice(0, 4)).toEqual([2, 2.02, 2.04, 2.06]);
+    expect(r.warnings.some((w) => /endless loop/.test(w))).toBe(false);
   });
 });
 

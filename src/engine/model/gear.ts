@@ -19,6 +19,11 @@ export const GearSkillSchema = z
     interval_s: z.number().positive().optional(),
     /** Skill Gauge: activates whenever the gauge reaches 100% (charge_skill fills it). */
     gauge: z.boolean().optional(),
+    /**
+     * Cast time: the skill goes off this many seconds after it activates (Primal Flame: 1.2 s after its 8 s timer,
+     * user 2026-11-06). The timer keeps its own rhythm (8 s, so hits at 9.2, 17.2 …).
+     */
+    cast_s: z.number().nonnegative().optional(),
     /** Defaults to the basic attack's accuracy / crit rate. */
     accuracy: z.number().optional(),
     crit_chance: z.number().optional(),

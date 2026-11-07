@@ -36,7 +36,7 @@
 - { id: acrobat_evasion, stat: evasion, source: manual, verified: false }
 - { id: talin_crit_dmg, stat: crit_dmg, source: manual, verified: false }
 - { id: lua_healing_power_enhance, stat: healing_power_enhance, source: manual, verified: false }
-- { id: feline_mage_item_haste, stat: item_haste, source: manual, verified: false }
+- { id: meow_mage_item_haste, stat: item_haste, source: manual, verified: false }
 - { id: kai_sword_weapon_dmg, stat: sword_dmg_increase, source: manual, verified: false }
 - { id: spearman_spear_weapon_dmg, stat: spear_dmg_increase, source: manual, verified: false }
 - { id: erwen_bow_dmg, stat: bow_dmg_increase, source: manual, verified: false }

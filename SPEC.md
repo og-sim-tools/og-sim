@@ -12,7 +12,7 @@
   - **Starting equipment** — items unlocked through hero stars that can be brought into a battle. The wiki calls these **supplies**, and the capacity **Supply Ability**.
   - **Item dot** — the marker in a slot near an item showing where that item's effect reaches. The wiki calls these **sockets**.
   - **Item effect** vs **status effect** — two different things (see §5).
-  - **Tick** — 0.1 seconds of combat time.
+  - **Tick** — 0.02 seconds of combat time (0.1 s until 2026-11-06).
   - **Classes** — Warrior, Ranger, **Wizard** (internal ids `warrior`, `ranger`, `wizard`). Note that "Mage" is the name of a Rare Wizard *hero*, not a class.
 
 ## 1. Purpose and scope
@@ -474,9 +474,11 @@ The wiki's *Stats and Effects* page is the main source for status rules. Where i
 
 ### 7.1 Timing
 
-- Real-time, simulated in **ticks of 0.1 s**. [UNVERIFIED: real frame timing varies by item; keep tick length in config.]
-- **A weapon attacks at most once per tick.** Any cooldown is clamped to a minimum of 0.1 s. A multi-hit attack still counts as one attack (§5.2).
-- **Triggered effects are not rate-limited by default.** Example: an item that gains block "when item under its dots deals damage", touching two 0.1 s weapons, gains block twice per tick.
+- Real-time, simulated in **ticks of 0.02 s** (user, 2026-11-06; was 0.1 s). [UNVERIFIED: real frame timing varies by item; keep tick length in config.]
+- **No minimum cooldown** (user, 2026-11-06), but an item acts at most once per tick.
+- **The hit queue** (user, 2026-11-06, measured on Primal Flame only): hits that come at once go out one every 0.02 s (`timing.hit_queue_seconds`): the hits of a multi-hit attack, "Activates Burn N times", crit repeats, and a weapon activated several times at once (by several items, or recast by hats; its second attack's hits wait for the first's). [UNVERIFIED for every other item: to be data-mined.]
+- **Cast time** (gear skills, `skill.cast_s`): the skill goes off that long after its timer fires, and the timer keeps its rhythm (Primal Flame: 8 s + 1.2 s cast → 9.2 s, 17.2 s …; user, 2026-11-06).
+- **Triggered effects are not rate-limited by default.** Example: an item that gains block "when item under its dots deals damage", touching two weapons that hit in the same tick, gains block twice in that tick.
 - **Exception: `on_dodge`** triggers at most once per tick, even if the player dodges more than once in that tick.
 - Make per-trigger rate limits configurable, since more exceptions will appear.
 
@@ -500,7 +502,7 @@ At the start of battle, resolve in this order:
 - **Cooldown:**
   `haste = item haste % + global Item Haste + Swift stacks`
   `cooldown = base_cooldown / (1 + haste) × (1 + Freeze stacks / 100)`
-  then clamp to the 0.1 s minimum. 100 Freeze stacks doubles cooldowns; there is no cap. Freeze applies to items only, not gear weapon skills. Stun pauses cooldowns.
+  with no minimum (user, 2026-11-06; an item acts at most once per tick). 100 Freeze stacks doubles cooldowns; there is no cap. Freeze applies to items only, not gear weapon skills. Stun pauses cooldowns.
 - **Damage formula** (from the game's community Discord):
 
   `damage = (base × damage_modifier × crit + additional_damage) × (1 + final%)`

@@ -131,7 +131,8 @@ describe('skill activations', () => {
       real,
     ).profile!;
     const lo = buildLoadout(real, profile, LayoutSchema.parse({ placements: [{ item: 'primal_flame', x: 0, y: 0, rotation: 0 }] }));
-    const r = runBattle(lo, ENEMY({ hp: '900B' }), { durationS: 16.05 });
+    // Skill at 8 s and 16 s, each going off 1.2 s later (cast time): 9.2 and 17.2.
+    const r = runBattle(lo, ENEMY({ hp: '900B' }), { durationS: 17.25 });
     const pf = Object.values(r.items).find((i) => i.name === 'Primal Flame')!;
     expect(pf.skillActivations).toBe(2);
     expect(pf.activations).toBeGreaterThan(2);

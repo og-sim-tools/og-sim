@@ -36,6 +36,8 @@ interface Props {
   onRename?: (from: string, to: string) => void;
   onDelete: (name: string) => void;
   onNew: () => void;
+  /** New build as a copy of this one, unsaved changes included (user, 2026-11-06); it goes in the temp build. */
+  onCopy?: () => void;
   onImport: (file: File) => void;
   onExport: () => void;
 }
@@ -99,6 +101,8 @@ export function BuildPicker(p: Props) {
   const box = useRef<HTMLDivElement>(null);
   const file = useRef<HTMLInputElement>(null);
   const isTemp = !active && !p.noTemp;
+  /** A copy needs a build to copy (the temp build would only copy itself). */
+  const canCopy = !!p.onCopy && !!active && !p.noTemp;
 
   useEffect(() => {
     if (!open) return;
@@ -215,7 +219,10 @@ export function BuildPicker(p: Props) {
         >
           Save
         </button>
-        <button onClick={() => (dirty || (isTemp && p.tempHasItems) ? setAsk({ kind: 'new' }) : p.onNew())} title="Start over in the temp build: same hero, gear, pets and skins, empty bag">
+        <button
+          onClick={() => (dirty || (isTemp && p.tempHasItems) || canCopy ? setAsk({ kind: 'new' }) : p.onNew())}
+          title={canCopy ? 'Start over in the temp build (same hero, gear, pets and skins, empty bag), or copy this build into it' : 'Start over in the temp build: same hero, gear, pets and skins, empty bag'}
+        >
           New build
         </button>
         <button onClick={() => file.current?.click()} title="Open a build file (.yaml) someone shared">
@@ -300,11 +307,21 @@ export function BuildPicker(p: Props) {
         </Dialog>
       )}
       {ask?.kind === 'new' && (
-        <Dialog title="Start a new build?" onCancel={done} actions={dirty ? leaveActions(() => p.onNew(), 'start one') : [{ label: 'New build', kind: 'primary', onClick: () => (p.onNew(), done()) }]}>
+        <Dialog
+          title="Start a new build?"
+          onCancel={done}
+          actions={[
+            ...(canCopy ? [{ label: 'Copy this build', kind: 'primary' as const, onClick: () => (p.onCopy!(), done()) }] : []),
+            ...(dirty
+              ? leaveActions(() => p.onNew(), 'start one').map((a) => (canCopy && a.kind === 'primary' ? { ...a, kind: undefined } : a))
+              : [{ label: canCopy ? 'Empty bag' : 'New build', kind: canCopy ? undefined : ('primary' as const), onClick: () => (p.onNew(), done()) }]),
+          ]}
+        >
           <p>
             It starts in the temp build with an empty bag (same hero, gear, pets and skins).
             {isTemp && p.tempHasItems ? ' What the temp build has now is replaced.' : ''}
-            {lost}
+            {canCopy ? ` Or copy this build into it, bag${dirty ? ' and unsaved changes' : ''} included${active ? `: "${active}" stays as it was saved` : ''}.` : ''}
+            {canCopy ? '' : lost}
           </p>
         </Dialog>
       )}

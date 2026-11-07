@@ -37,11 +37,11 @@ describe('pet skills', () => {
     expect(run([], ['raccoon:2'], {}, 0.1).warnings.some((w) => w.startsWith('Assumption'))).toBe(false); // the 2★ extra hit is confirmed too
   });
 
-  it("White Wolf Captain's 3-hit attack lands one tick apart every 3 s and never stops", () => {
+  it("White Wolf Captain's 3-hit attack lands 0.02 s apart every 3 s and never stops", () => {
     const r = run([], ['white_wolf_captain:2'], {}, 16);
     const [id] = petRow(r, 'White Wolf Captain');
     const times = r.log.filter((e) => e.type === 'damage' && e.source === id).map((e) => e.t);
-    expect(times).toEqual([3, 3.1, 3.2, 6, 6.1, 6.2, 9, 9.1, 9.2, 12, 12.1, 12.2, 15, 15.1, 15.2]);
+    expect(times).toEqual([3, 3.02, 3.04, 6, 6.02, 6.04, 9, 9.02, 9.04, 12, 12.02, 12.04, 15, 15.02, 15.04]);
   });
 
   it('pet attacks crit with my Crit Rate (+ their bonus) and my Crit DMG', () => {

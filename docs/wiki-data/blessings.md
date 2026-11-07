@@ -99,8 +99,8 @@ Only one of each per hero. Fixed value per rarity. A blessing named after a skil
 | Cecilia | (hero bonus) | DMG …when HP is above 80% | +25% | +40% | +80% |
 | Spark | Electrostatic Force | Sun Rate … | — | +7.5% | +15% |
 | Spark | (hero bonus) | [Lightning] Magic DMG … | +20% | +30% | +60% |
-| Feline Mage | Meow! | ATK per stack … | — | +0.1% | +0.2% |
-| Feline Mage | (hero bonus) | Item Haste … | +10% | +15% | +30% |
+| Meow Mage | Meow! | ATK per stack … | — | +0.1% | +0.2% |
+| Meow Mage | (hero bonus) | Item Haste … | +10% | +15% | +30% |
 | Fire Mage | Short-Term Memory | Max DMG increase … | — | +25% | +50% |
 | Fire Mage | (hero bonus) | [Fire] Magic DMG … | +20% | +30% | +60% |
 | Ice Mage | Snowball Fight | Chance to not consume Freeze … | — | +25% | +50% |

@@ -54,14 +54,15 @@ describe('activate again', () => {
     expect(new Set(again.map((e) => e.t))).toEqual(new Set([1]));
   });
 
-  it('a weapon spell queues its recasts: one tick apart, each its own attack', () => {
+  it('a weapon spell queues its recasts: one hit-queue step (0.02 s) apart, each its own attack', () => {
     const r = withChain(false, () => run(under('wspell', ['hat100', 'hat100']), 1.2));
     const attacks = r.log.filter((e) => e.type === 'attack' && e.detail?.startsWith('Weapon Spell'));
     expect(attacks).toHaveLength(3);
     const ts = attacks.map((e) => e.t);
-    const tick = data.config!.timing.tick_seconds;
-    expect(ts[1]! - ts[0]!).toBeCloseTo(tick * cfg.weapon_spacing_ticks, 6);
-    expect(ts[2]! - ts[1]!).toBeCloseTo(tick * cfg.weapon_spacing_ticks, 6);
+    const step = data.config!.timing.hit_queue_seconds;
+    expect(step).toBe(0.02);
+    expect(ts[1]! - ts[0]!).toBeCloseTo(step, 6);
+    expect(ts[2]! - ts[1]!).toBeCloseTo(step, 6);
   });
 
   it('two 30% hats: about 0.6 recasts per activation (separate rolls, no chain)', () => {

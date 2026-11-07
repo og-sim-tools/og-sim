@@ -12,6 +12,8 @@ export const WIKI = 'https://overgearedhero.fandom.com/wiki/';
 export const ID_FIXES: Record<string, string> = { racoon: 'raccoon' };
 const idOf = (name: string) => ID_FIXES[slugify(name)] ?? slugify(name);
 export const pageUrl = (page: string) => WIKI + page.replace(/ /g, '_');
+/** Heroes whose in-game name differs from their wiki page's (user, 2026-11-06: the wiki's Feline Mage is Meow Mage). */
+const HERO_WIKI_PAGE: Record<string, string> = { 'Meow Mage': 'Feline Mage' };
 
 export interface Flag {
   file: string;
@@ -359,7 +361,7 @@ export function parseHeroes(text: string): HeroesResult {
         supplies,
       };
       if (skins.length > 0) entry.skins = skins;
-      Object.assign(entry, provenance(pageUrl(name)));
+      Object.assign(entry, provenance(pageUrl(HERO_WIKI_PAGE[name] ?? name)));
       return entry;
     });
   }

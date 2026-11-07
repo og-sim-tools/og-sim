@@ -1,6 +1,6 @@
 # Heroes
 
-_Transcribed from the Overgeared Hero wiki ([Heroes](https://overgearedhero.fandom.com/wiki/Heroes), [Bjorn](https://overgearedhero.fandom.com/wiki/Bjorn), [Rose](https://overgearedhero.fandom.com/wiki/Rose), [Darkan](https://overgearedhero.fandom.com/wiki/Darkan), [Rebecca](https://overgearedhero.fandom.com/wiki/Rebecca), [Kai](https://overgearedhero.fandom.com/wiki/Kai), [Spearman](https://overgearedhero.fandom.com/wiki/Spearman), [Barbarian](https://overgearedhero.fandom.com/wiki/Barbarian), [Fighter](https://overgearedhero.fandom.com/wiki/Fighter), [Erwen](https://overgearedhero.fandom.com/wiki/Erwen), [Raven](https://overgearedhero.fandom.com/wiki/Raven), [Talin](https://overgearedhero.fandom.com/wiki/Talin), [Venom](https://overgearedhero.fandom.com/wiki/Venom), [Lua](https://overgearedhero.fandom.com/wiki/Lua), [Acrobat](https://overgearedhero.fandom.com/wiki/Acrobat), [Sniper](https://overgearedhero.fandom.com/wiki/Sniper), [Archer](https://overgearedhero.fandom.com/wiki/Archer), [Trixie](https://overgearedhero.fandom.com/wiki/Trixie), [Cecilia](https://overgearedhero.fandom.com/wiki/Cecilia), [Spark](https://overgearedhero.fandom.com/wiki/Spark), [Feline Mage](https://overgearedhero.fandom.com/wiki/Feline_Mage), [Fire Mage](https://overgearedhero.fandom.com/wiki/Fire_Mage), [Ice Mage](https://overgearedhero.fandom.com/wiki/Ice_Mage), [Mage](https://overgearedhero.fandom.com/wiki/Mage)) on 2026-10-15. Wiki data is unverified; see REVIEW.md for known problems._
+_Transcribed from the Overgeared Hero wiki ([Heroes](https://overgearedhero.fandom.com/wiki/Heroes), [Bjorn](https://overgearedhero.fandom.com/wiki/Bjorn), [Rose](https://overgearedhero.fandom.com/wiki/Rose), [Darkan](https://overgearedhero.fandom.com/wiki/Darkan), [Rebecca](https://overgearedhero.fandom.com/wiki/Rebecca), [Kai](https://overgearedhero.fandom.com/wiki/Kai), [Spearman](https://overgearedhero.fandom.com/wiki/Spearman), [Barbarian](https://overgearedhero.fandom.com/wiki/Barbarian), [Fighter](https://overgearedhero.fandom.com/wiki/Fighter), [Erwen](https://overgearedhero.fandom.com/wiki/Erwen), [Raven](https://overgearedhero.fandom.com/wiki/Raven), [Talin](https://overgearedhero.fandom.com/wiki/Talin), [Venom](https://overgearedhero.fandom.com/wiki/Venom), [Lua](https://overgearedhero.fandom.com/wiki/Lua), [Acrobat](https://overgearedhero.fandom.com/wiki/Acrobat), [Sniper](https://overgearedhero.fandom.com/wiki/Sniper), [Archer](https://overgearedhero.fandom.com/wiki/Archer), [Trixie](https://overgearedhero.fandom.com/wiki/Trixie), [Cecilia](https://overgearedhero.fandom.com/wiki/Cecilia), [Spark](https://overgearedhero.fandom.com/wiki/Spark), [Meow Mage](https://overgearedhero.fandom.com/wiki/Feline_Mage), [Fire Mage](https://overgearedhero.fandom.com/wiki/Fire_Mage), [Ice Mage](https://overgearedhero.fandom.com/wiki/Ice_Mage), [Mage](https://overgearedhero.fandom.com/wiki/Mage)) on 2026-10-15. Wiki data is unverified; see REVIEW.md for known problems._
 
 - Classes: Warrior, Ranger, Wizard. Stars **0–9**.
 - **Supply Ability** (starting-equipment capacity) = base (Rare 5, Epic 8, Legendary 10) + 1 per star.
@@ -226,7 +226,9 @@ _Transcribed from the Overgeared Hero wiki ([Heroes](https://overgearedhero.fand
   - Astrape — merge: Lightning Rod Wand + Spear = Astrape
 - **Supplies:** 0★ Combat Hammer, 1★ Intermediate Magic: Spark, 3★ Lightning Rod Wand, 5★ Advanced Magic: Thunderstrike, 7★ Astrape
 
-### Feline Mage
+### Meow Mage
+
+_The wiki calls this hero **Feline Mage**; in game it is Meow Mage (user, 2026-11-06, see corrections.md)._
 
 - **Rarity:** Epic · **Base Supply Ability:** 8
 - **Skills** [LATER effects]:

@@ -96,10 +96,12 @@ describe('stat aggregation', () => {
     expect(res.items.get('sword')!.damage!.modifier).toBeCloseTo(1.45);
   });
 
-  it('clamps cooldowns to the minimum', () => {
+  it('has no minimum cooldown (user, 2026-11-06)', () => {
     const fast = makeProfile(data, profileWith('item_haste: 5000'));
     const res = aggregateStats(makeLoadout(data, fast, LAYOUT));
-    expect(res.items.get('sword')!.cooldown).toMatchObject({ final: 0.1, clamped: true });
+    const cd = res.items.get('sword')!.cooldown!;
+    expect(cd.clamped).toBe(false);
+    expect(cd.final).toBeCloseTo(cd.base / 51);
   });
 
   it('refuses to guess when passives are not included in Stat Details', () => {

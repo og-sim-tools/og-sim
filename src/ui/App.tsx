@@ -605,8 +605,10 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
       const def = placeDef(it.item);
       const fp = def ? footprintOf(def) : null;
       if (!fp) continue;
-      const free = findFirstFit(buildLoadout(data, bagProfile, l).layout, fp, 0);
-      const at = free ? { ...free, rotation: 0 as const } : placedIt ? { x: placedIt.x, y: placedIt.y, rotation: placedIt.rotation } : { x: 0, y: 0, rotation: 0 as const };
+      // The copy is turned like the one it copies (user, 2026-11-06).
+      const rotation = it.rotation ?? 0;
+      const free = findFirstFit(buildLoadout(data, bagProfile, l).layout, fp, rotation);
+      const at = free ? { ...free, rotation } : placedIt ? { x: placedIt.x, y: placedIt.y, rotation } : { x: 0, y: 0, rotation };
       const r = addPlacement(l, { item: it.item, x: at.x, y: at.y, rotation: at.rotation, supply: !!it.supply });
       l = r.layout;
       made.push(r.id);
@@ -641,16 +643,19 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
    * overlaps there (user, 2026-10-22: no "no room" warning; move it after). Cleared: the old piece is taken out.
    */
   const swapGear = (from: string, to: string | null) => {
-    const old = bagLayout.placements.find((x) => x.item === from);
-    if (!old) return;
-    const rest = removePlacement(bagLayout, old.id);
-    if (!to || !placeDef(to) || !footprintOf(placeDef(to)!)) {
-      editBag(() => rest);
-      return;
-    }
-    const r = addPlacement(rest, { item: to, x: old.x, y: old.y, rotation: old.rotation, supply: false });
-    editBag(() => r.layout);
-    setSelected(r.id);
+    if (!bagLayout.placements.some((x) => x.item === from)) return;
+    const fits = !!to && !!placeDef(to) && !!footprintOf(placeDef(to)!);
+    // On the bag as it is by then: the Gear box's own change to the build (the new piece) came just before, and a
+    // bag computed from before it would undo it (user, 2026-11-06: only the bag changed, the Gear box didn't).
+    const id = fits ? addPlacement(bagLayout, { item: to!, x: 0, y: 0, rotation: 0, supply: false }).id : null;
+    editBag((l) => {
+      const old = l.placements.find((x) => x.item === from);
+      if (!old) return l;
+      const rest = removePlacement(l, old.id);
+      if (!id) return rest;
+      return addPlacement(rest, { id, item: to!, x: old.x, y: old.y, rotation: old.rotation, supply: false }).layout;
+    });
+    if (id) setSelected(id);
   };
   /** Put an item in the first free spot; with no room, over the first bag cell anyway (it shows red: move it). */
   const placeForced = (itemId: string, supply = false, fallback?: { x: number; y: number; rotation: 0 | 90 | 180 | 270 }) => {
@@ -1212,6 +1217,18 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
         }}
         onExport={editingEnemy ? doExportEnemyBuild : doExportBuild}
         onImport={(f) => void (editingEnemy ? doImportEnemyBuild(f) : doImportBuild(f))}
+        onCopy={
+          editingEnemy
+            ? undefined
+            : () => {
+                // A copy of this build as it is now (unsaved changes included) in the temp build; the saved build stays as saved.
+                setLayout(({ name: _name, ...rest }) => rest);
+                setLayoutName('');
+                setLayoutDirty(false);
+                lastBuild.set(TEMP_BUILD);
+                say(`Copied "${layoutName}" into the temp build. Save it under a new name to keep it.`);
+              }
+        }
         onNew={() => {
           if (editingEnemy) {
             editBag(() => ({ placements: [] }));
@@ -1515,7 +1532,7 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
             <Panel
               id="battle.bag"
               title="Bag"
-              aside={`${mask.filter((v) => v).length} cells · ${bagLayout.placements.length} placed${bagLayout.storage?.length ? ` · ${bagLayout.storage.length} stored` : ''}`}
+              aside={`${bagLayout.placements.length} placed${bagLayout.storage?.length ? ` · ${bagLayout.storage.length} stored` : ''}`}
               tools={
                 enemyBuild && (
                   <span className="tabs whose" role="radiogroup" aria-label="Whose build" title="Which bag this box edits: yours, or your opponent's (it has its own bag, hero, gear and pets)">

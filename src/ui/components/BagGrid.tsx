@@ -378,6 +378,9 @@ export function BagGrid(p: Props) {
             // Selected on the press (user, 2026-10-22): space right away turns this one, not the one before.
             // Pressing one of several selected keeps them all (to drag them together).
             pressed.current = null;
+            // Shift: a click toggles it in the selection and a drag draws the selection box, starting on an item
+            // too (user, 2026-11-06); the bag's own handler does both, so no drag here.
+            if (e.shiftKey && p.onBoxSelect) return;
             if (!e.shiftKey && !isSel(id)) {
               pressed.current = id;
               p.onSelect(id);
@@ -387,7 +390,7 @@ export function BagGrid(p: Props) {
           }}
           onClick={(e) => {
             e.stopPropagation();
-            if (dragJustEnded()) return;
+            if (dragJustEnded() || boxEnded.current) return;
             if (e.shiftKey && p.onShiftSelect) {
               p.onShiftSelect(id);
               return;
@@ -417,9 +420,11 @@ export function BagGrid(p: Props) {
         style={{ width, height, ['--cell-size' as string]: `${SIZE}px`, ...(look ? { ['--enh' as string]: look.color } : {}) }}
         onKeyDown={onKeyDown}
         onPointerDown={(e) => {
-          // Shift+drag on the bag (not on an item): a box, and the items it touches are selected.
-          if (!e.shiftKey || !p.onBoxSelect || p.readOnly || p.maskEdit || p.enhanceEdit || (e.target as HTMLElement).closest('.item-cell')) return;
+          // Shift+drag on the bag, from an item too: a box, and the items it touches are selected. Shift+click on an
+          // item (the box hardly moved) adds it to the selection or takes it out.
+          if (!e.shiftKey || !p.onBoxSelect || p.readOnly || p.maskEdit || p.enhanceEdit) return;
           e.preventDefault();
+          const onItem = (e.target as HTMLElement).closest<HTMLElement>('.item-cell')?.dataset.item ?? null;
           const r = ref.current!.getBoundingClientRect();
           const x0 = e.clientX - r.left;
           const y0 = e.clientY - r.top;
@@ -431,13 +436,18 @@ export function BagGrid(p: Props) {
             setBox(null);
             const x1 = ev.clientX - r.left;
             const y1 = ev.clientY - r.top;
+            boxEnded.current = true;
+            setTimeout(() => (boxEnded.current = false), 0);
+            if (onItem && Math.abs(x1 - x0) < 5 && Math.abs(y1 - y0) < 5) {
+              if (p.onShiftSelect) p.onShiftSelect(onItem);
+              else p.onBoxSelect!([onItem]);
+              return;
+            }
             const cx0 = Math.floor(Math.min(x0, x1) / SIZE) - MARGIN;
             const cx1 = Math.floor(Math.max(x0, x1) / SIZE) - MARGIN;
             const cy0 = Math.floor(Math.min(y0, y1) / SIZE) - MARGIN;
             const cy1 = Math.floor(Math.max(y0, y1) / SIZE) - MARGIN;
             const ids = [...layout.items.entries()].filter(([, it]) => it.cells.some((c) => c.x >= cx0 && c.x <= cx1 && c.y >= cy0 && c.y <= cy1)).map(([id]) => id);
-            boxEnded.current = true;
-            setTimeout(() => (boxEnded.current = false), 0);
             p.onBoxSelect!(ids);
           };
           window.addEventListener('pointermove', move);

@@ -205,10 +205,10 @@ describe('the killing blow, Total ATK, cooldowns, debuff picks', () => {
     expect(hits(run(['rock', 'atkup'], {}, 1.5).log, 'player')).toEqual([150_000]);
   });
 
-  it('add_cooldown_s changes the base cooldown, not below the minimum', () => {
+  it('add_cooldown_s changes the base cooldown, never below one tick (there is no minimum cooldown)', () => {
     const s = aggregateStats(combatLoadout(['quick', 'tooquick'], '', data)).items;
     expect(s.get('quick0')!.cooldown!.base).toBe(0.5);
-    expect(s.get('tooquick1')!.cooldown!.base).toBe(data.config!.timing.min_cooldown_seconds);
+    expect(s.get('tooquick1')!.cooldown!.base).toBe(data.config!.timing.tick_seconds);
   });
 
   it("picks the enemy's most common debuff", () => {

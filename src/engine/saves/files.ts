@@ -25,7 +25,7 @@ import {
 } from '../model';
 import { BagMaskSchema, EnhancedCellsSchema, StoredItemSchema } from '../model/placement';
 
-export const SAVE_VERSION = 7;
+export const SAVE_VERSION = 8;
 
 /** HP / ATK / Block before they're entered (an account with these hasn't entered its stats yet). */
 export const DEFAULT_BASIC_STATS = { hp: '1M', atk: '100K', initial_block: 0 } as { hp: z.infer<typeof Abbrev>; atk: z.infer<typeof Abbrev>; initial_block: z.infer<typeof Abbrev> };

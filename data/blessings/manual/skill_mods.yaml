@@ -61,7 +61,7 @@
   skill_mods: [{ effect: 0, path: interval_s, op: add }]
   source: manual
   verified: false
-- id: feline_mage_meow
+- id: meow_mage_meow
   skill_mods: [{ effect: 0, path: amount, op: add }]
   source: manual
   verified: false

@@ -230,11 +230,11 @@ describe('gear weapon skills', () => {
     runBattle(combatLoadout([id, ...extraItems], stats, DATA_, gearProfile(id)), ENEMY(calm), { durationS: 4.15, log: true });
 
   it('fires on a fixed timer, hits several times, and ignores haste and Freeze', () => {
-    // The gear weapon's basic attack hits at the start (t = 0), then the skill every 2 s (2 hits a tick apart).
-    expect(times(run('skillblade').log, 'hit')).toEqual([0, 2, 2.1, 4, 4.1]);
+    // The gear weapon's basic attack hits at the start (t = 0), then the skill every 2 s (2 hits 0.02 s apart).
+    expect(times(run('skillblade').log, 'hit')).toEqual([0, 2, 2.02, 4, 4.02]);
     expect(hits(run('skillblade').log, 'player', 'skill')).toEqual([200_000, 200_000, 200_000, 200_000]);
-    expect(times(run('skillblade', 'item_haste: 100').log, 'hit')).toEqual([0, 2, 2.1, 4, 4.1]);
-    expect(times(run('skillblade', '', ['selfpoison']).log, 'hit')).toEqual([0, 2, 2.1, 4, 4.1]);
+    expect(times(run('skillblade', 'item_haste: 100').log, 'hit')).toEqual([0, 2, 2.02, 4, 4.02]);
+    expect(times(run('skillblade', '', ['selfpoison']).log, 'hit')).toEqual([0, 2, 2.02, 4, 4.02]);
   });
 
   it('fills a Skill Gauge with charge_skill and fires at 100%', () => {
@@ -314,7 +314,7 @@ describe('Gauntlet and Boss Rush (SPEC §7.5)', () => {
   });
 
   it('Gauntlet Berserk runs on the battle clock: a late enemy gets stack 1 at once, then +1 every whole second', () => {
-    // 1M damage per second: enemy 1 dies at 12.3 s; enemy 2 enters at 12.4 s.
+    // 1M damage per second: enemy 1 dies at 12.3 s; enemy 2 enters the next tick (12.32 s).
     const enemies = [ENEMY({ name: 'A', hp: '12.3M' }), ENEMY({ name: 'B', hp: '1B' }), ENEMY({ name: 'C' }), ENEMY({ name: 'D' })];
     const r = runBattle(combatLoadout(['sure']), enemies, { mode: 'gauntlet', log: true, durationS: 14.5 });
     const bz = r.log.filter((e) => e.type === 'berserk').map((e) => [e.t, e.amount]);
@@ -322,7 +322,7 @@ describe('Gauntlet and Boss Rush (SPEC §7.5)', () => {
       [10, 1],
       [11, 2],
       [12, 3],
-      [12.4, 1],
+      [12.32, 1],
       [13, 2],
       [14, 3],
     ]);

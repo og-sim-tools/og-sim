@@ -68,6 +68,8 @@ export interface CombatSkill {
   /** Fixed timer in ticks (not affected by haste or Freeze). */
   intervalTicks: number | null;
   gauge: boolean;
+  /** Cast time in ticks: the skill goes off this long after it activates (0 = at once). */
+  castTicks: number;
   accuracy: number | null;
   critChancePct: number;
   alwaysHit: boolean;

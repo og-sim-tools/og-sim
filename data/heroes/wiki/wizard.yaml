@@ -114,8 +114,8 @@
   source: wiki
   url: https://overgearedhero.fandom.com/wiki/Spark
   verified: false
-- id: feline_mage
-  name: Feline Mage
+- id: meow_mage
+  name: Meow Mage
   class: wizard
   rarity: epic
   base_supply_ability: 8

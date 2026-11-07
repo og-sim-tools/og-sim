@@ -282,7 +282,7 @@
   source: manual
   verified: false
 
-- id: feline_mage
+- id: meow_mage
   skill_effects:
     meow:
       status: complete

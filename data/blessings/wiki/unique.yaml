@@ -539,10 +539,10 @@
   source: wiki
   url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
   verified: false
-- id: feline_mage_meow
+- id: meow_mage_meow
   name: Meow!
   kind: unique
-  hero: feline_mage
+  hero: meow_mage
   buffs_skill: meow
   effect_text: ATK per stack …
   unit: pct
@@ -554,10 +554,10 @@
   source: wiki
   url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
   verified: false
-- id: feline_mage_item_haste
+- id: meow_mage_item_haste
   name: Item Haste
   kind: unique
-  hero: feline_mage
+  hero: meow_mage
   effect_text: Item Haste …
   unit: pct
   values:

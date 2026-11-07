@@ -109,6 +109,7 @@ You've never seen this item. Drop it from the merge lists of Alchemy Magic: Ice 
 | Lua exclusive item | "Fairy's Bow" | Same item as **Fairy Bow** |
 | Divine Smite (gear) | "Divine Blessing" in the skill | Same mechanic as **Divine Grace** |
 | Wizard item, Feline Mage supply (7★), Drizzle's merge result | Transformation Magic: Deluge | Renamed in-game to **Transformation Magic: Heavy Rain**. |
+| Wizard hero | Feline Mage | Called **Meow Mage** in game (user, 2026-11-06). Ids `meow_mage…`; saves before version 8 are renamed when loaded. |
 | Spark unique blessing | Electrostatic Force: Sun Rate | **Stun Rate** +7.5% / +15% |
 | Venom unique blessing | Poison Trigger Interval −0.2s / −0.4s / 0.6s | Mythic is **−0.6s** |
 | Erwen unique blessings | First one unnamed | Names unknown. One is **[Bow] DMG** (+20/+30/+60%); the other is **[Spirit] Burn Inflict & Swift Gain** (+25/+50%). Give them ids `erwen_bow_dmg` and `erwen_spirit_gain`. |

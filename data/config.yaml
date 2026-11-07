@@ -76,11 +76,15 @@ observations:
   display_rounding: round
 
 timing:
-  tick_seconds: 0.1                # [UNVERIFIED] real frame timing varies by item
-  min_cooldown_seconds: 0.1
-  # Ticks between the steps of one sequence: hits of a multi-hit attack or gear skill, "Activates Burn N times",
-  # and the repeats of a crit Burn (Primal Flame mythic: 9 activations all critting = 18 ticks). User, 2026-10-16.
-  multi_hit_spacing_ticks: 1
+  # User, 2026-11-06 (one in-game test with Primal Flame): hits that come at once go out of a queue 0.02 s apart,
+  # so the fight runs in 0.02 s ticks (was 0.1 s). [UNVERIFIED] for every other item: needs data-mining.
+  tick_seconds: 0.02
+  min_cooldown_seconds: null       # user, 2026-11-06: no minimum cooldown (was 0.1 s); an item still acts at most once a tick, and a cooldown can't go below one tick
+  # The hit queue (user, 2026-11-06): the steps of one sequence (hits of a multi-hit attack or gear skill,
+  # "Activates Burn N times", the repeats of a crit Burn) and a weapon activated several times at once (by
+  # several items, or recast by hats) go out one every this many seconds. 0 = all in the same tick.
+  # [UNVERIFIED] measured only on Primal Flame's 9 Burns.
+  hit_queue_seconds: 0.02
   status_timer_seconds: 2          # Poison / Regen global timer from battle start
   trigger_rate_limits:             # max fires per tick; triggers not listed are unlimited
     on_dodge: 1
@@ -102,7 +106,7 @@ combat:
   max_chain_depth: 400                          # NOT a game rule (user, 2026-10-17: chains never stop in game): only a guard so a simulator bug can't hang the app; hitting it is reported as a bug
   recast:                                        # "activate again" (Wizard's / Mage's Hats); user 2026-10-20: each hat rolls on its own (2 hats = 2 separate rolls)
     chain: true                                  # confirmed (user, 2026-10-20): a recast is a spell activation too, so the hats roll on it again
-    weapon_spacing_ticks: 1                      # confirmed (user, 2026-10-20): weapon spells queue their recasts one tick apart (tool spells act again in the same tick)
+    # Weapon spells' recasts go in the weapon's hit queue (timing.hit_queue_seconds apart; tool spells act again in the same tick).
     status_reading_once_per_tick: true           # user 2026-10-20: a spell that reads statuses (Instant Freeze, Charm) acts once per tick; extra activations that tick are wasted (Witch's Mirror still sees them)
     status_reading_actions: [remove_status, steal_status, cleanse, trigger_status, multiply_status]
     max_per_tick: 50                             # NOT a game rule: most recasts of one item in one tick, so hat spam can't hang the app (reported when hit)
