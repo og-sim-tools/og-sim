@@ -1,6 +1,7 @@
 /** profile/profile.yaml — my account (SPEC §4.8). Rule checks (capacity, class, slots) come in phase 3. */
 import { z } from 'zod';
 import { Abbrev, Id, Rarity } from './common';
+import { TrainingSchema } from './training';
 
 export const GearRef = z
   .object({
@@ -53,6 +54,13 @@ export const OwnedPetsSchema = z.array(z.object({ id: Id, stars: z.number().int(
 export const ProfileSchema = z
   .object({
     basic_stats: BasicStatsSchema,
+    /**
+     * Where HP / ATK / Block come from: `direct` (left out) = basic_stats as typed in; `calculated` = Combat
+     * Training plus the other sources (gear isn't known yet, so it's incomplete and says so).
+     */
+    stat_mode: z.enum(['direct', 'calculated']).optional(),
+    /** Combat Training: rank name and number, then HP, ATK and Block upgrades in that rank (used when calculated). */
+    training: TrainingSchema.optional(),
     /** Keys come from data/stats.yaml. */
     detailed_stats: DetailedStatsSchema.default({}),
     heroes: z.array(OwnedHeroSchema).default([]),

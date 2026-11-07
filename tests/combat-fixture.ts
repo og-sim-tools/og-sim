@@ -88,7 +88,7 @@ export const COMBAT_GEAR = `
 `;
 
 export const COMBAT_PETS = `
-- { id: spawner, name: Spawner, rarity: rare, activation_cost: 1, skill: { name: Eggs, text: "" }, role: bag_items, spawns: [{ item: egg, count: 3, stars: 0 }], spawn_inflict_multiplier: [{ stars: 1, status: poison, factor: 2 }], source: manual, verified: true }
+- { id: spawner, name: Spawner, rarity: rare, activation_cost: 1, skill: { name: Eggs, text: "" }, role: bag_items, spawns: [{ item: egg, count: 3, stars: 0 }], spawn_inflict_multiplier: [{ stars: 1, status: poison, factor: 2 }], spawn_cooldown_delta: [{ stars: 2, seconds: -0.5 }], source: manual, verified: true }
 `;
 
 export function combatData(extra: SourceFile[] = []): GameData {

@@ -7,12 +7,16 @@
     - { item: venomous_spider_egg_sack, count: 4, stars: 4 }
   spawn_inflict_multiplier:
     - { stars: 5, status: poison, factor: 2 }
+  # 2026-11-06 (user): "Base Cooldown decreases by 2s" is the cooldown of the spiders hatched from the egg sacks,
+  # small and big (same cooldown): 6s → 4s.
+  spawn_cooldown_delta:
+    - { stars: 2, seconds: -2 }
   source: manual
   verified: false
   notes: >-
     From the wiki: 12 Egg Sacks; 1★ +1 Hefty Egg Sack (permanent); 4★ +4 Egg Sacks; 5★ "Summoned Spiders
     inflict x2 Poison" (applied to everything this pet spawns, including what they hatch into).
-    "2★: Base Cooldown decreases by 2s" isn't simulated (which cooldown?).
+    2★ "Base Cooldown decreases by 2s": the hatched Mini and Large Venomous Spiders' cooldown (user, 2026-11-06).
 
 - id: butterfly
   spawns:

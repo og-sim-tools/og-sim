@@ -27,9 +27,21 @@ Start a new chat with:
 
 ## Still open (ask me)
 
-- Stat calculation data: training level, gear level, pet levels per rarity, and the Power (CP) formula.
-- Widow Spider: the dots are below as `## / ## / oo`. Flip it if the game has them on the other side.
-- Venomous Spider 2★ "Base Cooldown decreases by 2s": which cooldown? Not simulated yet.
+- **Training rank names:** `data/training.yaml` uses the CSV's names (Apprentice, Adventurer, Elite, Master, Warrior, GMaster, Hero). What does the game show? (You wrote "Champion 12"; is that Warrior?) Only `name:` needs changing.
+- **Training formula check:** a stat = rank bonus + its own track at tier 10 × rank level + its upgrades; "Defence" = Initial Block. Confirm with one in-game training number.
+- **Blood Moon Familiar:** sprite drawn from your screenshot; its shape (`#`, one cell) is still a guess. Is it one cell in game?
+- **Calculated stats, still stubs:** gear HP / ATK / Block (formula unknown); pet levels (the wiki's Pet Food table has HP / ATK per level, but pet levels aren't in the profile yet and the table's rarity is unclear, see SOURCES 2026-10-19); pet ownership "+x% Total HP / ATK"; hero ownership effects; how HP % / ATK % lines apply. Power (CP): not needed (user, 2026-11-06).
+
+## Done
+
+- 2026-11-06: Widow Spider dots confirmed below (`## / ## / oo`).
+- 2026-11-06: Venomous Spider 2★ "Base Cooldown decreases by 2s" = the hatched spiders' cooldown, small and big (6s → 4s), via the generic pet field `spawn_cooldown_delta`.
+- 2026-11-06: Combat Training from the user's CSVs (`data/training.yaml`, regenerate with `tools/training-csv/convert.py`); Profile tab "Type in / Calculate" for HP / ATK / Block (save version 7). Calculated mode always warns that gear isn't counted.
+
+- 2026-11-06: Flame Staff base cooldown 2.6s (in game; wiki 2.1).
+- 2026-11-06: unique blessings: the value is fixed to the wiki's per rarity (not typed in); a differing saved value shows a "Use x" button.
+- 2026-11-06: one of each pet (picker greys out pets in another slot; validation error `pet_duplicate`).
+- 2026-11-06: pet and skin spawns are real items in the bag while the pet / skin skill is on (first free spots, movable, removed when turned off; no room = placed at the start of battle as before). Blood Moon Familiar sprite redrawn from the user's screenshot.
 
 ## Backlog
 

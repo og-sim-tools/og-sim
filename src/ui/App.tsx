@@ -27,7 +27,7 @@ import { Storage, type StoredView } from './components/Storage';
 import { bagSizesFor, enhancerOf, sizeOf } from './state/bagSizes';
 import { ItemDrawer } from './components/ItemDrawer';
 import { battleStartStats } from '../engine/combat/battle';
-import { withPetSpawns } from '../engine/combat/setup';
+import { syncSpawnPlacements, withPetSpawns } from '../engine/combat/setup';
 import { resolveEnemy } from '../engine/combat/montecarlo';
 import { BattleTab } from './components/BattleTab';
 import { playerEnemy } from './components/BattlePanel';
@@ -410,6 +410,13 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
     () => (editingEnemy ? (data && bagProfile ? buildLoadout(data, bagProfile, bagLayout) : null) : playerLoadout),
     [editingEnemy, data, bagProfile, bagLayout, playerLoadout],
   );
+  // Pet and skin spawns are real items in my bag while the pet / skin is on, so they can be moved (user, 2026-11-06).
+  // Not an edit of mine: no undo step, and the build isn't marked unsaved.
+  useEffect(() => {
+    if (!playerLoadout) return;
+    const next = syncSpawnPlacements(playerLoadout);
+    if (next) setLayout((l) => (l === layout ? withIds({ ...l, placements: next.placements, storage: next.storage }) : l));
+  }, [playerLoadout]); // eslint-disable-line react-hooks/exhaustive-deps
   const issues = useMemo(() => (loadout ? validateLoadout(loadout) : []), [loadout]);
   // Where pets' (and skins') spawned items land at the start of battle, to show over the bag.
   const spawned = useMemo(() => {

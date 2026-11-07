@@ -17,6 +17,7 @@ import {
   HeroBlessingsSchema,
   Id,
   LayoutBattleSchema,
+  TrainingSchema,
   type LayoutData,
   LayoutPlacementSchema,
   type Profile,
@@ -24,7 +25,7 @@ import {
 } from '../model';
 import { BagMaskSchema, EnhancedCellsSchema, StoredItemSchema } from '../model/placement';
 
-export const SAVE_VERSION = 6;
+export const SAVE_VERSION = 7;
 
 /** HP / ATK / Block before they're entered (an account with these hasn't entered its stats yet). */
 export const DEFAULT_BASIC_STATS = { hp: '1M', atk: '100K', initial_block: 0 } as { hp: z.infer<typeof Abbrev>; atk: z.infer<typeof Abbrev>; initial_block: z.infer<typeof Abbrev> };
@@ -40,6 +41,10 @@ export const AccountFileSchema = z
     version: z.number().int().default(SAVE_VERSION),
     /** HP, ATK and Block as the game's Stat Details screen shows them. Left out: not entered yet. */
     stats: BasicStatsSchema.optional(),
+    /** Version 7: `calculated` = HP / ATK / Block from Combat Training and the rest; left out = typed in (`stats`). */
+    stat_mode: z.enum(['direct', 'calculated']).optional(),
+    /** Version 7: Combat Training rank name and number, and HP / ATK / Block upgrades in that rank. */
+    training: TrainingSchema.optional(),
     heroes: z
       .array(
         z
@@ -111,6 +116,8 @@ export type BuildFile = z.infer<typeof BuildFileSchema>;
 export function accountToProfile(a: AccountFile): Profile {
   return ProfileSchema.parse({
     basic_stats: a.stats ?? DEFAULT_BASIC_STATS,
+    ...(a.stat_mode ? { stat_mode: a.stat_mode } : {}),
+    ...(a.training ? { training: a.training } : {}),
     heroes: a.heroes.map((h) => ({ id: h.id, stars: h.stars, links: h.links, ...(h.blessings ? { blessings: h.blessings } : {}) })),
     owned_pets: a.pets,
     skins: a.skins,
@@ -124,6 +131,8 @@ export function profileToAccount(p: Profile, migratedFromV1?: Record<string, unk
   return {
     version: SAVE_VERSION,
     ...(statsUnset(p.basic_stats) ? {} : { stats: structuredClone(p.basic_stats) }),
+    ...(p.stat_mode === 'calculated' ? { stat_mode: 'calculated' as const } : {}),
+    ...(p.training ? { training: structuredClone(p.training) } : {}),
     heroes: p.heroes.map((h) => ({ id: h.id, stars: h.stars, links: [...h.links], ...(h.blessings ? { blessings: structuredClone(h.blessings) } : {}) })),
     pets: structuredClone(p.owned_pets ?? []),
     skins: structuredClone(p.skins ?? []),

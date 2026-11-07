@@ -6,7 +6,10 @@
 import type { GameData, Hero, Issue } from '../../engine/loader';
 import { formatIssue } from '../../engine/loader';
 import type { LoadoutIssue } from '../../engine/loadout';
+import { basicStats } from '../../engine/accountStats';
 import { CLASSES, type Profile } from '../../engine/model';
+import { formatShown } from '../../engine/numbers';
+import { rankLevel } from '../../engine/training';
 import { IssueLine } from './StatsPanel';
 import { AbbrevInput, BlessingsEditor, SkillLinksEditor, sortPets } from './SetupEditors';
 import { rarityColor } from './BagGrid';
@@ -47,15 +50,22 @@ export function ProfileEditor({ data, profile, issues, loadoutIssues, editingEne
         <div className="small muted">
           {editingEnemy
             ? "The enemy's HP, ATK and Block (saved with this build)."
-            : "HP, ATK and Block as the game's Stat Details screen shows them. They're the same in every build; everything else (Crit, Haste, DMG bonuses …) is calculated from your gear, blessings and auras."}
+            : profile.stat_mode === 'calculated'
+              ? 'HP, ATK and Block added up from your Combat Training (rank, then HP, ATK and Block upgrades in that rank) and the other sources the simulator knows. The same in every build.'
+              : "HP, ATK and Block as the game's Stat Details screen shows them (this overrides every calculation). They're the same in every build; everything else (Crit, Haste, DMG bonuses …) is calculated from your gear, blessings and auras."}
         </div>
-        <div className="row small" style={{ marginTop: 6 }}>
-          {(['hp', 'atk', 'initial_block'] as const).map((k) => (
-            <label key={k} className="muted">
-              {k === 'hp' ? 'HP' : k === 'atk' ? 'ATK' : 'Block'} <AbbrevInput label={k === 'hp' ? 'HP' : k === 'atk' ? 'ATK' : 'Initial Block'} value={profile.basic_stats[k]} onCommit={(v) => update((p) => void (p.basic_stats[k] = v))} width={80} />
-            </label>
-          ))}
-        </div>
+        {!editingEnemy && <StatModeToggle profile={profile} update={update} />}
+        {profile.stat_mode === 'calculated' && !editingEnemy ? (
+          <CalculatedStats data={data} profile={profile} update={update} />
+        ) : (
+          <div className="row small" style={{ marginTop: 6 }}>
+            {(['hp', 'atk', 'initial_block'] as const).map((k) => (
+              <label key={k} className="muted">
+                {k === 'hp' ? 'HP' : k === 'atk' ? 'ATK' : 'Block'} <AbbrevInput label={k === 'hp' ? 'HP' : k === 'atk' ? 'ATK' : 'Initial Block'} value={profile.basic_stats[k]} onCommit={(v) => update((p) => void (p.basic_stats[k] = v))} width={80} />
+              </label>
+            ))}
+          </div>
+        )}
       </div>
       <div className="stack">
         <div className="panel" data-tour="profile.heroes">
@@ -201,6 +211,108 @@ export function ProfileEditor({ data, profile, issues, loadoutIssues, editingEne
           })}
         </div>
 
+      </div>
+    </div>
+  );
+}
+
+/** Type HP / ATK / Block in (accurate), or calculate them from Combat Training and the rest (incomplete). */
+function StatModeToggle({ profile, update }: { profile: Profile; update: (fn: (p: Profile) => void) => void }) {
+  const mode = profile.stat_mode ?? 'direct';
+  return (
+    <div className="row small" role="radiogroup" aria-label="How HP, ATK and Block are found" style={{ marginTop: 6 }}>
+      {(
+        [
+          ['direct', 'Type in', 'Type in your HP, ATK and Block exactly as the game shows them. Overrides every calculation (training, pets, heroes, gear).'],
+          ['calculated', 'Calculate', 'Add up Combat Training and the other sources. Incomplete: gear is not counted yet.'],
+        ] as const
+      ).map(([m, label, title]) => (
+        <label key={m} title={title}>
+          <input
+            type="radio"
+            name="stat-mode"
+            checked={mode === m}
+            onChange={() =>
+              update((p) => {
+                if (m === 'direct') delete p.stat_mode;
+                else p.stat_mode = 'calculated';
+              })
+            }
+          />{' '}
+          {label}
+        </label>
+      ))}
+    </div>
+  );
+}
+
+const range = (n: number, from = 0) => Array.from({ length: n - from + 1 }, (_, i) => i + from);
+
+/** Combat Training inputs (rank name, number, then HP / ATK / Block upgrades) and the calculated totals. */
+function CalculatedStats({ data, profile, update }: { data: GameData; profile: Profile; update: (fn: (p: Profile) => void) => void }) {
+  const t = data.training;
+  const result = basicStats(data, profile);
+  const tr = profile.training ?? (t ? { rank: t.ranks[0]!.id, number: 1, hp: 0, atk: 0, block: 0 } : null);
+  const rank = t?.ranks.find((r) => r.id === tr?.rank);
+  const per = t?.upgrades_per_rank ?? 10;
+  // The last rank has no next one: its upgrades stop where the table ends.
+  const level = t && tr ? rankLevel(t, tr.rank, tr.number) : null;
+  const maxUps = t && level !== null ? Math.min(per, t.track.hp.length - 1 - per * level) : per;
+  const set = (patch: Partial<NonNullable<typeof tr>>) =>
+    update((p) => {
+      if (!tr) return;
+      const next = { ...tr, ...patch };
+      const r = t?.ranks.find((x) => x.id === next.rank);
+      if (r && next.number > r.numbers) next.number = r.numbers;
+      p.training = next;
+    });
+  return (
+    <div className="calculated-stats" style={{ marginTop: 6 }}>
+      {t && tr && (
+        <div className="row small" data-tour="profile.training">
+          <span className="muted">Combat Training</span>
+          <label className="muted">
+            Rank{' '}
+            <select aria-label="Training rank" value={tr.rank} onChange={(e) => set({ rank: e.target.value })}>
+              {t.ranks.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <select aria-label="Training rank number" value={tr.number} onChange={(e) => set({ number: Number(e.target.value) })}>
+            {range(rank?.numbers ?? 1, 1).map((n) => (
+              <option key={n} value={n}>
+                {n}
+              </option>
+            ))}
+          </select>
+          {(['hp', 'atk', 'block'] as const).map((k) => (
+            <label key={k} className="muted">
+              {k === 'hp' ? 'HP' : k === 'atk' ? 'ATK' : 'Block'}{' '}
+              <select aria-label={`Training ${k === 'hp' ? 'HP' : k === 'atk' ? 'ATK' : 'Block'} upgrades`} value={tr[k]} onChange={(e) => set({ [k]: Number(e.target.value) })}>
+                {range(Math.max(maxUps, tr[k])).map((n) => (
+                  <option key={n} value={n}>
+                    {n}/{per}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ))}
+        </div>
+      )}
+      <div className="small" style={{ marginTop: 4 }}>
+        HP <b>{formatShown(result.hp)}</b> · ATK <b>{formatShown(result.atk)}</b> · Initial Block <b>{formatShown(result.initialBlock)}</b>
+        <span className="muted"> (calculated)</span>
+      </div>
+      {result.source.parts.map((p, i) => (
+        <div key={i} className="small muted">
+          {p.label}: {formatShown(p.amount)}
+        </div>
+      ))}
+      <div className="issue warning small" role="alert">
+        Calculated stats are incomplete and lower than in game. {result.source.warnings.join(' ')} For accurate battles, pick "Type in" and enter your stats from the game's Stat Details screen.
       </div>
     </div>
   );

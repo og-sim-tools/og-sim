@@ -26,7 +26,7 @@ import {
   statusPct,
 } from '../statuses/runtime';
 import { type BerserkBonus, NO_BERSERK, berserkBonus } from './berserk';
-import { type EnemyInput, buildEnemy, buildEnemyFromBuild, buildPlayer, combatItemFromDef, enemyKind, enemyPrefix, hasPlayerItems } from './setup';
+import { type EnemyInput, buildEnemy, buildEnemyFromBuild, buildPlayer, combatItemFromDef, enemyKind, enemyPrefix, hasPlayerItems, withCooldownDelta } from './setup';
 import {
   type BattleEvent,
   type BattleResult,
@@ -2049,6 +2049,8 @@ class Battle implements EffectApi {
     const next = combatItemFromDef(lo, this.sides[item.side], def as Item, item.id, item.origin, occupant);
     next.side = item.side;
     next.inflictMultiplier = item.inflictMultiplier;
+    next.cooldownDeltaS = item.cooldownDeltaS;
+    next.baseCooldown = withCooldownDelta(next.baseCooldown, item.cooldownDeltaS, lo.data.config!.timing.tick_seconds);
     const list = this.sides[item.side].items;
     const at = list.indexOf(item);
     if (at >= 0) list[at] = next;

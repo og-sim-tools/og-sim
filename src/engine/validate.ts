@@ -205,9 +205,12 @@ export function validateLoadout(loadout: Loadout): LoadoutIssue[] {
   // ---------------------------------------------------------------- pets
   if (profile.pets.length > cfg.pets.max_equipped) err('pet_count', `${profile.pets.length} pets equipped; the limit is ${cfg.pets.max_equipped}.`);
   let cost = 0;
+  const petsSeen = new Set<string>();
   for (const p of profile.pets) {
     const pet = data.pets.get(p.id);
     if (!pet) continue;
+    if (petsSeen.has(p.id)) err('pet_duplicate', `${pet.name} is equipped more than once (one of each pet).`);
+    petsSeen.add(p.id);
     if (p.stars > cfg.pets.max_stars) err('pet_stars', `${pet.name}: ${p.stars}★, the maximum is ${cfg.pets.max_stars}★.`);
     if (!p.active) continue;
     cost += petCost(loadout, p.id, p.stars) ?? 0;

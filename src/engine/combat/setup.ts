@@ -3,7 +3,7 @@ import { type Cell, type Rotation, buildLayout, findFirstFit, footprintOf, place
 import { activeEffects } from '../effects/resolve';
 import type { GameData, Gear, Item, Skin } from '../loader';
 import { type Loadout, buildLoadout, copyName, copyNumbers } from '../loadout';
-import { type EnemyData, ItemEffectSchema } from '../model';
+import { type EnemyData, ItemEffectSchema, type LayoutData } from '../model';
 import { parseAbbrev, resolveRatio } from '../numbers';
 import { checkSkinQuest } from '../skinQuests';
 import { aggregateStats, blessingTagBonus } from '../stats';
@@ -20,6 +20,8 @@ export interface SpawnResult {
   loadout: Loadout;
   /** Instance id → status factors for what it inflicts. */
   multipliers: Map<string, Record<string, number>>;
+  /** Instance id → seconds added to its Base Cooldown (and to what it hatches into). */
+  cooldownDeltas: Map<string, number>;
   warnings: string[];
 }
 
@@ -32,21 +34,18 @@ export function withPetSpawns(loadout: Loadout): SpawnResult {
   const { data, profile } = loadout;
   const warnings: string[] = [];
   const multipliers = new Map<string, Record<string, number>>();
-  const want = new Map<string, number>();
+  const cooldownDeltas = new Map<string, number>();
+  const deltas: { items: Set<string>; seconds: number }[] = [];
   const factors: { items: Set<string>; status: string; factor: number }[] = [];
   for (const p of profile.pets) {
     const pet = data.pets.get(p.id);
     if (!pet || !p.active || pet.ignored) continue;
-    const items = new Set<string>();
-    for (const s of pet.spawns) {
-      items.add(s.item);
-      if (p.stars >= s.stars) want.set(s.item, (want.get(s.item) ?? 0) + s.count);
-    }
+    const items = new Set(pet.spawns.map((s) => s.item));
     for (const m of pet.spawn_inflict_multiplier) if (p.stars >= m.stars) factors.push({ items, status: m.status, factor: m.factor });
+    for (const d of pet.spawn_cooldown_delta) if (p.stars >= d.stars) deltas.push({ items, seconds: d.seconds });
   }
-  // Skin skills that summon items ("My minions!": Blood Moon Familiars).
-  for (const { skin, stars } of activeSkins(loadout)) for (const s of skin.spawns) if (stars >= s.stars) want.set(s.item, (want.get(s.item) ?? 0) + s.count);
-  if (want.size === 0) return { loadout, multipliers, warnings };
+  const want = wantedSpawns(loadout);
+  if (want.size === 0) return { loadout, multipliers, cooldownDeltas, warnings };
 
   const placements = [...loadout.layoutData.placements];
   const defs = new Map<string, Item | Gear>([...data.items, ...data.gear]);
@@ -77,10 +76,72 @@ export function withPetSpawns(loadout: Loadout): SpawnResult {
       m[f.status] = (m[f.status] ?? 1) * f.factor;
       multipliers.set(e.instanceId, m);
     }
+    for (const d of deltas) if (d.items.has(e.def.id)) cooldownDeltas.set(e.instanceId, (cooldownDeltas.get(e.instanceId) ?? 0) + d.seconds);
   }
-  return { loadout: next, multipliers, warnings };
+  return { loadout: next, multipliers, cooldownDeltas, warnings };
 }
 
+/** What active pets and skin skills ("My minions!": Blood Moon Familiars) put in the bag: item id → how many. */
+export function wantedSpawns(loadout: Loadout): Map<string, number> {
+  const want = new Map<string, number>();
+  const add = (item: string, n: number) => want.set(item, (want.get(item) ?? 0) + n);
+  for (const p of loadout.profile.pets) {
+    const pet = loadout.data.pets.get(p.id);
+    if (pet && p.active && !pet.ignored) for (const s of pet.spawns) if (p.stars >= s.stars) add(s.item, s.count);
+  }
+  for (const { skin, stars } of activeSkins(loadout)) for (const s of skin.spawns) if (stars >= s.stars) add(s.item, s.count);
+  return want;
+}
+
+const isSpawnItem = (data: GameData, id: string) => {
+  const kind = data.items.get(id)?.kind;
+  return kind === 'pet_spawn' || kind === 'skin_spawn';
+};
+
+/**
+ * The build with its pet / skin spawns as real items (user, 2026-11-06: in game they come with the shop once
+ * the pet or skin is on, and can be moved like any item). Missing ones go in the first free spot (as at the
+ * start of battle), ones no pet or skin gives any more are taken out (storage first, then the bag, newest
+ * first). What a pet or skin gives is worked out without its spawns in the bag, so this settles in one step.
+ * Null when nothing changes (or there's no room: the start of battle then warns).
+ */
+export function syncSpawnPlacements(loadout: Loadout): LayoutData | null {
+  const { data, profile, layoutData } = loadout;
+  const spawn = (p: { item: string }) => isSpawnItem(data, p.item);
+  const want = wantedSpawns(buildLoadout(data, profile, { ...layoutData, placements: layoutData.placements.filter((p) => !spawn(p)) }));
+  const placements = [...layoutData.placements];
+  const storage = [...(layoutData.storage ?? [])];
+  const count = (id: string) => placements.filter((p) => p.item === id).length + storage.filter((p) => p.item === id).length;
+  let changed = false;
+  for (const id of new Set([...placements, ...storage].filter(spawn).map((p) => p.item))) {
+    for (let extra = count(id) - (want.get(id) ?? 0); extra > 0; extra--) {
+      const last = (list: { item: string }[]) => list.map((p) => p.item).lastIndexOf(id);
+      if (last(storage) >= 0) storage.splice(last(storage), 1);
+      else placements.splice(last(placements), 1);
+      changed = true;
+    }
+  }
+  const defs = new Map<string, Item | Gear>([...data.items, ...data.gear]);
+  const layoutOf = () => buildLayout(loadout.bag, placements.map((p, i) => ({ instanceId: p.id ?? `p${i}`, itemId: p.item, x: p.x, y: p.y, rotation: p.rotation })), defs);
+  let layout = layoutOf();
+  for (const [id, n] of want) {
+    const def = data.items.get(id);
+    const fp = def && isSpawnItem(data, id) ? footprintOf(def) : null;
+    if (!fp) continue;
+    for (let k = count(id); k < n; k++) {
+      const at = findFirstFit(layout, fp, 0);
+      if (!at) break;
+      placements.push({ item: id, x: at.x, y: at.y, rotation: 0, supply: false });
+      layout = layoutOf();
+      changed = true;
+    }
+  }
+  if (!changed) return null;
+  const { storage: _s, ...rest } = layoutData;
+  return { ...rest, placements, ...(storage.length ? { storage } : {}) };
+}
+
+// ---------------------------------------------------------------- player
 // ---------------------------------------------------------------- player
 
 /** The active hero's blessings that only apply while a condition holds. */
@@ -318,7 +379,7 @@ export function buildPlayer(input: Loadout): { player: Combatant; loadout: Loado
   const warnings = [...spawn.warnings];
   const cfg = loadout.data.config!;
   const { player: stats, items: final, issues } = aggregateStats(loadout);
-  for (const i of issues) if (i.code === 'blessing_not_simulated' || i.code === 'gear_bonus_missing') warnings.push(i.message);
+  for (const i of issues) if (i.code === 'blessing_not_simulated' || i.code === 'gear_bonus_missing' || i.code === 'calculated_stats_incomplete') warnings.push(i.message);
   const items: CombatItem[] = [];
   const copies = copyNumbers(loadout.layout);
   const enhancedCells = new Set((loadout.layoutData.enhanced_cells ?? []).map((c) => `${c.x},${c.y}`));
@@ -337,7 +398,7 @@ export function buildPlayer(input: Loadout): { player: Combatant; loadout: Loado
       tags: entry.def.tags,
       rarity: entry.kind === 'gear' ? entry.gearRarity : (entry.def as Item).rarity,
       damage: s.damage ? { base: s.damage.base, typePct: s.damage.typePct.total } : null,
-      baseCooldown: s.cooldown?.base ?? null,
+      baseCooldown: withCooldownDelta(s.cooldown?.base ?? null, spawn.cooldownDeltas.get(id), cfg.timing.tick_seconds),
       staticHastePct: s.cooldown?.haste.total ?? 0,
       accuracy: s.accuracy?.total ?? null,
       critChancePct: s.critChance?.total ?? 0,
@@ -356,6 +417,7 @@ export function buildPlayer(input: Loadout): { player: Combatant; loadout: Loado
           ? buildSkill(entry.def as Gear, loadout, stats.atk, stats.detailed.attack_dmg_increase ?? 0, s.accuracy?.total ?? null, s.critChance?.total ?? 0, cfg.timing.tick_seconds, stats.detailed.crit_rate ?? 0)
           : null,
       inflictMultiplier: spawn.multipliers.get(id) ?? {},
+      cooldownDeltaS: spawn.cooldownDeltas.get(id),
       temporary: entry.kind === 'item' && (entry.def as Item).temporary,
       enhanced: placed.cells.some((c) => enhancedCells.has(`${c.x},${c.y}`)),
       origin: { x: p.x, y: p.y, rotation: p.rotation },
@@ -387,6 +449,12 @@ export function buildPlayer(input: Loadout): { player: Combatant; loadout: Loado
     atkPct: 0,
   };
   return { player, loadout, warnings };
+}
+
+/** A Base Cooldown changed by a pet's star effect, never below one tick. No cooldown stays none. */
+export function withCooldownDelta(base: number | null, deltaS: number | undefined, tickS: number): number | null {
+  if (base === null || !deltaS) return base;
+  return Math.max(tickS, base + deltaS);
 }
 
 /**

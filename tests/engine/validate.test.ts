@@ -138,6 +138,7 @@ describe('loadout validation', () => {
         'error:4 pets equipped; the limit is 3.',
         'error:Cat: 7★, the maximum is 6★.',
         "warning:Rock Pet is active but isn't simulated.",
+        'error:Cat is equipped more than once (one of each pet).',
         'warning:Active pets cost 7 points; each hero has 5 per run.',
       ]);
     });

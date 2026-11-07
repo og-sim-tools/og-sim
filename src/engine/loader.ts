@@ -20,6 +20,8 @@ import {
   SkinSchema,
   BlessingSchema,
   ConfigSchema,
+  TrainingDataSchema,
+  type TrainingData,
   EnemySchema,
   EnemyTraitSchema,
   GEOMETRY_KEYS,
@@ -153,6 +155,8 @@ export interface GameData {
   skills: Map<string, Skill>;
   stats: Map<string, StatDef>;
   config: Config | null;
+  /** Combat Training tables (training.yaml); null if the file is missing. */
+  training: TrainingData | null;
   /** Renamed ids per category: old → new. */
   aliases: Record<Category, Map<string, string>>;
 }
@@ -369,6 +373,7 @@ function emptyData(): GameData {
     skills: new Map(),
     stats: new Map(),
     config: null,
+    training: null,
     aliases,
   };
 }
@@ -392,6 +397,10 @@ export function loadGameData(files: readonly SourceFile[]): LoadResult {
     }
     if (file.path === 'config.yaml') {
       loadConfig(file, data, issues);
+      continue;
+    }
+    if (file.path === 'training.yaml') {
+      loadTraining(file, data, issues);
       continue;
     }
     const m = /^([a-z_]+)\/(wiki|manual)\/[^/]+$/.exec(file.path);
@@ -623,6 +632,24 @@ function loadConfig(file: SourceFile, data: GameData, issues: Issue[]): void {
     return;
   }
   data.config = res.data;
+}
+
+function loadTraining(file: SourceFile, data: GameData, issues: Issue[]): void {
+  const parsed = readYaml(file, issues);
+  if (!parsed) return;
+  const res = TrainingDataSchema.safeParse(parsed.value);
+  if (!res.success) {
+    issues.push(...zodIssues(res.error.issues, { file: file.path }));
+    return;
+  }
+  const t = res.data;
+  const levels = t.ranks.reduce((a, r) => a + r.numbers, 0);
+  for (const s of ['hp', 'atk', 'block'] as const) {
+    if (t.rank_bonus[s].length !== levels) issues.push({ level: 'error', file: file.path, field: `rank_bonus.${s}`, message: `Has ${t.rank_bonus[s].length} values; the ranks have ${levels} levels.` });
+    if (t.track[s].length !== (levels - 1) * t.upgrades_per_rank + 1)
+      issues.push({ level: 'error', file: file.path, field: `track.${s}`, message: `Has ${t.track[s].length} tiers; ${levels} rank levels need ${(levels - 1) * t.upgrades_per_rank + 1}.` });
+  }
+  data.training = t;
 }
 
 // ------------------------------------------------------------------ profile

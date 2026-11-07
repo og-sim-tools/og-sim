@@ -40,6 +40,8 @@ export interface CombatItem {
   skill: CombatSkill | null;
   /** Status factor for what this item inflicts (pet star effects: "inflict x2 Poison"). */
   inflictMultiplier: Record<string, number>;
+  /** Seconds added to the Base Cooldown, kept when it hatches (pet star effects: "Base Cooldown decreases by 2s"). */
+  cooldownDeltaS?: number;
   /** Extra % on statuses this item inflicts, gained in battle (add_inflict_pct). */
   inflictPct?: Record<string, number>;
   /** Covers an enhanced bag cell (layout enhanced_cells). */

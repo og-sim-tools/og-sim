@@ -269,6 +269,16 @@ describe('pet-spawned items', () => {
     expect(r.log.filter((e) => e.detail?.endsWith('becomes Bug'))).toHaveLength(3);
     expect(r.enemy.statuses.poison).toBe(3 * 2);
   });
+
+  it('shorten what they hatch into by the pet star cooldown change', () => {
+    // Bug: 1s cooldown. At 2★ the pet takes 0.5s off it, so the hatched bugs act twice as often.
+    const acts = (stars: number) => {
+      const r = runBattle(combatLoadout([], '', DATA_, pet(stars)), ENEMY(calm), { durationS: 3.05, log: true });
+      return Object.entries(r.items).filter(([id]) => id.startsWith('spawn:egg')).reduce((a, [, it]) => a + (it.activations ?? 0), 0);
+    };
+    expect(acts(1)).toBeGreaterThan(0);
+    expect(acts(2)).toBe(2 * acts(1));
+  });
 });
 
 describe('Gauntlet and Boss Rush (SPEC §7.5)', () => {

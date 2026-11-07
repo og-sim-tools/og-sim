@@ -179,11 +179,11 @@ heroes: [{ id: erwen, stars: 9 }, { id: ${other.id}, stars: 9 }]
     expect(shape()).not.toBe(before); // the other class's x32 is shaped differently
   }, 30000);
 
-  it('shows where pets put their items when asked', async () => {
+  it("puts an active pet's items in the bag as items of their own (user, 2026-11-06)", async () => {
     await start('version: 4\nheroes: [{ id: erwen, stars: 9 }]\npets: [{ id: venomous_spider, stars: 0 }]\n', 'version: 6\nhero: erwen\npets: [{ id: venomous_spider, active: true }]\nplacements: []\n');
-    expect(document.querySelectorAll('.spawn-ghost')).toHaveLength(0);
-    fireEvent.click(screen.getByLabelText(/Show pet spawns \(12\)/));
-    expect(document.querySelectorAll('.spawn-ghost').length).toBeGreaterThan(0);
+    await waitFor(() => expect(new Set([...document.querySelectorAll('.bag .item-cell[title^="Venomous Spider Egg Sack"]')].map((e) => e.getAttribute('title'))).size).toBe(12));
+    // 12 egg sacks (each drawn in both bags on the page); all placed, so nothing is left to preview.
+    expect(screen.queryByLabelText(/Show pet spawns/)).toBeNull();
   }, 30000);
 });
 

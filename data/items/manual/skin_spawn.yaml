@@ -6,6 +6,9 @@
   rarity: rare
   tags: [weapon, creature]
   footprint: "#"
+  # Sprite redrawn by hand from the user's in-game screenshot (2026-11-06): tools/sprites/blood_moon_familiar.py.
+  image: items/blood_moon_familiar.png
+  image_size: { w: 15, h: 14 }
   stats:
     damage: { ratio: 1.1, scales_with: atk }
     cooldown: 3.3

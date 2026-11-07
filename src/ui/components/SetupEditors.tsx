@@ -178,7 +178,10 @@ export function BlessingsEditor({ hero, owned, data, update, account = false, op
               style={{ maxWidth: 190 }}
               onChange={(e) => {
                 const d = data.blessings.get(e.target.value)!;
-                setB({ id: d.id, rarity: (Object.keys(d.values)[0] ?? 'common') as Rarity });
+                const r = (Object.keys(d.values)[0] ?? 'common') as Rarity;
+                const v = d.values[r];
+                // Fixed values (unique blessings) are the only possible value (user, 2026-11-06).
+                setB({ id: d.id, rarity: r, ...(v && 'value' in v ? { value: v.value } : {}) });
               }}
             >
               {choices.map((c) => (
@@ -188,12 +191,31 @@ export function BlessingsEditor({ hero, owned, data, update, account = false, op
                 </option>
               ))}
             </select>
-            <select value={b.rarity} aria-label="Blessing rarity" onChange={(e) => setB({ rarity: e.target.value as Rarity })}>
+            <select
+              value={b.rarity}
+              aria-label="Blessing rarity"
+              onChange={(e) => {
+                const v = def?.values[e.target.value as Rarity];
+                setB({ rarity: e.target.value as Rarity, ...(v && 'value' in v ? { value: v.value } : {}) });
+              }}
+            >
               {Object.keys(def?.values ?? {}).map((r) => (
                 <option key={r}>{r}</option>
               ))}
             </select>
-            <input type="number" step="any" value={b.value} aria-label="Blessing value" style={{ width: 64 }} onChange={(e) => setB({ value: Number(e.target.value) })} />
+            {range && 'value' in range ? (
+              // A fixed value (unique blessings): nothing to type in (user, 2026-11-06). A saved value that differs can be fixed in one click.
+              <>
+                <input type="number" value={range.value} aria-label="Blessing value" style={{ width: 64 }} readOnly disabled title="This blessing has one possible value at this rarity" />
+                {!inRange(range, b.value) && (
+                  <button className="small" onClick={() => setB({ value: range.value })} title={`Saved as ${b.value}`}>
+                    Use {range.value}
+                  </button>
+                )}
+              </>
+            ) : (
+              <input type="number" step="any" value={b.value} aria-label="Blessing value" style={{ width: 64 }} onChange={(e) => setB({ value: Number(e.target.value) })} />
+            )}
             <span className={range && !inRange(range, b.value) ? 'field-warn' : 'muted'} title={def ? blessingHow(def, data) : ''}>
               {def?.unit === 'pct' ? '%' : def?.unit === 'seconds' ? 's' : ''} ({showRange(range)})
             </span>
@@ -406,7 +428,8 @@ export function PetsEditor({ data, profile, update, account = false }: { data: G
                 onChange={(e) => update((p) => void (p.pets[i] = { ...pet, id: e.target.value, stars: p.owned_pets.find((o) => o.id === e.target.value)?.stars ?? 0 }))}
               >
                 {sorted.map((d) => (
-                  <option key={d.id} value={d.id}>
+                  // One of each pet (user, 2026-11-06).
+                  <option key={d.id} value={d.id} disabled={d.id !== pet.id && profile.pets.some((x) => x.id === d.id)}>
                     {d.rarity.toUpperCase()} · {d.name}
                     {d.role === 'economy' ? ' — shop only' : ''}
                     {d.ignored ? ' — not simulated' : ''}
@@ -447,7 +470,8 @@ export function PetsEditor({ data, profile, update, account = false }: { data: G
           onClick={() =>
             update((p) => {
               // Pets I own first.
-              const pick = [...p.owned_pets.map((o) => o.id), ...sorted.map((d) => d.id)].find((id) => data.pets.has(id) && !p.pets.some((x) => x.id === id)) ?? sorted[0]!.id;
+              const pick = [...p.owned_pets.map((o) => o.id), ...sorted.map((d) => d.id)].find((id) => data.pets.has(id) && !p.pets.some((x) => x.id === id));
+              if (!pick) return;
               p.pets.push({ id: pick, stars: p.owned_pets.find((o) => o.id === pick)?.stars ?? 0, active: true });
             })
           }

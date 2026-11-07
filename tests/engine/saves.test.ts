@@ -266,6 +266,24 @@ describe('frozen version-6 saves', () => {
   });
 });
 
+describe('frozen version-7 saves', () => {
+  it('every one loads without notes; version 6 loads the same apart from the new training settings', () => {
+    const acc = readAccount(read('v7', 'profile.yaml'));
+    expect(acc.version).toBe(7);
+    expect(acc.notes).toEqual([]);
+    expect(acc.profile.stat_mode).toBe('calculated');
+    expect(acc.profile.training).toEqual({ rank: 'gmaster', number: 12, hp: 7, atk: 10, block: 3 });
+    const { stat_mode: _m, training: _t, ...rest } = acc.profile;
+    expect(rest).toEqual(readAccount(read('v6', 'profile.yaml')).profile);
+    for (const f of yamls('v7', 'builds')) {
+      const r = readBuild(read('v7', 'builds', f));
+      expect(r.version, f).toBe(7);
+      expect(r.notes, f).toEqual([]);
+      if (yamls('v6', 'builds').includes(f)) expect(r.layout, f).toEqual(readBuild(read('v6', 'builds', f)).layout);
+    }
+  });
+});
+
 describe('older builds\' own values move into the account', () => {
   const base = readAccount(null).profile;
   const v2 = `version: 2

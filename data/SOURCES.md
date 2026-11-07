@@ -115,3 +115,20 @@ Read in the browser: the wiki search for "combat power" (`https://overgearedhero
 What's there: the Arena page says opponents' combat power is shown for the backpack they took into the Arena, and that viewing an opponent can show hero, gear, combat power, blessings, pets, chapter and tower progress. It also says an Arena backpack is made from the chosen hero, pets, gear and supplies plus items bought with a limited amount of gold (the Arena shop can have special shop and merged items), and doesn't update when the account gets stronger. **No formula for combat power** anywhere; the search found nothing else about it.
 
 Nothing was extracted into the data: no data files changed. CP isn't shown (user: only with an exact formula).
+
+## 2026-11-06 — Combat Training tables (from the user, not the web)
+
+Not a web fetch: two CSV files the user attached, `combat-training-ranks.csv` (121 rank levels) and `combat-training-levels.csv` (tiers 0–1200). Converted with `tools/training-csv/convert.py` into **`data/training.yaml`** (`source: observed`, `verified: true`, since the user supplied it).
+
+What was taken: the rank types in order with their numbers (Apprentice 1–3, Adventurer 1–5, Elite 1–10, Master 1–15, Warrior 1–20, GMaster 1–27, Hero 1–41); per rank level its MaxHp / Attack / Defence; per tier its MaxHp / Attack / Defence. Checks passed: every row's delta columns match the totals, and rank level × 10 = the three-track tier, × 30 = the road progress. Gold costs and level bounds were left out (not needed for stats).
+
+Unclear, flagged to the user: the CSV's rank names are internal (`GMaster`; no "Champion", which the user wrote); "Defence" is read as Initial Block; and the reading "stat = rank bonus + that stat's track at 10 × rank level + its upgrades" isn't confirmed by an in-game number yet.
+
+Also from the user (2026-11-06, in chat): Venomous Spider 2★ "Base Cooldown decreases by 2s" is the cooldown of the hatched spiders, small and big → `data/pets/manual/spawns.yaml` (`spawn_cooldown_delta`). Widow Spider's dots stay below.
+
+## 2026-11-06 — more from the user (not the web)
+
+No web fetch. From the user in chat:
+- **Flame Staff** base cooldown is 2.6s in game (wiki 2.1) → `data/items/manual/observed_2026-11-06.yaml`.
+- **Unique blessings** have only the wiki's value per rarity: the value can't be typed in any more (UI), it follows the rarity.
+- **Blood Moon Familiar** sprite: redrawn by hand from the user's in-game screenshot (15×14, no background, colours sampled from the screenshot) by `tools/sprites/blood_moon_familiar.py` → `data/images/items/blood_moon_familiar.png`, named in `data/items/manual/skin_spawn.yaml`. Its shape `#` is still the earlier guess.

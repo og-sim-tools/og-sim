@@ -15,7 +15,7 @@ const real = loadGameDataFromDir(join(ROOT, 'data')).data;
 describe('sprites', () => {
   it('every image the data names exists, at the size it says', () => {
     const defs = [...real.items.values(), ...real.gear.values()].filter((d) => d.image);
-    expect(defs.length).toBe(231 + 38); // every item and gear piece
+    expect(defs.length).toBe(232 + 38); // every item and gear piece (Blood Moon Familiar: hand-drawn, 2026-11-06)
     for (const d of defs) {
       const file = join(ROOT, 'data', 'images', d.image!);
       expect(existsSync(file), d.id).toBe(true);

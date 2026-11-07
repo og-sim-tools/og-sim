@@ -14,3 +14,4 @@ export * from './stats';
 export * from './config';
 export * from './profile';
 export * from './layout';
+export * from './training';

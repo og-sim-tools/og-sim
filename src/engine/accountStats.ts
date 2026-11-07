@@ -6,10 +6,15 @@
  * HP / ATK / Block are typed in as the game shows them, gear bonuses already included (user, 2026-10-16),
  * so HP % / ATK % lines are listed (Gigantization reads HP %) but never applied to them again.
  * profile.detailed_stats is only an optional manual adjustment on top (tests use it).
+ *
+ * Calculated mode (profile.stat_mode, user 2026-11-06): HP / ATK / Block are added up from Combat Training
+ * instead (training.ts). Gear's HP / ATK / Block formula isn't known yet, and pet, hero and % bonuses aren't
+ * counted, so calculated stats are too low and always carry a warning; typed-in stats are the accurate way.
  */
 import type { GameData } from './loader';
 import { type Profile, RARITIES, type Rarity } from './model';
 import { parseAbbrev } from './numbers';
+import { trainingStats } from './training';
 
 export interface StatPart {
   stat: string;
@@ -30,6 +35,49 @@ export interface AccountStats {
   notes: string[];
   /** Weapon bonus stats that need the in-game value (shown as red warnings). */
   bonusMissing: BonusMissing[];
+  /** How HP / ATK / Block were found: typed in, or calculated (with each source and what's missing). */
+  basic: BasicStatsSource;
+}
+
+export interface BasicStatsSource {
+  mode: 'direct' | 'calculated';
+  /** Calculated only: where each amount came from (stat hp / atk / initial_block). */
+  parts: StatPart[];
+  /** Calculated only: what isn't counted, or why the input couldn't be used. Always at least the gear stub. */
+  warnings: string[];
+}
+
+/** What calculated HP / ATK / Block can't count yet (shown on the Profile tab and with every battle). */
+export const CALCULATED_STATS_MISSING = [
+  "Gear HP / ATK / Block isn't counted: its formula isn't known yet.",
+  "Pet, hero and aura bonuses and HP % / ATK % lines aren't counted yet.",
+];
+
+/** HP / ATK / Block: typed in, or calculated from Combat Training (gear and the rest not known yet). */
+export function basicStats(data: GameData, profile: Profile): { hp: number; atk: number; initialBlock: number; source: BasicStatsSource } {
+  if (profile.stat_mode !== 'calculated')
+    return {
+      hp: parseAbbrev(profile.basic_stats.hp),
+      atk: parseAbbrev(profile.basic_stats.atk),
+      initialBlock: parseAbbrev(profile.basic_stats.initial_block),
+      source: { mode: 'direct', parts: [], warnings: [] },
+    };
+  const parts: StatPart[] = [];
+  const warnings: string[] = [];
+  const t = data.training;
+  if (!t) warnings.push('Combat Training data (training.yaml) is missing, so training adds nothing.');
+  else if (!profile.training) warnings.push('Enter your Combat Training rank and upgrades: training adds nothing until you do.');
+  else {
+    const s = trainingStats(t, profile.training);
+    warnings.push(...s.problems.map((p) => `Training: ${p}`));
+    const name = `${t.ranks.find((r) => r.id === profile.training!.rank)?.name ?? profile.training.rank} ${profile.training.number}`;
+    parts.push({ stat: 'hp', amount: s.hp, label: `Training (${name}, HP +${profile.training.hp})` });
+    parts.push({ stat: 'atk', amount: s.atk, label: `Training (${name}, ATK +${profile.training.atk})` });
+    parts.push({ stat: 'initial_block', amount: s.block, label: `Training (${name}, Block +${profile.training.block})` });
+  }
+  warnings.push(...CALCULATED_STATS_MISSING);
+  const sum = (stat: string) => parts.filter((p) => p.stat === stat).reduce((a, p) => a + p.amount, 0);
+  return { hp: sum('hp'), atk: sum('atk'), initialBlock: sum('initial_block'), source: { mode: 'calculated', parts, warnings } };
 }
 
 export interface BonusMissing {
@@ -126,12 +174,14 @@ export function computeAccountStats(data: GameData, profile: Profile, heroId: st
     if (v) parts.unshift({ stat: k, amount: v, label: 'Manual adjustment' });
   }
   for (const p of parts) if (p.label !== 'Manual adjustment') detailed[p.stat] = (detailed[p.stat] ?? 0) + p.amount;
+  const basic = basicStats(data, profile);
   return {
     bonusMissing,
     detailed,
-    hp: parseAbbrev(profile.basic_stats.hp),
-    atk: parseAbbrev(profile.basic_stats.atk),
-    initialBlock: parseAbbrev(profile.basic_stats.initial_block),
+    hp: basic.hp,
+    atk: basic.atk,
+    initialBlock: basic.initialBlock,
+    basic: basic.source,
     parts,
     notes,
   };

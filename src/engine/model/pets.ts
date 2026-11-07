@@ -34,6 +34,11 @@ export const PetSchema = z
     spawn_inflict_multiplier: z
       .array(z.object({ stars: z.number().int().min(0), status: Id, factor: z.number().positive() }).strict())
       .default([]),
+    /**
+     * From a star level, the Base Cooldown of everything this pet spawns, and of what it hatches into, changes by
+     * `seconds` (Venomous Spider 2★ "Base Cooldown decreases by 2s": the Mini and Large spiders, user 2026-11-06).
+     */
+    spawn_cooldown_delta: z.array(z.object({ stars: z.number().int().min(0), seconds: z.number() }).strict()).default([]),
     ...provenance,
   })
   .strict();

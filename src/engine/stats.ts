@@ -139,6 +139,8 @@ export function aggregateStats(loadout: Loadout): StatsResult {
   const account = computeAccountStats(data, profile, loadout.heroId);
   for (const n of account.notes) issues.push({ level: 'warning', code: 'stat_not_counted', message: n });
   for (const b of account.bonusMissing) issues.push({ level: 'error', code: 'gear_bonus_missing', message: b.message });
+  if (account.basic.mode === 'calculated')
+    issues.push({ level: 'warning', code: 'calculated_stats_incomplete', message: `HP / ATK / Block are calculated (Profile tab) and too low: ${account.basic.warnings.join(' ')} Switch to "Type in" for accurate stats.` });
   const detailed = account.detailed;
   const player: PlayerStats = { hp: account.hp, atk: account.atk, initialBlock: account.initialBlock, detailed };
   const global = (id: string): Contribution[] => {

@@ -26,7 +26,7 @@ describe('batch 5 mechanics', () => {
   it('random extra hits (Spark: 0~1 more) and auto crits (Firestorm vs 41+ Burn)', () => {
     const hitsPer = new Set<number>();
     for (let seed = 1; seed <= 12; seed++) {
-      const r = fight(['flame_staff@1,2', 'intermediate_magic_spark@2,1'], {}, 2.35, 'crit_rate: 0', seed);
+      const r = fight(['flame_staff@1,2', 'intermediate_magic_spark@2,1'], {}, 2.85, 'crit_rate: 0', seed); // Flame Staff: 2.6s (in game, 2026-11-06)
       const a = r.log.filter((e) => e.type === 'hit' && e.source === 'intermediate_magic_spark1').length;
       if (a) hitsPer.add(a);
     }
@@ -34,7 +34,7 @@ describe('batch 5 mechanics', () => {
     // Each extra attack is an activation of its own (On Activation / dot watchers see it again), one hit each.
     let moreActivations = false;
     for (let seed = 1; seed <= 12; seed++) {
-      const r = fight(['flame_staff@1,2', 'intermediate_magic_spark@2,1'], {}, 2.35, 'crit_rate: 0', seed);
+      const r = fight(['flame_staff@1,2', 'intermediate_magic_spark@2,1'], {}, 2.85, 'crit_rate: 0', seed);
       const spark = r.items.intermediate_magic_spark1!;
       expect(spark.activations).toBe(spark.attacks);
       expect(r.log.some((e) => e.type === 'attack' && e.source === 'intermediate_magic_spark1' && /hits\)/.test(e.detail ?? ''))).toBe(false);

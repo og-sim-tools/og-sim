@@ -14,6 +14,8 @@
  * statuses on hit and deal a % of max HP. Nothing older changes meaning.
  * Version 5 (2026-10-20): a build's skin can have its skill forced on (quest_forced). Nothing older changes.
  * Version 6 (2026-10-20): a typed-in attack's on-hit status can be gained by the attacker (self). Nothing older changes.
+ * Version 7 (2026-11-06): the account can hold Combat Training and calculate HP / ATK / Block from it (stat_mode).
+ * Left out = typed in, as before, so nothing older changes.
  */
 import { DEFAULT_BASIC_STATS } from './files';
 import type { SaveNote } from './salvage';
@@ -174,4 +176,11 @@ export function v4toV5(raw: Raw): Raw {
 /** v5 → v6 (account or build): one new optional setting, so nothing to change but the number. */
 export function v5toV6(raw: Raw): Raw {
   return { ...raw, version: 6 };
+}
+
+// ------------------------------------------------------------------ v6 → v7
+
+/** v6 → v7 (account or build): new optional account settings (training, stat_mode), so nothing to change but the number. */
+export function v6toV7(raw: Raw): Raw {
+  return { ...raw, version: 7 };
 }
