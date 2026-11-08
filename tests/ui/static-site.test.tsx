@@ -9,7 +9,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { parse } from 'yaml';
 import { readDataDir } from '../../src/engine/loader-node';
 import { readBuild } from '../../src/engine/saves';
-import { BROWSER_EDITS_FILE, deepMerge, readEdits, removeEdit, upsertEdit, writeEdits } from '../../src/engine/userEdits';
+import { deepMerge, readEdits, removeEdit, upsertEdit, writeEdits } from '../../src/engine/userEdits';
 import { App } from '../../src/ui/App';
 import { browserStore } from '../../src/ui/saves';
 import { seedStarter } from '../../src/ui/starter';
@@ -54,7 +54,7 @@ describe('item edits', () => {
     await store.writeEdit('items', { id: 'whip', value: 99 });
     await store.writeEdit('items', { id: 'whip', stats: { cooldown: 1 } });
     const data = await store.readData();
-    const mine = data.find((f) => f.path === `items/manual/${BROWSER_EDITS_FILE}`)!;
+    const mine = data.find((f) => f.path === 'edits/items.yaml')!;
     expect(parse(mine.text)).toEqual([{ id: 'whip', value: 99, stats: { cooldown: 1 } }]);
     expect(data.length).toBe(onDisk.length + 1);
     expect(store.editsWhere('items')).toMatch(/this browser/);

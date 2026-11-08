@@ -1,4 +1,4 @@
-/** Pet skills in battle (data/pets/manual/battle_effects.yaml) and the generic mechanics they needed. */
+/** Pet skills in battle (data/pets.yaml) and the generic mechanics they needed. */
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { runBattle } from '../../src/engine/combat/battle';

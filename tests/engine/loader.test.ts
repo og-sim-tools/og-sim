@@ -54,21 +54,21 @@ const WIKI_ITEMS = `
 
 describe('loading wiki entries', () => {
   it('validates entries, fills defaults and parses footprints into cells', () => {
-    const res = load(f('items/wiki/a.yaml', WIKI_ITEMS));
+    const res = load(f('items.yaml', WIKI_ITEMS));
     expect(res.errors).toEqual([]);
     const sword = res.data.items.get('sword')!;
     expect(sword.kind).toBe('item');
     expect(sword.class_restriction).toEqual([]);
     expect(sword.shape).toEqual([{ x: 0, y: 0 }, { x: 0, y: 1 }, { x: 0, y: 2 }]);
     expect(sword.dots).toEqual([]);
-    expect(sword.meta.origins).toEqual(['items/wiki/a.yaml:2']);
+    expect(sword.meta.origins).toEqual(['items.yaml:2']);
     expect(sellValue(res.data.items.get('big_sword')!)).toBe(5);
   });
 
   it('names the file, line, entry and field of schema errors', () => {
     const res = load(
       f(
-        'items/wiki/a.yaml',
+        'items.yaml',
         `- id: bad
   name: Bad
   rarity: mythic
@@ -80,27 +80,27 @@ describe('loading wiki entries', () => {
       ),
     );
     const msgs = res.errors.map(formatIssue);
-    expect(msgs.some((m) => m.startsWith('ERROR items/wiki/a.yaml:1 › bad › rarity:'))).toBe(true);
-    expect(msgs.some((m) => /items\/wiki\/a\.yaml:1 › bad: Unrecognized key\(s\) in object: 'footprnt'/.test(m))).toBe(true);
+    expect(msgs.some((m) => m.startsWith('ERROR items.yaml:1 › bad › rarity:'))).toBe(true);
+    expect(msgs.some((m) => /items\.yaml:1 › bad: Unrecognized key\(s\) in object: 'footprnt'/.test(m))).toBe(true);
     expect(res.data.items.has('bad')).toBe(false);
   });
 
   it('reports YAML syntax errors with the line', () => {
-    const res = load(f('items/wiki/a.yaml', '- id: x\n  name: [unclosed\n'));
-    expect(res.errors[0]!.file).toBe('items/wiki/a.yaml');
+    const res = load(f('items.yaml', '- id: x\n  name: [unclosed\n'));
+    expect(res.errors[0]!.file).toBe('items.yaml');
     expect(res.errors[0]!.line).toBeGreaterThan(0);
     expect(res.errors[0]!.message).toMatch(/YAML syntax error/);
   });
 
   it('rejects duplicate ids, naming both places', () => {
-    const res = load(f('items/wiki/a.yaml', WIKI_ITEMS), f('items/wiki/b.yaml', WIKI_ITEMS));
-    expect(res.errors.map((e) => e.message)).toContain('Duplicate id (also at items/wiki/a.yaml:2).');
+    const res = load(f('items.yaml', WIKI_ITEMS), f('items/b.yaml', WIKI_ITEMS));
+    expect(res.errors.map((e) => e.message)).toContain('Duplicate id (also at items.yaml:2).');
   });
 
   it('rejects items whose dots land on their own cells, naming the item and cells', () => {
     const res = load(
       f(
-        'items/wiki/a.yaml',
+        'items.yaml',
         `- { id: bad, name: Bad, rarity: rare, shape: [[0, 0], [1, 0]], dots: [[1, 0]], value: 1, source: wiki, verified: false }\n`,
       ),
     );
@@ -110,35 +110,35 @@ describe('loading wiki entries', () => {
 
   it('rejects footprint and shape on the same entry', () => {
     const res = load(
-      f('items/wiki/a.yaml', `- { id: x, name: X, rarity: rare, footprint: "#", shape: [[0, 0]], value: 1, source: wiki, verified: false }\n`),
+      f('items.yaml', `- { id: x, name: X, rarity: rare, footprint: "#", shape: [[0, 0]], value: 1, source: wiki, verified: false }\n`),
     );
     expect(res.errors[0]!.message).toMatch(/either `footprint` or `shape`/);
   });
 
   it('reports unknown references', () => {
     const res = load(
-      f('items/wiki/a.yaml', `- { id: x, name: X, rarity: rare, value: 1, components: [nope], source: wiki, verified: false }\n`),
+      f('items.yaml', `- { id: x, name: X, rarity: rare, value: 1, components: [nope], source: wiki, verified: false }\n`),
     );
-    expect(res.errors.map(formatIssue)).toEqual(['ERROR items/wiki/a.yaml:1 › x › components.0: Unknown items id "nope".']);
+    expect(res.errors.map(formatIssue)).toEqual(['ERROR items.yaml:1 › x › components.0: Unknown items id "nope".']);
   });
 
-  it('warns about files outside <category>/wiki|manual', () => {
-    const res = load(f('items/a.yaml', '[]'), f('weapons/wiki/a.yaml', '[]'));
+  it('warns about files that are not a database or edits', () => {
+    const res = load(f('items/wiki/a.yaml', '[]'), f('weapons.yaml', '[]'));
     expect(res.issues.filter((i) => i.level === 'warning')).toHaveLength(2);
   });
 
   it('keeps items without a shape but marks them unplaceable', () => {
-    const res = load(f('items/wiki/a.yaml', `- { id: x, name: X, rarity: rare, value: 1, source: wiki, verified: false }\n`));
+    const res = load(f('items.yaml', `- { id: x, name: X, rarity: rare, value: 1, source: wiki, verified: false }\n`));
     expect(res.data.items.get('x')!.shape).toBeNull();
   });
 
   it('throwing variant lists every error', () => {
-    expect(() => loadGameDataOrThrow([...BASE, f('items/wiki/a.yaml', '- { id: x }\n')])).toThrow(DataLoadError);
-    expect(() => loadGameDataOrThrow([f('items/wiki/a.yaml', '[]')])).toThrow(/Missing config\.yaml/);
+    expect(() => loadGameDataOrThrow([...BASE, f('items.yaml', '- { id: x }\n')])).toThrow(DataLoadError);
+    expect(() => loadGameDataOrThrow([f('items.yaml', '[]')])).toThrow(/Missing config\.yaml/);
   });
 });
 
-describe('manual overrides', () => {
+describe('edits (the hosted site item editor)', () => {
   const MANUAL = `
 - id: sword
   footprint: "o#"
@@ -152,7 +152,7 @@ describe('manual overrides', () => {
 `;
 
   it('overrides field by field: objects merge, lists and values replace, null deletes', () => {
-    const res = load(f('items/wiki/a.yaml', WIKI_ITEMS), f('items/manual/m.yaml', MANUAL));
+    const res = load(f('items.yaml', WIKI_ITEMS), f('edits/items.yaml', MANUAL));
     expect(res.errors).toEqual([]);
     const s = res.data.items.get('sword')!;
     expect(s.stats.damage).toEqual({ ratio: 1.6, scales_with: 'atk' });
@@ -165,22 +165,22 @@ describe('manual overrides', () => {
     expect(s.source).toBe('wiki');
     expect(s.verified).toBe(false);
     expect(s.notes).toBe('checked in-game');
-    expect(s.meta.origins).toEqual(['items/wiki/a.yaml:2', 'items/manual/m.yaml:2']);
+    expect(s.meta.origins).toEqual(['items.yaml:2', 'edits/items.yaml:2']);
   });
 
   it('reports every override with old and new values', () => {
-    const res = load(f('items/wiki/a.yaml', WIKI_ITEMS), f('items/manual/m.yaml', MANUAL));
+    const res = load(f('items.yaml', WIKI_ITEMS), f('edits/items.yaml', MANUAL));
     const byField = Object.fromEntries(res.overrides.map((o) => [o.field, o]));
     expect(Object.keys(byField).sort()).toEqual(['effect_text', 'footprint', 'merges_into', 'stats.damage.ratio']);
-    expect(byField['stats.damage.ratio']).toMatchObject({ from: 1.5, to: 1.6, source: 'observed', verified: true, file: 'items/manual/m.yaml', line: 2 });
+    expect(byField['stats.damage.ratio']).toMatchObject({ from: 1.5, to: 1.6, source: 'observed', verified: true, file: 'edits/items.yaml', line: 2 });
     expect(byField['effect_text']!.to).toBeUndefined();
     expect(res.data.items.get('sword')!.meta.overrides).toHaveLength(4);
   });
 
   it('replaces geometry as a whole', () => {
     const res = load(
-      f('items/wiki/a.yaml', WIKI_ITEMS),
-      f('items/manual/m.yaml', `- { id: sword, shape: [[0, 0]], dots: [[1, 0]], source: observed, verified: true }\n`),
+      f('items.yaml', WIKI_ITEMS),
+      f('edits/items.yaml', `- { id: sword, shape: [[0, 0]], dots: [[1, 0]], source: observed, verified: true }\n`),
     );
     expect(res.errors).toEqual([]);
     expect(res.overrides.map((o) => o.field)).toEqual(['footprint', 'shape', 'dots']);
@@ -189,26 +189,26 @@ describe('manual overrides', () => {
 
   it('adds manual-only entries', () => {
     const res = load(
-      f('items/wiki/a.yaml', WIKI_ITEMS),
-      f('items/manual/m.yaml', `- { id: new_thing, name: New, rarity: common, footprint: "#", value: 2, source: observed, verified: true }\n`),
+      f('items.yaml', WIKI_ITEMS),
+      f('edits/items.yaml', `- { id: new_thing, name: New, rarity: common, footprint: "#", value: 2, source: observed, verified: true }\n`),
     );
     expect(res.data.items.get('new_thing')!.source).toBe('observed');
   });
 
   it('validates the merged entry and names both files', () => {
-    const res = load(f('items/wiki/a.yaml', WIKI_ITEMS), f('items/manual/m.yaml', `- { id: sword, value: -3, source: observed, verified: true }\n`));
-    expect(res.errors.map(formatIssue)[0]).toMatch(/^ERROR items\/wiki\/a\.yaml:2 \+ items\/manual\/m\.yaml:1 › sword › value:/);
+    const res = load(f('items.yaml', WIKI_ITEMS), f('edits/items.yaml', `- { id: sword, value: -3, source: observed, verified: true }\n`));
+    expect(res.errors.map(formatIssue)[0]).toMatch(/^ERROR items\.yaml:2 \+ edits\/items\.yaml:1 › sword › value:/);
   });
 
-  it('warns when a manual entry changes nothing', () => {
-    const res = load(f('items/wiki/a.yaml', WIKI_ITEMS), f('items/manual/m.yaml', `- { id: sword, value: 5, source: observed, verified: true }\n`));
-    expect(res.issues.some((i) => i.level === 'warning' && /overrides nothing/.test(i.message))).toBe(true);
+  it('warns when an edit changes nothing', () => {
+    const res = load(f('items.yaml', WIKI_ITEMS), f('edits/items.yaml', `- { id: sword, value: 5, source: observed, verified: true }\n`));
+    expect(res.issues.some((i) => i.level === 'warning' && /changes nothing/.test(i.message))).toBe(true);
   });
 
   it('renames with `replaces` and redirects references', () => {
     const res = load(
-      f('items/wiki/a.yaml', WIKI_ITEMS),
-      f('items/manual/m.yaml', `- { id: great_sword, replaces: big_sword, name: Great Sword, source: observed, verified: true }\n`),
+      f('items.yaml', WIKI_ITEMS),
+      f('edits/items.yaml', `- { id: great_sword, replaces: big_sword, name: Great Sword, source: observed, verified: true }\n`),
     );
     expect(res.errors).toEqual([]);
     expect(res.data.items.has('big_sword')).toBe(false);
@@ -225,9 +225,9 @@ describe('manual overrides', () => {
 
   it('rejects `replaces` of an unknown entry or onto an existing id, and duplicate manual entries', () => {
     const res = load(
-      f('items/wiki/a.yaml', WIKI_ITEMS),
+      f('items.yaml', WIKI_ITEMS),
       f(
-        'items/manual/m.yaml',
+        'edits/items.yaml',
         `- { id: z, replaces: nope, source: observed, verified: true }
 - { id: sword, replaces: big_sword, source: observed, verified: true }
 - { id: big_sword, value: 11, source: observed, verified: true }
@@ -236,9 +236,9 @@ describe('manual overrides', () => {
       ),
     );
     expect(errors(res.issues).map((e) => e.message)).toEqual([
-      'No wiki entry "nope" to replace.',
+      'No entry "nope" to replace.',
       'Can\'t rename "big_sword" to "sword": a wiki entry already has that id.',
-      'Duplicate manual entry (also at items/manual/m.yaml:3).',
+      'Duplicate edit (also at edits/items.yaml:3).',
     ]);
   });
 
@@ -247,6 +247,42 @@ describe('manual overrides', () => {
     const out = mergeEntry({ id: 'a', source: 'wiki', verified: false, x: 1 }, { id: 'b', source: 'observed', verified: true, x: 2 }, (fld) => recs.push(fld));
     expect(out).toEqual({ id: 'a', source: 'wiki', verified: false, x: 2 });
     expect(recs).toEqual(['x']);
+  });
+});
+
+describe('databases: corrections and old ids', () => {
+  const DB = `- id: great_sword
+  name: Great Sword
+  rarity: rare
+  footprint: "#"
+  stats: { cooldown: 2.6 }
+  value: 5
+  old_ids: [big_old_sword]
+  source: wiki
+  verified: false
+  corrections:
+    - { field: stats.cooldown, wiki: 2.1, source: observed, verified: true }
+- { id: holder, name: Holder, rarity: rare, footprint: "#", value: 1, components: [big_old_sword], source: manual, verified: true }
+`;
+
+  it('lists each correction with the wiki value and the value in use', () => {
+    const res = load(f('items.yaml', DB));
+    expect(res.ok).toBe(true);
+    expect(res.overrides).toEqual([
+      expect.objectContaining({ category: 'items', id: 'great_sword', field: 'stats.cooldown', from: 2.1, to: 2.6, source: 'observed', verified: true, file: 'items.yaml' }),
+    ]);
+    expect(res.data.items.get('great_sword')!.meta.overrides).toHaveLength(1);
+  });
+
+  it('redirects old ids to the entry', () => {
+    const res = load(f('items.yaml', DB));
+    expect(res.data.aliases.items.get('big_old_sword')).toBe('great_sword');
+    expect(res.data.items.get('holder')!.components).toEqual(['great_sword']);
+  });
+
+  it('rejects an old id that another entry still has', () => {
+    const res = load(f('items.yaml', DB + '- { id: big_old_sword, name: B, rarity: rare, footprint: "#", value: 1, source: wiki, verified: false }\n'));
+    expect(res.errors.map((e) => e.message)).toContain('"big_old_sword" is still the id of another entry.');
   });
 });
 
@@ -275,7 +311,7 @@ describe('hero, blessing and profile checks', () => {
 `;
 
   it('checks skill links, global skill ids, supply ability and supply stars', () => {
-    const res = load(f('items/wiki/a.yaml', WIKI_ITEMS), f('heroes/wiki/h.yaml', HEROES));
+    const res = load(f('items.yaml', WIKI_ITEMS), f('heroes.yaml', HEROES));
     const msgs = res.issues.map((i) => `${i.level} ${i.entry} ${i.field ?? ''} ${i.message}`);
     expect(msgs).toContain('error alpha skill_links.1.skill "other" is not one of Alpha\'s skills (smash, bash).');
     expect(msgs).toContain('error beta skills Skill id "smash" is also used by hero "alpha".');
@@ -285,9 +321,9 @@ describe('hero, blessing and profile checks', () => {
 
   it('checks that blessings buff a skill of their own hero', () => {
     const res = load(
-      f('heroes/wiki/h.yaml', HEROES.replace('[{ stars: 1, item: sword }]', '[]')),
+      f('heroes.yaml', HEROES.replace('[{ stars: 1, item: sword }]', '[]')),
       f(
-        'blessings/wiki/b.yaml',
+        'blessings.yaml',
         `- { id: beta_smash, name: Smash, kind: unique, hero: beta, buffs_skill: bash, unit: pct, values: { epic: { value: 5 } }, source: wiki, verified: false }
 - { id: oops, name: Oops, kind: class, unit: pct, values: {}, source: wiki, verified: false }
 `,
@@ -300,7 +336,7 @@ describe('hero, blessing and profile checks', () => {
   });
 
   it('loads a profile and checks every id it names', () => {
-    const res = load(f('items/wiki/a.yaml', WIKI_ITEMS), f('heroes/wiki/h.yaml', HEROES));
+    const res = load(f('items.yaml', WIKI_ITEMS), f('heroes.yaml', HEROES));
     const ok = loadProfile(
       f('profile.yaml', `basic_stats: { hp: "4M", atk: "1.34M", initial_block: 812.5K }\ndetailed_stats: { crit_rate: 50 }\nheroes: [{ id: alpha, stars: 3, links: [bash] }]\nactive_hero: alpha\n`),
       res.data,

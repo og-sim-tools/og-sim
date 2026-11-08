@@ -1,17 +1,15 @@
 /**
- * Item editor edits (SPEC §8.2): a list of entries in a manual/ file that override the wiki field by field.
- * Pure, so the dev server (data/<category>/manual/user_edits.yaml) and the browser (hosted site) share it.
+ * The hosted site's item editor edits (SPEC §8.2): kept in the browser as a list of entries that override the
+ * databases field by field (loaded as edits/<category>.yaml). The local project changes data/<category>.yaml
+ * itself instead (database.ts).
  */
 import { parse, stringify } from 'yaml';
 
-export const USER_EDITS_FILE = 'user_edits.yaml';
-/** The hosted site's edits, kept in the browser: a separate file name, loaded after user_edits.yaml so they win. */
-export const BROWSER_EDITS_FILE = 'your_edits.yaml';
 export const EDIT_ID_RE = /^[a-z0-9]+(?:_[a-z0-9]+)*$/;
 
 export const EDITS_HEADER =
-  '# Written by the item editor (SPEC §8.2). Same id as a wiki entry = override field by field.\n' +
-  '# Safe to hand-edit. Loaded after the other manual/ files, so these edits win.\n';
+  '# Written by the item editor (SPEC §8.2). Same id as a database entry = override field by field.\n' +
+  '# Safe to hand-edit. Loaded after the databases, so these edits win.\n';
 
 export type Entry = Record<string, unknown>;
 const isObj = (v: unknown): v is Entry => typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -34,7 +32,7 @@ export function upsertEdit(list: Entry[], entry: Entry): Entry[] {
   return idx >= 0 ? list.map((e, i) => (i === idx ? deepMerge(e, entry) : e)) : [...list, entry];
 }
 
-/** Drop all edits to one entry (the wiki / other manual files show again). */
+/** Drop all edits to one entry (the database entry shows again). */
 export const removeEdit = (list: Entry[], id: string): Entry[] => list.filter((e) => e.id !== id);
 
 export function readEdits(text: string | null | undefined): Entry[] {

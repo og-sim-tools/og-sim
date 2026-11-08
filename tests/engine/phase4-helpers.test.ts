@@ -75,8 +75,8 @@ describe('confirmed flag', () => {
   it('marks a wiki entry verified without changing any field', () => {
     const res = loadGameData([
       ...base,
-      { path: 'auras/wiki/a.yaml', text: '- { id: a, name: A, rarity: rare, skill_name: S, skill_text: T, source: wiki, verified: false }\n' },
-      { path: 'auras/manual/user_edits.yaml', text: '- { id: a, confirmed: true, source: observed, verified: true }\n' },
+      { path: 'auras.yaml', text: '- { id: a, name: A, rarity: rare, skill_name: S, skill_text: T, source: wiki, verified: false }\n' },
+      { path: 'edits/auras.yaml', text: '- { id: a, confirmed: true, source: observed, verified: true }\n' },
     ]);
     expect(res.errors).toEqual([]);
     expect(res.data.auras.get('a')!.verified).toBe(true);
@@ -87,7 +87,7 @@ describe('confirmed flag', () => {
   it('works on manual-only entries too', () => {
     const res = loadGameData([
       ...base,
-      { path: 'auras/manual/x.yaml', text: '- { id: b, name: B, rarity: rare, skill_name: S, skill_text: T, source: manual, verified: false, confirmed: true }\n' },
+      { path: 'auras/x.yaml', text: '- { id: b, name: B, rarity: rare, skill_name: S, skill_text: T, source: manual, verified: false, confirmed: true }\n' },
     ]);
     expect(res.errors).toEqual([]);
     expect(res.data.auras.get('b')!.verified).toBe(true);

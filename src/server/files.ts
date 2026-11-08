@@ -3,7 +3,7 @@
  * layouts, and saves only to these places:
  *   profile/profile.yaml
  *   layouts/<name>.yaml
- *   data/<category>/manual/user_edits.yaml   (item editor; overrides the wiki field by field)
+ *   data/<category>.yaml   (item editor: the entry is changed in the database itself)
  * Names and categories are checked, so nothing outside the project can be written.
  */
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
@@ -12,9 +12,7 @@ import { parse } from 'yaml';
 import { CATEGORIES, type SourceFile } from '../engine/loader';
 import { readDataDir } from '../engine/loader-node';
 import { BUILD_NAME_RE, BUILD_NAME_RULE } from '../engine/saves/names';
-import { type Entry, USER_EDITS_FILE, readEdits, removeEdit, upsertEdit, writeEdits } from '../engine/userEdits';
-
-export { USER_EDITS_FILE };
+import { removeDatabaseEntry, upsertDatabaseEntry } from '../engine/database';
 const ID_RE = /^[a-z0-9]+(?:_[a-z0-9]+)*$/;
 
 export class FileApiError extends Error {
@@ -93,42 +91,37 @@ export function writeProfile(root: string, text: string): void {
   writeFileSync(join(root, 'profile', 'profile.yaml'), text);
 }
 
-function editsFile(root: string, category: string): string {
+function databaseFile(root: string, category: string): string {
   if (!(CATEGORIES as readonly string[]).includes(category)) throw new FileApiError(`Unknown category "${category}".`);
-  return join(root, 'data', category, 'manual', USER_EDITS_FILE);
+  return join(root, 'data', `${category}.yaml`);
 }
 
-function readEditsFile(file: string): Entry[] {
-  if (!existsSync(file)) return [];
-  checkYaml(readFileSync(file, 'utf8'), USER_EDITS_FILE);
+/** Change (or add) one entry in data/<category>.yaml with the item editor's fields (see upsertDatabaseEntry). */
+export function upsertManualEntry(root: string, category: string, entry: Record<string, unknown>): void {
+  const file = databaseFile(root, category);
+  const id = entry.id;
+  if (typeof id !== 'string' || !ID_RE.test(id)) throw new FileApiError(`Bad id "${String(id)}".`);
+  const text = existsSync(file) ? readFileSync(file, 'utf8') : null;
+  if (text !== null) checkYaml(text, `data/${category}.yaml`);
   try {
-    return readEdits(readFileSync(file, 'utf8'));
+    writeFileSync(file, upsertDatabaseEntry(text, category, entry));
   } catch (e) {
-    throw new FileApiError(`${file}: ${(e as Error).message}`);
+    throw new FileApiError((e as Error).message);
   }
 }
 
-function writeEditsFile(file: string, list: Entry[]): void {
-  mkdirSync(join(file, '..'), { recursive: true });
-  writeFileSync(file, writeEdits(list));
-}
-
-/** Insert or update one entry in data/<category>/manual/user_edits.yaml (see upsertEdit). */
-export function upsertManualEntry(root: string, category: string, entry: Record<string, unknown>): void {
-  const file = editsFile(root, category);
-  const id = entry.id;
-  if (typeof id !== 'string' || !ID_RE.test(id)) throw new FileApiError(`Bad id "${String(id)}".`);
-  writeEditsFile(file, upsertEdit(readEditsFile(file), entry));
-}
-
-/** Drop all my editor edits to one entry (the wiki / other manual files show again). */
+/** Delete one of my own entries (an enemy item I made) from data/<category>.yaml. Wiki entries can't be deleted. */
 export function deleteManualEntry(root: string, category: string, id: string): boolean {
-  const file = editsFile(root, category);
-  const list = readEditsFile(file);
-  const next = removeEdit(list, id);
-  if (next.length === list.length) return false;
-  if (next.length === 0) rmSync(file);
-  else writeEditsFile(file, next);
+  const file = databaseFile(root, category);
+  if (!existsSync(file)) return false;
+  let next: string | null;
+  try {
+    next = removeDatabaseEntry(readFileSync(file, 'utf8'), id);
+  } catch (e) {
+    throw new FileApiError((e as Error).message);
+  }
+  if (next === null) return false;
+  writeFileSync(file, next);
   return true;
 }
 

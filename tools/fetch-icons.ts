@@ -1,6 +1,6 @@
 /**
  * Downloads item sprites and gear icons from the wiki into data/images/ and writes
- * data/items/manual/images.yaml + data/gear/manual/images.yaml (image path + native pixel size).
+ * the image path + native pixel size into data/items.yaml / data/gear.yaml.
  * Run once: npx tsx tools/fetch-icons.ts <item list file> <gear list file>
  *   item list: "Item Name|a/ab/File.png" per line (from the wiki's Items page)
  *   gear list: Gear-Icon file names after "Gear-Icon-", space separated (from the Gear page)
@@ -8,7 +8,7 @@
 import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { parse, stringify } from 'yaml';
+import { upsertDatabaseEntry } from '../src/engine/database';
 import { loadGameDataFromDir } from '../src/engine/loader-node';
 
 const ROOT = process.cwd();
@@ -83,10 +83,8 @@ async function run() {
   }
   const missingGear = [...data.gear.values()].filter((g) => !gearEntries.some((e) => (e as { id: string }).id === g.id)).map((g) => g.name);
 
-  const head = (what: string) =>
-    `# ${what} images from the wiki (tools/fetch-icons.ts, 2026-10-16). image_size is the sprite's native pixel size.\n\n`;
-  writeFileSync(join(ROOT, 'data/items/manual/images.yaml'), head('Item sprite') + stringify(itemEntries, { lineWidth: 0 }));
-  writeFileSync(join(ROOT, 'data/gear/manual/images.yaml'), head('Gear icon') + stringify(gearEntries, { lineWidth: 0 }));
+  patchDatabase('items', itemEntries as Record<string, unknown>[]);
+  patchDatabase('gear', gearEntries as Record<string, unknown>[]);
   console.log(`items: ${itemEntries.length}, gear: ${gearEntries.length}, ${bytes} bytes`);
   console.log(`no icon: ${[...missingItems, ...missingGear].join(', ') || 'none'}`);
   for (const r of report) console.log(r);
@@ -98,13 +96,10 @@ async function run() {
  */
 async function runList(file: string) {
   let bytes = 0;
-  const files = { item: 'data/items/manual/images.yaml', gear: 'data/gear/manual/images.yaml', gearicon: 'data/gear/manual/icons.yaml' } as const;
-  const current = Object.fromEntries(
-    Object.entries(files).map(([k, f]) => [k, (parse(readFileSync(join(ROOT, f), 'utf8')) ?? []) as { id: string }[]]),
-  ) as Record<keyof typeof files, { id: string }[]>;
+  const patches: Record<'items' | 'gear', Record<string, unknown>[]> = { items: [], gear: [] };
   const NL = String.fromCharCode(10);
   for (const line of readFileSync(file, 'utf8').split(NL).filter(Boolean)) {
-    const [kind, id, rawPath] = line.trim().split('|') as [keyof typeof files, string, string];
+    const [kind, id, rawPath] = line.trim().split('|') as ['item' | 'gear' | 'gearicon', string, string];
     // gearicon lines give the Gear-Icon file name; its path comes from the name's md5.
     const path = kind === 'gearicon' ? wikiPath(`Gear-Icon-${rawPath}`) : rawPath;
     const dir = kind === 'item' ? 'items' : kind === 'gear' ? 'gear' : 'gear_icons';
@@ -112,17 +107,21 @@ async function runList(file: string) {
     bytes += buf.length;
     mkdirSync(join(ROOT, `data/images/${dir}`), { recursive: true });
     writeFileSync(join(ROOT, `data/images/${dir}/${id}.png`), buf);
-    const entry =
-      kind === 'gearicon'
-        ? { id, icon: `${dir}/${id}.png`, source: 'wiki', url: BASE + path, verified: false }
-        : { id, image: `${dir}/${id}.png`, image_size: pngSize(buf), source: 'wiki', url: BASE + path, verified: false };
-    current[kind] = [...current[kind].filter((e) => e.id !== id), entry];
+    patches[kind === 'item' ? 'items' : 'gear'].push(kind === 'gearicon' ? { id, icon: `${dir}/${id}.png` } : { id, image: `${dir}/${id}.png`, image_size: pngSize(buf) });
   }
-  for (const [k, f] of Object.entries(files)) {
-    const head = readFileSync(join(ROOT, f), 'utf8').split(NL).filter((l) => l.startsWith('#')).join(NL);
-    writeFileSync(join(ROOT, f), head + NL + NL + stringify(current[k as keyof typeof files], { lineWidth: 0 }));
-  }
+  patchDatabase('items', patches.items);
+  patchDatabase('gear', patches.gear);
   console.log(`downloaded ${bytes} bytes`);
+}
+
+/** Set the image fields of existing database entries (data/<category>.yaml). */
+function patchDatabase(category: 'items' | 'gear', entries: Record<string, unknown>[]) {
+  const file = join(ROOT, 'data', `${category}.yaml`);
+  let text = readFileSync(file, 'utf8');
+  for (const { id, image, image_size, icon } of entries) {
+    text = upsertDatabaseEntry(text, category, { id, ...(image ? { image, image_size } : {}), ...(icon ? { icon } : {}), source: 'wiki' });
+  }
+  writeFileSync(file, text);
 }
 
 if (process.argv[2] === '--list') void runList(process.argv[3]!);

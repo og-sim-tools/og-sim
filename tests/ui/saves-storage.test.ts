@@ -75,7 +75,7 @@ describe('account export / import', () => {
       { path: 'OG-Simulator\\profile\\profile.yaml', text: 'p' },
       { path: 'OG-Simulator/layouts/raven.yaml', text: 'r' },
       { path: 'OG-Simulator/layouts/Trixie: best!.yaml', text: 't' },
-      { path: 'OG-Simulator/data/items/wiki/items.yaml', text: 'x' },
+      { path: 'OG-Simulator/data/items.yaml', text: 'x' },
       { path: 'OG-Simulator/tests/fixtures/saves/v1/profile.yaml', text: 'deeper' },
     ]);
     expect(back.accountText).toBe('p');

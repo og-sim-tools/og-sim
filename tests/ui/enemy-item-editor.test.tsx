@@ -60,7 +60,7 @@ describe('enemy items in battle', () => {
   it("an enemy build can carry a monster item, and its abilities run on the enemy's side", () => {
     const data = combatData([
       {
-        path: 'items/manual/monster.yaml',
+        path: 'items/monster.yaml',
         text: `- { id: ogre_club, name: Ogre Club, rarity: rare, tags: [weapon], footprint: "#", value: 0, enemy_item: true, stats: { damage: { ratio: 0.01, scales_with: atk }, cooldown: 1, accuracy: 1000 }, effects: [{ trigger: on_hit, target: enemy, action: apply_status, status: burn, stacks: 3 }], source: manual, verified: true }`,
       },
     ]);

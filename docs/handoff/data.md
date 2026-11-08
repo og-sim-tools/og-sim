@@ -6,11 +6,10 @@ Start a new chat with:
 
 ## How data works
 
-- **Game data** lives in `data/` (items, gear, pets, skins, heroes, statuses, enemies, auras, blessings).
-  - `wiki/` folders hold what came from the wiki.
-  - `manual/` folders hold corrections and effects, and override the wiki field by field.
-- **Shape and value corrections** go in `data/items/manual/corrections.yaml` with `source: observed` and `verified: true`, plus a comment giving the date and what the wiki said. Example: Widow Spider `## / ## / oo` (2026-10-22).
-- **Item effects** live in `data/items/manual/effects_batch_*.yaml`, and gear effects in `data/gear/manual/`. They use generic effect types only; nothing item-specific goes in the engine code.
+- **Game data** is one database per category: `data/items.yaml`, `gear.yaml`, `pets.yaml`, `skins.yaml`, `heroes.yaml`, `statuses.yaml`, `enemies.yaml`, `enemy_traits.yaml`, `auras.yaml`, `blessings.yaml` (plus `config.yaml`, `stats.yaml`, `training.yaml`). Each entry is complete, like a wiki page, with your corrections applied.
+- **Corrections** are made in the entry itself. When a value the wiki gave changes, add a record to the entry's `corrections` list with the wiki's value: `{field: stats.cooldown, wiki: 2.1, source: observed, verified: true}`. The entry keeps `source: wiki` and its URL, and `notes` says when and what you saw. The item editor does this for you.
+- **Effects** (items, gear, pets, hero skills) are in the same entries. They use generic effect types only; nothing item-specific goes in the engine code.
+- **History:** until 2026-11-07 the data was split into `wiki/` and `manual/` files; their comments are in `docs/data-history.md`.
 - **Your in-game numbers beat the wiki.** Claude keeps your value and tells you about the conflict.
 - **Anything from the web** gets `source: wiki`, its URL and `verified: false`, and is logged in `data/SOURCES.md`. Claude reports every fetch (URL, what it took, anything unclear) and never fixes a misspelled name on its own.
 - **Unknown values** aren't guessed; they're left out or flagged where you can see them.
@@ -21,7 +20,7 @@ Start a new chat with:
 - S-rank gear starts at epic. S gear numbers you quote already include the rare-and-below bonuses.
 - Pets: in-game values beat the wiki, and the values shown include stars. Repeated "+%" bonuses add up. Pets ignore haste and Freeze.
 - "Additionally increases by Y%" adds points (15% becomes 35%).
-- Blood Moon Familiar: a skin item that isn't released yet. Its shape (`#`) is a guess and it has no image; finish it on release.
+- Blood Moon Familiar: its shape (`#`) is a guess; its sprite was redrawn from your screenshot (2026-11-06).
 - Raid builds use gear and starting equipment only (no shop items).
 - Stats are calculated (gear + blessings + auras). Only HP, ATK and Initial Block are typed in.
 
@@ -38,6 +37,7 @@ Start a new chat with:
 - 2026-11-06: Venomous Spider 2★ "Base Cooldown decreases by 2s" = the hatched spiders' cooldown, small and big (6s → 4s), via the generic pet field `spawn_cooldown_delta`.
 - 2026-11-06: Combat Training from the user's CSVs (`data/training.yaml`, regenerate with `tools/training-csv/convert.py`); Profile tab "Type in / Calculate" for HP / ATK / Block (save version 7). Calculated mode always warns that gear isn't counted.
 
+- 2026-11-07: wiki and manual layers merged into one database per category (`data/<category>.yaml`), corrections recorded per field; chapters and arena are next (from the wiki, for review).
 - 2026-11-06: Flame Staff base cooldown 2.6s (in game; wiki 2.1).
 - 2026-11-06: unique blessings: the value is fixed to the wiki's per rarity (not typed in); a differing saved value shows a "Use x" button.
 - 2026-11-06: one of each pet (picker greys out pets in another slot; validation error `pet_duplicate`).

@@ -11,14 +11,14 @@ import { ENEMY, combatData, combatLoadout } from '../combat-fixture';
 const P = 'value: 1, source: manual, verified: true';
 const data = combatData([
   {
-    path: 'heroes/manual/test.yaml',
+    path: 'heroes/test.yaml',
     text: `
 - { id: wiz, name: Wiz, class: wizard, rarity: legendary, base_supply_ability: 10, source: manual, verified: true }
 - { id: war, name: War, class: warrior, rarity: legendary, base_supply_ability: 10, source: manual, verified: true }
 `,
   },
   {
-    path: 'items/manual/skins-test.yaml',
+    path: 'items/skins-test.yaml',
     text: `
 - { id: mirror, name: Mirror, rarity: common, tags: [armor], footprint: "#", ${P} }
 - { id: lsword, name: Legend Sword, rarity: legendary, tags: [weapon, sword], footprint: "#", stats: { damage: { ratio: 1, scales_with: atk }, cooldown: 100, accuracy: 1000 }, ${P} }
@@ -29,7 +29,7 @@ const data = combatData([
 `,
   },
   {
-    path: 'skins/manual/test.yaml',
+    path: 'skins/test.yaml',
     text: `
 - id: spiky_skin
   name: Spiky Skin

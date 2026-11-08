@@ -69,8 +69,14 @@ export const provenance = {
   /** Basic stats at the time of an in-game observation. */
   observed_with: z.object({ hp: Abbrev.optional(), atk: Abbrev.optional() }).strict().optional(),
   notes: z.string().optional(),
+  /** Ids this entry had before (renamed in game); old saves and references to them still work. */
+  old_ids: z.array(z.string().min(1)).optional(),
+  /** Fields that differ from the wiki: the wiki's value (in-game values beat the wiki). */
+  corrections: z
+    .array(z.object({ field: z.string().min(1), wiki: z.unknown(), removed: z.boolean().optional(), source: Source, verified: z.boolean() }).strict())
+    .optional(),
 };
-export const PROVENANCE_KEYS = ['source', 'url', 'verified', 'observed_with', 'notes'] as const;
+export const PROVENANCE_KEYS = ['source', 'url', 'verified', 'observed_with', 'notes', 'old_ids', 'corrections'] as const;
 
 /**
  * Bag geometry: either `footprint` in the docs notation ("o#o / .#.") or explicit

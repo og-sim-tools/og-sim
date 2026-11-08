@@ -1,6 +1,6 @@
 /**
  * Item editor (SPEC §8.2): add or correct items, gear and pets without hand-editing YAML.
- * Saves only the changed fields to data/<category>/manual/user_edits.yaml, so the wiki version is
+ * Saves only the changed fields (dev server: into data/<category>.yaml; hosted site: browser edits), so the original is
  * overridden field by field. Includes the "needs shape" queue.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -292,7 +292,7 @@ export function ItemEditor({ data, target, onTarget, onSaved, onError }: Props) 
   const errors = target ? validateDraft(target.category, working) : [];
   const changes = target ? (isNew ? working : diffFields(orig, working)) : {};
   const changed = Object.keys(changes).filter((k) => !['id', 'source', 'verified'].includes(k));
-  const hasEdits = !!entry && (entry.meta as { origins: string[] }).origins.some((o) => o.includes('/manual/user_edits.yaml') || o.includes('/manual/your_edits.yaml'));
+  const hasEdits = !!entry && (entry.meta as { origins: string[] }).origins.some((o) => o.startsWith('edits/'));
 
   const queue = useMemo(
     () => [

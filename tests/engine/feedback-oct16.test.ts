@@ -48,7 +48,7 @@ describe('Mithril Ingot', () => {
 describe('gear-style skills', () => {
   const data = combatData([
     {
-      path: 'items/manual/skilled.yaml',
+      path: 'items/skilled.yaml',
       text: `- { id: ogre_totem, name: Ogre Totem, rarity: rare, tags: [tool], footprint: "#", value: 0, enemy_item: true, skill: { text: Smash, damage: { ratio: 0.01, scales_with: atk }, interval_s: 1, accuracy: 1000 }, effects: [{ trigger: on_skill_hit, target: enemy, action: apply_status, status: burn, stacks: 2 }], source: manual, verified: true }`,
     },
   ]);

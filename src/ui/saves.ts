@@ -7,7 +7,7 @@
 import { createContext, useContext } from 'react';
 import type { SourceFile } from '../engine/loader';
 import { BUILD_NAME_RE, BUILD_NAME_RULE } from '../engine/saves/names';
-import { BROWSER_EDITS_FILE, USER_EDITS_FILE, readEdits, removeEdit, upsertEdit, writeEdits } from '../engine/userEdits';
+import { readEdits, removeEdit, upsertEdit, writeEdits } from '../engine/userEdits';
 import { deleteManualEntry, fetchSnapshot, saveManualEntry } from './api';
 import { bundledData } from './staticData';
 
@@ -69,7 +69,7 @@ export function fileStore(): SaveStore {
     readData: async () => (await fetchSnapshot()).data,
     writeEdit: (category, entry) => saveManualEntry(category, entry),
     deleteEdit: (category, id) => deleteManualEntry(category, id),
-    editsWhere: (category) => `data/${category}/manual/${USER_EDITS_FILE}`,
+    editsWhere: (category) => `data/${category}.yaml`,
     listEdits: async () => [],
   };
 }
@@ -117,7 +117,7 @@ export function browserStore(storage: Storage = globalThis.localStorage, readBas
     deleteBuild: async (name) => guard(`delete "${name}"`, () => storage.removeItem(BUILD_KEY + name)),
     readData: async () => {
       const base = await readBase();
-      const edits = keys(EDITS_KEY).map((category) => ({ path: `${category}/manual/${BROWSER_EDITS_FILE}`, text: storage.getItem(EDITS_KEY + category) ?? '' }));
+      const edits = keys(EDITS_KEY).map((category) => ({ path: `edits/${category}.yaml`, text: storage.getItem(EDITS_KEY + category) ?? '' }));
       return [...base, ...edits];
     },
     writeEdit: async (category, entry) => {

@@ -100,11 +100,11 @@ export const PETS = `
 export function makeData(extra: SourceFile[] = []): GameData {
   const res = loadGameData([
     ...BASE,
-    { path: 'items/manual/test.yaml', text: ITEMS },
-    { path: 'heroes/manual/test.yaml', text: HEROES },
-    { path: 'gear/manual/test.yaml', text: GEAR },
-    { path: 'blessings/manual/test.yaml', text: BLESSINGS },
-    { path: 'pets/manual/test.yaml', text: PETS },
+    { path: 'items/test.yaml', text: ITEMS },
+    { path: 'heroes/test.yaml', text: HEROES },
+    { path: 'gear/test.yaml', text: GEAR },
+    { path: 'blessings/test.yaml', text: BLESSINGS },
+    { path: 'pets/test.yaml', text: PETS },
     ...extra,
   ]);
   if (!res.ok) throw new Error(res.errors.map(formatIssue).join('\n'));

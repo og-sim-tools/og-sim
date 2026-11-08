@@ -1,10 +1,10 @@
 // @vitest-environment jsdom
 /** Overkill not counted, activations/triggers in reports, tagged inflict blessings, one of each supply, draggable unplaced item. */
-import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { cleanup, createEvent, fireEvent, render } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { runBattle } from '../../src/engine/combat/battle';
+import { loadGameDataFromDir } from '../../src/engine/loader-node';
 import { buildLoadout } from '../../src/engine/loadout';
 import { LayoutSchema } from '../../src/engine/model';
 import { validateLoadout } from '../../src/engine/validate';
@@ -35,13 +35,13 @@ describe('item reports', () => {
 
 describe('[Spirit] Burn Inflict & Swift Gain', () => {
   const data = combatData([
-    { path: 'items/manual/spirit.yaml', text: '- { id: firesp, name: Fire Sp, rarity: common, tags: [tool, spirit], footprint: "#", effects: [{ trigger: battle_start, target: enemy, action: apply_status, status: burn, stacks: 10 }], value: 1, source: manual, verified: true }' },
+    { path: 'items/spirit.yaml', text: '- { id: firesp, name: Fire Sp, rarity: common, tags: [tool, spirit], footprint: "#", effects: [{ trigger: battle_start, target: enemy, action: apply_status, status: burn, stacks: 10 }], value: 1, source: manual, verified: true }' },
     {
-      path: 'heroes/manual/h.yaml',
+      path: 'heroes/h.yaml',
       text: '- { id: erw, name: Erw, class: ranger, rarity: legendary, base_supply_ability: 10, source: manual, verified: true }',
     },
     {
-      path: 'blessings/manual/b.yaml',
+      path: 'blessings/b.yaml',
       text: '- { id: spirit_gain, name: "[Spirit] Burn Inflict & Swift Gain", kind: unique, hero: erw, item_inflict_statuses: [burn, swift], target_tags: [spirit], unit: pct, values: { mythic: { value: 50 } }, source: manual, verified: true }',
     },
   ]);
@@ -64,9 +64,9 @@ describe('[Spirit] Burn Inflict & Swift Gain', () => {
   });
 
   it('the real Fire Spirit inflicts Burn per [dot] Spirit', () => {
-    const real = readFileSync(join(__dirname, '..', '..', 'data', 'items', 'manual', 'effects_spirits.yaml'), 'utf8');
-    expect(real).toMatch(/fire_spirit[\s\S]*status: burn, stacks: 12, duration_s: 10/);
-    expect(real).toMatch(/wind_spirit[\s\S]*status: swift, stacks: 10, duration_s: 10/);
+    const real = loadGameDataFromDir(join(__dirname, '..', '..', 'data')).data.items;
+    expect(real.get('fire_spirit')!.effects).toContainEqual(expect.objectContaining({ action: 'apply_status', status: 'burn', stacks: 12, duration_s: 10 }));
+    expect(real.get('wind_spirit')!.effects).toContainEqual(expect.objectContaining({ status: 'swift', stacks: 10, duration_s: 10 }));
   });
 });
 
@@ -146,7 +146,7 @@ describe('expiry log', () => {
   });
   it('says when a timed stat change ends', () => {
     const data = combatData([
-      { path: 'items/manual/t.yaml', text: '- { id: furyband, name: Furyband, rarity: common, tags: [tool], footprint: "#", effects: [{ trigger: battle_start, target: player, action: add_player_stat, player_stat: all_dmg_increase, amount: 20, duration_s: 2 }], value: 1, source: manual, verified: true }' },
+      { path: 'items/t.yaml', text: '- { id: furyband, name: Furyband, rarity: common, tags: [tool], footprint: "#", effects: [{ trigger: battle_start, target: player, action: add_player_stat, player_stat: all_dmg_increase, amount: 20, duration_s: 2 }], value: 1, source: manual, verified: true }' },
     ]);
     const r = runBattle(combatLoadout(['furyband'], '', data), ENEMY({ hp: '900B' }), { durationS: 3, log: true });
     expect(r.log.some((e) => e.detail?.includes('all_dmg_increase +20 (Furyband) ends'))).toBe(true);
@@ -167,7 +167,7 @@ describe('battle-start stats (item side panel)', () => {
 describe('helped-apply statuses and Plague-style debuffs', () => {
   const data = combatData([
     {
-      path: 'items/manual/plague.yaml',
+      path: 'items/plague.yaml',
       text: '- { id: plaguer, name: Plaguer, rarity: common, tags: [armor], footprint: "#o", effects: [{ trigger: on_weapon_hit, uses_dots: true, target: enemy, action: apply_status, pick: most_stacks_debuff, stacks: 2, ignore_inflict_bonus: true }], value: 1, source: manual, verified: true }',
     },
   ]);

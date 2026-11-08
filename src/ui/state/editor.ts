@@ -1,6 +1,6 @@
 /**
  * Item editor helpers (SPEC §8.2): turn a loaded entry into an editable draft, diff a draft against
- * the original (only changed fields are saved to manual/user_edits.yaml), validate a draft, and
+ * the original (only changed fields are saved), validate a draft, and
  * convert between footprints and the clickable shape grid.
  */
 import { type Cell, FootprintError, formatFootprint, parseFootprint, validateShapeDefinition } from '../../engine/bag';

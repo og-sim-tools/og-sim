@@ -1,0 +1,882 @@
+# Heroes (skills, supplies, star effects): the simulator's database, one complete entry each (like a wiki page).
+# In-game values beat the wiki. Where an entry differs from the wiki, `corrections` keeps the wiki value
+# (field, wiki, source, verified). Provenance per entry: source (wiki / observed / manual), url, verified, notes.
+# Edit here directly, or with the item editor (it writes here too).
+
+- id: erwen
+  name: Erwen
+  class: ranger
+  rarity: legendary
+  base_supply_ability: 10
+  skills:
+    - id: spirit_affinity
+      name: Spirit Affinity
+      text: "Start of Game: Enhance fixed 2 slots in the backpack with Fire and Wind elements respectively. When entering Shop: Consume a Spirit Stone on an enhanced slot to summon Fire Spirit or Wind Spirit. Upon entering round 1/5/9: Create 1 Spirit Stone."
+    - {id: chasing_arrow, name: Chasing Arrow, text: "Upon gaining 10 Swift: Gain 3 Focus."}
+  skill_links:
+    - {stars: 4, skill: chasing_arrow}
+    - {stars: 8, skill: spirit_affinity}
+  exclusive_items:
+    - {item: spirit_stone, note: You can buy the Spirit Stone item in the Shop.}
+    - {item: erwens_bow, note: You are able to merge Erwen's Bow.}
+  supplies:
+    - {stars: 0, item: poison_bow}
+    - {stars: 0, item: fire_spirit}
+    - {stars: 1, item: spirit_stone}
+    - {stars: 3, item: wind_spirit}
+    - {stars: 5, item: air_walker}
+    - {stars: 7, item: erwens_bow}
+  skill_effects:
+    spirit_affinity: {status: shop, effects: [], notes: "Enhanced Fire / Wind slots, Spirit Stones and summoning all happen in the shop."}
+    chasing_arrow:
+      status: complete
+      effects:
+        - text: "Upon gaining 10 Swift: Gain 3 Focus."
+          trigger: on_status_applied
+          watch: any
+          params: {status: swift}
+          every: 10
+          target: player
+          action: apply_status
+          status: focus
+          stacks: 3
+      notes: Counts Swift my items give me (10 gained in total → 3 Focus, then the next 10 …).
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Erwen
+  verified: false
+
+- id: raven
+  name: Raven
+  class: ranger
+  rarity: legendary
+  base_supply_ability: 10
+  skills:
+    - {id: outlaw_tactics, name: Outlaw Tactics, text: "Start of Battle: Evade all attacks for 3s."}
+    - id: call_it_survival_instinct
+      name: Call it Survival Instinct
+      text: "When receiving a lethal attack: Consume 5 Focus to evade the attack. _The cost increases by 5 with each activation._"
+  skill_links:
+    - {stars: 4, skill: call_it_survival_instinct}
+    - {stars: 8, skill: outlaw_tactics}
+  exclusive_items:
+    - {item: black_feather, note: You can buy the Black Feather item in the Shop.}
+    - {item: shadow_hunter, note: "merge: Black Bow + Large Crow = Shadow Hunter"}
+  supplies:
+    - {stars: 0, item: shiny_bow}
+    - {stars: 0, item: pile_of_gold}
+    - {stars: 1, item: black_feather}
+    - {stars: 3, item: black_bow}
+    - {stars: 5, item: large_crow}
+    - {stars: 7, item: shadow_hunter}
+  skill_effects:
+    outlaw_tactics:
+      status: complete
+      effects:
+        - {text: "Start of Battle: Evade all attacks for 3s.", trigger: battle_start, target: player, action: apply_status, status: evade, stacks: 1, duration_s: 3}
+      notes: Weapon attacks (and gear skill hits) miss; each counts as a dodge.
+    call_it_survival_instinct:
+      status: complete
+      effects:
+        - text: "When receiving a lethal attack: Consume 5 Focus to evade the attack. The cost increases by 5 with each activation."
+          trigger: on_lethal
+          target: player
+          action: prevent_lethal
+          status: focus
+          stacks: 5
+          stacks_growth: 5
+          avoid: true
+      notes: Any lethal damage (status damage too), not just weapon hits. Not enough Focus = no evade.
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Raven
+  verified: false
+
+- id: talin
+  name: Talin
+  class: ranger
+  rarity: legendary
+  base_supply_ability: 10
+  skills:
+    - {id: pursuit, name: Pursuit, text: "If your Weapon lands as a Critical Hit: Refunds 15% of remaining Cooldown."}
+    - {id: hawk_eye, name: Hawk Eye, text: 10% chance for your Weapon's Critical Hit to deal 100% increased DMG.}
+  skill_links:
+    - {stars: 4, skill: hawk_eye}
+    - {stars: 8, skill: pursuit}
+  exclusive_items:
+    - {item: adrenaline, note: You can buy the Adrenaline item in the Shop.}
+    - {item: triple_crossbow, note: "merge: Arbalest + Tracker's Bow = Triple Crossbow"}
+  supplies:
+    - {stars: 0, item: hunters_bow}
+    - {stars: 0, item: leather_gloves}
+    - {stars: 1, item: adrenaline}
+    - {stars: 3, item: trackers_bow}
+    - {stars: 5, item: war_hawk}
+    - {stars: 7, item: triple_crossbow}
+  skins: [Summer]
+  skill_effects:
+    pursuit:
+      status: complete
+      effects:
+        - text: "If your Weapon lands as a Critical Hit: Refunds 15% of remaining Cooldown."
+          trigger: on_crit
+          watch: any
+          watch_filter: {tags_any: [weapon]}
+          target: event_item
+          action: refund_cooldown
+          pct: 15
+          pct_of: remaining
+      notes: Right after an attack almost the whole cooldown remains, so this is close to 15% of the cooldown.
+    hawk_eye:
+      status: complete
+      effects:
+        - {text: 10% chance for your Weapon's Critical Hit, trigger: passive, target: player, action: add_player_stat, player_stat: weapon_crit_proc_chance, amount: 10}
+        - {text: to deal 100% increased DMG., trigger: passive, target: player, action: add_player_stat, player_stat: weapon_crit_proc_dmg, amount: 100}
+      notes: The crit hit is × 2 on top of Crit DMG. Gear skill hits count as weapon hits.
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Talin
+  verified: false
+
+- id: venom
+  name: Venom
+  class: ranger
+  rarity: epic
+  base_supply_ability: 8
+  skills:
+    - {id: poison_coating, name: Poison Coating, text: "Start of Game: Randomly enhance 2 slots in the Backpack. Start of Battle: Items in enhanced slots inflict 50% more Poison."}
+    - {id: web_weaving, name: Web Weaving, text: Increase chance for Venomous Insect to appear in the shop by 10%.}
+  skill_links:
+    - {stars: 4, skill: web_weaving}
+    - {stars: 8, skill: poison_coating}
+  exclusive_items:
+    - {item: spider_fang, note: "merge: Dagger + Widow Spider = Spider Fang"}
+  supplies:
+    - {stars: 0, item: poison_powder}
+    - {stars: 1, item: poison_crossbow}
+    - {stars: 3, item: spider_fang}
+    - {stars: 5, item: venomous_crossbow}
+    - {stars: 7, item: violet_assassin}
+  skill_effects:
+    poison_coating:
+      status: complete
+      effects:
+        - text: "Start of Battle: Items in enhanced slots inflict 50% more Poison."
+          trigger: battle_start
+          target: all_items
+          filter: {enhanced: true}
+          action: add_inflict_pct
+          status: poison
+          amount: 50
+      notes: The 2 enhanced slots are random each run, so mark them on the layout (Enhanced cells). Added to Poison Inflict Increase.
+      enhanced_slots: {count: 2, color: "#a78bfa", label: items here inflict 50% more Poison}
+    web_weaving: {status: shop, effects: []}
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Venom
+  verified: false
+
+- id: lua
+  name: Lua
+  class: ranger
+  rarity: epic
+  base_supply_ability: 8
+  skills:
+    - {id: fairy_wisdom, name: Fairy Wisdom, text: "On Over Heal: Gain 3 Focus and increase Crit Rate of all Weapons by 5% for 5s."}
+    - {id: naive_fairy, name: Naive Fairy, text: Increase chance for Fairy Dust and Fairy to appear in the shop by 10%.}
+  skill_links:
+    - {stars: 4, skill: naive_fairy}
+    - {stars: 8, skill: fairy_wisdom}
+  exclusive_items:
+    - {item: fairy_bow, note: "merge: Shiny Bow + Fairy = Fairy Bow"}
+  supplies:
+    - {stars: 0, item: fairy_dust}
+    - {stars: 1, item: fairy_blessing}
+    - {stars: 3, item: fairy}
+    - {stars: 5, item: fairy_bow}
+    - {stars: 7, item: fairy_forest_twig}
+  skill_effects:
+    fairy_wisdom:
+      status: complete
+      effects:
+        - {text: "On Over Heal: Gain 3 Focus", trigger: on_heal, watch: any, min_event_amount: 0, target: player, action: apply_status, status: focus, stacks: 3}
+        - text: and increase Crit Rate of all Weapons by 5% for 5s.
+          trigger: on_heal
+          watch: any
+          min_event_amount: 0
+          target: all_items
+          filter: {tags_any: [weapon]}
+          action: add_stat_pct
+          stat: crit_chance_pct
+          amount: 5
+          duration_s: 5
+      notes: Every heal with overheal counts (Regen / Vamp included). Each one adds another +5% for 5s (stacking, not refreshing).
+    naive_fairy: {status: shop, effects: []}
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Lua
+  verified: false
+
+- id: acrobat
+  name: Acrobat
+  class: ranger
+  rarity: rare
+  base_supply_ability: 5
+  skills:
+    - {id: agile_movement, name: Agile Movement, text: "Start of Battle: Gain 10 Dodge. On Successful Evasion: For 2s, increase DMG dealt by 10%."}
+    - {id: thiefs_hobby, name: Thief's Hobby, text: Increase chance for Leather Boots to appear in the Shop by 10%.}
+  skill_links:
+    - {stars: 4, skill: thiefs_hobby}
+    - {stars: 8, skill: agile_movement}
+  exclusive_items: []
+  supplies:
+    - {stars: 1, item: leather_boots}
+    - {stars: 3, item: fairy_dust}
+    - {stars: 5, item: winged_boots}
+    - {stars: 7, item: dancing_crescent_moon}
+  skill_effects:
+    agile_movement:
+      status: complete
+      effects:
+        - {text: "Start of Battle: Gain 10 Dodge.", trigger: battle_start, target: player, action: apply_status, status: dodge, stacks: 10}
+        - text: "On Successful Evasion: For 2s, increase DMG dealt by 10%."
+          trigger: on_dodge
+          target: player
+          action: add_player_stat
+          player_stat: all_dmg_increase
+          amount: 10
+          duration_s: 2
+      notes: '"DMG dealt" read as All DMG. Each dodge adds another +10% for 2s (stacking, not refreshing).'
+    thiefs_hobby: {status: shop, effects: []}
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Acrobat
+  verified: false
+
+- id: sniper
+  name: Sniper
+  class: ranger
+  rarity: rare
+  base_supply_ability: 5
+  skills:
+    - {id: ultra_focus, name: Ultra Focus, text: "Start of Battle: Gain 30 Focus. When HP is below or equal to 60%: Lose 30 Focus."}
+    - {id: western_crossbowman, name: Western Crossbowman, text: Increase chance for Crossbow and Training Bow to appear in the Shop by 10%.}
+  skill_links:
+    - {stars: 4, skill: western_crossbowman}
+    - {stars: 8, skill: ultra_focus}
+  exclusive_items: []
+  supplies:
+    - {stars: 1, item: crossbow}
+    - {stars: 3, item: telescope}
+    - {stars: 5, item: arbalest}
+    - {stars: 7, item: marksmans_hat}
+  skill_effects:
+    ultra_focus:
+      status: complete
+      effects:
+        - {text: "Start of Battle: Gain 30 Focus.", trigger: battle_start, target: player, action: apply_status, status: focus, stacks: 30}
+        - text: "When HP is below or equal to 60%: Lose 30 Focus."
+          trigger: hp_below
+          hp_pct: 60
+          target: player
+          action: remove_status
+          status: focus
+          count: 30
+          count_unit: stacks
+      notes: Fires again if healed above 60% and dropped back below.
+    western_crossbowman: {status: shop, effects: []}
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Sniper
+  verified: false
+
+- id: archer
+  name: Archer
+  class: ranger
+  rarity: rare
+  base_supply_ability: 5
+  skills:
+    - {id: focus_training, name: Focus Training, text: Gain 5% Accuracy}
+    - {id: pickpocket, name: Pickpocket, text: "On entering Shop: 50% chance to gain 1 Coin."}
+  skill_links:
+    - {stars: 4, skill: focus_training}
+    - {stars: 8, skill: pickpocket}
+  exclusive_items: []
+  supplies:
+    - {stars: 1, item: target}
+    - {stars: 3, item: baby_hawk}
+    - {stars: 5, item: bear_trap}
+    - {stars: 7, item: hawk}
+  skill_effects:
+    focus_training:
+      status: complete
+      effects:
+        - {text: Gain 5% Accuracy, trigger: passive, target: player, action: add_player_stat, player_stat: accuracy_bonus, amount: 5}
+      notes: +5 accuracy points on every weapon (like Accuracy Bonus).
+    pickpocket: {status: shop, effects: []}
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Archer
+  verified: false
+
+- id: bjorn
+  name: Bjorn
+  class: warrior
+  rarity: legendary
+  base_supply_ability: 10
+  skills:
+    - {id: gigantization, name: Gigantization, text: "In proportion to your Max HP increase, All DMG increases up to 30%. _(The character's size also increases!)_"}
+    - id: flesh_burst
+      name: Flesh Burst
+      text: "Upon losing HP yourself: Remove 50% of your and 10% of the opponent's Block respectively, and deal Attack DMG x? DMG. For each 100% of bonus Max HP, Flesh Burst DMG increases by Attack DMG x?."
+  skill_links:
+    - {stars: 4, skill: gigantization}
+    - {stars: 8, skill: flesh_burst}
+  exclusive_items:
+    - {item: lithinum, note: You can buy the Lithinum item in the Shop.}
+    - {item: lithinum_greatshield, note: You are able to merge Lithinum Greatshield.}
+  supplies:
+    - {stars: 0, item: throwing_axe}
+    - {stars: 0, item: warrior_flesh}
+    - {stars: 1, item: lithinum}
+    - {stars: 3, item: berserk_potion}
+    - {stars: 5, item: blood_frenzy}
+    - {stars: 7, item: lithinum_greatshield}
+  skill_effects:
+    gigantization:
+      status: complete
+      effects:
+        - text: In proportion to your Max HP increase, All DMG increases up to 30%.
+          trigger: passive
+          target: player
+          action: add_player_stat
+          player_stat: all_dmg_increase
+          amount: 30
+          amount_from: {stat: hp_pct, factor: 0.3, max: 30}
+      notes: Guess — "Max HP increase" = my HP % bonus from gear and blessings; +100% HP → +30% All DMG (cap). Check in game.
+    flesh_burst:
+      status: complete
+      effects:
+        - {text: "Upon losing HP yourself: Remove 50% of your", trigger: on_self_hp_loss, target: player, action: remove_block, pct_of_current: 50}
+        - {text: "and 10% of the opponent's Block respectively,", trigger: on_self_hp_loss, target: enemy, action: remove_block, pct_of_current: 10}
+        - text: and deal Attack DMG x3.0 DMG. For each 100% of max HP of Block removed, Flesh Burst DMG increases by Attack DMG x0.4.
+          trigger: on_self_hp_loss
+          target: enemy
+          action: deal_damage
+          damage_type: weapon
+          value: {ratio: 3, scales_with: atk}
+          bonus_per_removed_block: {ratio: 0.4, scales_with: atk}
+      notes: "From the user (ATK 702.2K): 2.10M = 3.0× ATK, +280.8K = 0.4× ATK for each 100% of my max HP in Block removed from both sides together (prorated: 50% of max HP → +0.2× ATK). Weapon damage. Fires for every HP loss my own items or skills cause (Price of the Pact included)."
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Bjorn
+  verified: false
+
+- id: rose
+  name: Rose
+  class: warrior
+  rarity: legendary
+  base_supply_ability: 10
+  skills:
+    - {id: impale, name: Impale, text: "Your Spike, Poison and Burn ignores the enemy's Block and deals penetration DMG."}
+    - {id: parting_rose, name: Parting Rose, text: "If your Spike stacks exceed 10 times the opponent's current HP %, Execute the opponent."}
+  skill_links:
+    - {stars: 4, skill: parting_rose}
+    - {stars: 8, skill: impale}
+  exclusive_items:
+    - {item: red_rose, note: You can buy the Red Rose item in the Shop.}
+    - {item: red_rose_rapier, note: "merge: Gladius + Red Rose = Red Rose Rapier"}
+  supplies:
+    - {stars: 0, item: steel_spike}
+    - {stars: 0, item: whip}
+    - {stars: 1, item: red_rose}
+    - {stars: 3, item: spiked_whip}
+    - {stars: 5, item: spiked_gloves}
+    - {stars: 7, item: red_rose_rapier}
+  skins: [Summer]
+  skill_effects:
+    impale:
+      status: complete
+      effects:
+        - text: Your Spike, Poison and Burn ignores the enemy's Block and deals penetration DMG.
+          trigger: passive
+          target: player
+          action: add_player_stat
+          player_stat: status_ignores_block
+          amount: 1
+    parting_rose:
+      status: complete
+      effects:
+        - text: If your Spike stacks exceed 10 times the opponent's current HP %, Execute the opponent.
+          trigger: passive
+          condition: {who: self, status_over_foe_hp: {status: spike, factor: 10}}
+          target: enemy
+          action: execute
+      notes: Checked every tick. Enemy at 30% HP → more than 300 Spike executes.
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Rose
+  verified: false
+
+- id: darkan
+  name: Darkan
+  class: warrior
+  rarity: legendary
+  base_supply_ability: 10
+  skills:
+    - {id: forbidden_power, name: Forbidden Power, text: "Accuracy decreases by 6%, but all weapon DMG and Haste increase up to 25% in proportion to your missing HP."}
+    - {id: price_of_the_pact, name: Price of the Pact, text: "Every 2s: Lose _x_ HP, then cover it to Block."}
+  skill_links:
+    - {stars: 4, skill: price_of_the_pact}
+    - {stars: 8, skill: forbidden_power}
+  exclusive_items:
+    - {item: blood_demon_stone, note: You can buy the Blood Demon Stone item in the Shop.}
+    - {item: blood_demon_sword, note: "merge: Blood Demon Stone + Bloodletting Sword = Blood Demon Sword"}
+  supplies:
+    - {stars: 0, item: blood_stone}
+    - {stars: 0, item: dagger}
+    - {stars: 1, item: blood_demon_stone}
+    - {stars: 3, item: serrated_sword}
+    - {stars: 5, item: bloody_crown}
+    - {stars: 7, item: blood_demon_sword}
+  skins: [Summer]
+  skill_effects:
+    forbidden_power:
+      status: complete
+      effects:
+        - {text: "Accuracy decreases by 6%,", trigger: passive, target: player, action: add_player_stat, player_stat: accuracy_bonus, amount: -6}
+        - text: but all weapon DMG
+          trigger: passive
+          target: all_items
+          filter: {tags_any: [weapon]}
+          action: add_stat_pct
+          stat: damage_pct
+          amount: 25
+          amount_from: {missing_hp: true, factor: 0.25, max: 25}
+        - text: and Haste increase up to 25% in proportion to your missing HP.
+          trigger: passive
+          target: all_items
+          filter: {tags_any: [weapon]}
+          action: add_stat_pct
+          stat: haste_pct
+          amount: 25
+          amount_from: {missing_hp: true, factor: 0.25, max: 25}
+      notes: Guess — linear, +25% at 100% missing HP (so +12.5% at half HP). Check in game.
+    price_of_the_pact:
+      status: complete
+      effects:
+        - {text: "Every 2s: Lose 0.05x HP,", trigger: timer, interval_s: 2, target: player, action: lose_hp, value: {ratio: 0.05, scales_with: hp}}
+        - {text: then cover it to Block., trigger: timer, interval_s: 2, target: player, action: gain_block, value: {ratio: 0.05, scales_with: hp}}
+      notes: "From the user (HP 4.35M): 217.6K = 0.05× max HP lost and gained as Block every 2s. Block Gain bonuses apply to the Block part."
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Darkan
+  verified: false
+
+- id: rebecca
+  name: Rebecca
+  class: warrior
+  rarity: epic
+  base_supply_ability: 8
+  skills:
+    - {id: courage_to_protect_all, name: Courage to Protect All, text: "Start of Battle: Gain _x_ Block. All weapons deal additional DMG equal to 10% of current Block."}
+    - {id: safety_first, name: Safety First!, text: Increase chance for Armor to appear in the shop by 10%.}
+  skill_links:
+    - {stars: 4, skill: safety_first}
+    - {stars: 8, skill: courage_to_protect_all}
+  exclusive_items:
+    - {item: knights_order_banner, note: You can buy the Knight's Order Banner item in the Shop.}
+  supplies:
+    - {stars: 0, item: anvil}
+    - {stars: 1, item: longsword}
+    - {stars: 3, item: plate_armor}
+    - {stars: 5, item: greatsword}
+    - {stars: 7, item: mithril_armor}
+  skill_effects:
+    courage_to_protect_all:
+      status: complete
+      effects:
+        - {text: "Start of Battle: Gain 0.2x HP Block.", trigger: battle_start, target: player, action: gain_block, value: {ratio: 0.2, scales_with: hp}}
+        - text: All weapons deal additional DMG equal to 10% of current Block.
+          trigger: passive
+          target: player
+          action: add_player_stat
+          player_stat: weapon_dmg_from_block_pct
+          amount: 10
+      notes: "From the user (HP 4.35M): 870.7K = 0.2× max HP. The extra damage uses the Block I have right before each hit, added before the final multiplier."
+    safety_first: {status: shop, effects: []}
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Rebecca
+  verified: false
+
+- id: kai
+  name: Kai
+  class: warrior
+  rarity: epic
+  base_supply_ability: 8
+  skills:
+    - {id: sword_master, name: Sword Master, text: Increase Sword DMG by 6% for each different Sword in the backpack.}
+    - {id: enhancement_master, name: Enhancement Master, text: Increase chance for Smithing Stone and Whetstone to appear in Shop by 10%.}
+  skill_links:
+    - {stars: 4, skill: enhancement_master}
+    - {stars: 8, skill: sword_master}
+  exclusive_items:
+    - {item: heros_longsword, note: "merge: Gladius + Mithril Ingot = Hero's Longsword"}
+  supplies:
+    - {stars: 0, item: whetstone}
+    - {stars: 1, item: gladius}
+    - {stars: 3, item: mithril_ingot}
+    - {stars: 5, item: heros_longsword}
+    - {stars: 7, item: miracle_sword}
+  skill_effects:
+    sword_master:
+      status: complete
+      effects:
+        - text: Increase Sword DMG by 6% for each different Sword in the backpack.
+          trigger: passive
+          target: all_items
+          filter: {tags_any: [sword]}
+          action: add_stat_pct
+          stat: damage_pct
+          amount: 6
+          per_bag: {tags_any: [sword]}
+      notes: Counted once at the start of battle; "different" = different item kinds (two Longswords count once).
+    enhancement_master: {status: shop, effects: []}
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Kai
+  verified: false
+
+- id: spearman
+  name: Spearman
+  class: warrior
+  rarity: rare
+  base_supply_ability: 5
+  skills:
+    - {id: spearmans_pride, name: Spearman's Pride, text: ""}
+    - {id: aesthetic_insight, name: Aesthetic Insight, text: Increase chance for Spear to appear in the Shop by 10%.}
+  skill_links:
+    - {stars: 4, skill: aesthetic_insight}
+    - {stars: 8, skill: spearmans_pride}
+  exclusive_items: []
+  supplies:
+    - {stars: 1, item: spear}
+    - {stars: 3, item: red_dust}
+    - {stars: 5, item: assault_spear}
+    - {stars: 7, item: steel_shield}
+  skill_effects:
+    spearmans_pride:
+      status: complete
+      effects:
+        - text: Spear DMG +30%. For each non-Spear weapon (excluding gear), reduce Spear DMG by 10%.
+          trigger: passive
+          target: all_items
+          filter: {tags_any: [spear]}
+          action: add_stat_pct
+          stat: damage_pct
+          amount: 30
+          per_bag_reduce: {tags_any: [weapon], tags_none: [spear], exclude_gear: true, step: 10, min: 0}
+      notes: From the user (the wiki has no text). Counts each non-Spear weapon item in the bag at the start of battle; 3 or more → +0%.
+    aesthetic_insight: {status: shop, effects: []}
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Spearman
+  verified: false
+
+- id: barbarian
+  name: Barbarian
+  class: warrior
+  rarity: rare
+  base_supply_ability: 5
+  skills:
+    - {id: battle_cry, name: Battle Cry, text: "On Attacked: 25% chance to gain 1 Spike, and Haste +5% for 2.5s."}
+    - {id: thats_mine, name: That's Mine!, text: Increase chance for Big Spike to appear in the Shop by 10%.}
+  skill_links:
+    - {stars: 4, skill: thats_mine}
+    - {stars: 8, skill: battle_cry}
+  exclusive_items: []
+  supplies:
+    - {stars: 1, item: club}
+    - {stars: 3, item: big_spike}
+    - {stars: 5, item: spiked_club}
+    - {stars: 7, item: spiked_shield}
+  skill_effects:
+    battle_cry:
+      status: complete
+      effects:
+        - {text: "On Attacked: 25% chance to gain 1 Spike,", trigger: on_attacked, chance_pct: 25, roll_group: cry, target: player, action: apply_status, status: spike, stacks: 1}
+        - text: and Haste +5% for 2.5s.
+          trigger: on_attacked
+          chance_pct: 25
+          roll_group: cry
+          target: all_items
+          action: add_stat_pct
+          stat: haste_pct
+          amount: 5
+          duration_s: 2.5
+      notes: One 25% roll for both parts. The Haste goes to all my items and stacks.
+    thats_mine: {status: shop, effects: []}
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Barbarian
+  verified: false
+
+- id: fighter
+  name: Fighter
+  class: warrior
+  rarity: rare
+  base_supply_ability: 5
+  skills:
+    - {id: valiant_hero, name: Valiant Hero, text: Braver than others}
+    - {id: artisans_spirit, name: Artisan's Spirit, text: "On Merging Item: 30% chance to gain 1 Coin."}
+  skill_links:
+    - {stars: 4, skill: valiant_hero}
+    - {stars: 8, skill: artisans_spirit}
+  exclusive_items: []
+  supplies:
+    - {stars: 1, item: leather_helmet}
+    - {stars: 3, item: wooden_shield}
+    - {stars: 5, item: warriors_helmet}
+    - {stars: 7, item: golden_pig}
+  skill_effects: {valiant_hero: {status: shop, effects: [], notes: '"Braver than others" — no effect.'}, artisans_spirit: {status: shop, effects: []}}
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Fighter
+  verified: false
+
+- id: trixie
+  name: Trixie
+  class: wizard
+  rarity: legendary
+  base_supply_ability: 10
+  skills:
+    - {id: ill_be_having_that, name: I'll Be Having That, text: "When removing an enemy buff: 30% chance to steal that buff instead."}
+    - {id: consider_this_yours, name: Consider This Yours, text: Reflects 20% of received debuffs.}
+  skill_links:
+    - {stars: 4, skill: ill_be_having_that}
+    - {stars: 8, skill: consider_this_yours}
+  exclusive_items:
+    - {item: transformation_magic_charm, note: "You can buy the Transformation Magic: Charm item in the Shop."}
+    - {item: witchs_mirror, note: "merge: Transformation Magic: Charm + Magic Shield = Witch's Mirror"}
+  supplies:
+    - {stars: 0, item: wizards_hat}
+    - {stars: 0, item: broom}
+    - {stars: 1, item: transformation_magic_charm}
+    - {stars: 3, item: absorbing_necklace}
+    - {stars: 5, item: magic_shield}
+    - {stars: 7, item: witchs_mirror}
+  skins: [Summer]
+  skill_effects:
+    ill_be_having_that:
+      status: complete
+      effects:
+        - text: "When removing an enemy buff: 30% chance to steal that buff instead."
+          trigger: passive
+          target: player
+          action: add_player_stat
+          player_stat: steal_on_remove_pct
+          amount: 30
+      notes: One roll per removal effect; on success I gain everything it removed.
+    consider_this_yours:
+      status: complete
+      effects:
+        - {text: Reflects 20% of received debuffs., trigger: passive, target: player, action: add_player_stat, player_stat: debuff_reflect_pct, amount: 20}
+      notes: I still get the full debuff; 20% of the stacks (fractions alternate) also go onto the enemy.
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Trixie
+  verified: false
+
+- id: cecilia
+  name: Cecilia
+  class: wizard
+  rarity: legendary
+  base_supply_ability: 10
+  skills:
+    - {id: instant_casting, name: Instant Casting, text: "Start of Game: Enhance 1 random slot(s) in the backpack. Every 4s: Activate spells in enhanced slots."}
+    - {id: backmasking, name: Backmasking, text: "Whenever 20 enemy Burn or Freeze is removed: Randomly activate a Spell in the backpack."}
+  skill_links:
+    - {stars: 4, skill: instant_casting}
+    - {stars: 8, skill: backmasking}
+  exclusive_items:
+    - {item: hourglass, note: You can buy the Hourglass item in the Shop.}
+    - {item: millennium_dragon, note: "merge: Dragon + Hourglass = Millennium Dragon"}
+  supplies:
+    - {stars: 0, item: intermediate_magic_magic_missile}
+    - {stars: 0, item: dragon}
+    - {stars: 1, item: hourglass}
+    - {stars: 3, item: archmages_staff}
+    - {stars: 5, item: staff_of_the_sage}
+    - {stars: 7, item: millennium_dragon}
+  skill_effects:
+    instant_casting:
+      status: complete
+      effects:
+        - text: "Every 4s: Activate spells in enhanced slots."
+          trigger: timer
+          interval_s: 4
+          target: all_items
+          filter: {tags_any: [spell], enhanced: true}
+          action: activate_item
+      notes: The enhanced slot is random each run, so mark it on the layout (Enhanced cells).
+      enhanced_slots: {count: 1, color: "#22c55e", label: spells here activate every 4s}
+    backmasking:
+      status: complete
+      effects:
+        - text: "Whenever 20 enemy Burn or Freeze is removed: Randomly activate a Spell in the backpack."
+          trigger: on_status_removed
+          params: {statuses: [burn, freeze]}
+          every: 20
+          target: all_items
+          filter: {tags_any: [spell]}
+          action: activate_item
+          pick_random: 1
+      notes: Counts Burn and Freeze taken off the enemy by effects (cleanse, remove, steal), not stacks running out.
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Cecilia
+  verified: false
+
+- id: spark
+  name: Spark
+  class: wizard
+  rarity: epic
+  base_supply_ability: 8
+  skills:
+    - {id: electrostatic_force, name: Electrostatic Force, text: Stun's chance increases by 15%.}
+    - {id: spark_body, name: Spark Body, text: "Increase chance for Intermediate Magic: Spark to appear in the Shop by 10%."}
+  skill_links:
+    - {stars: 4, skill: spark_body}
+    - {stars: 8, skill: electrostatic_force}
+  exclusive_items:
+    - {item: lightning_rod_wand, note: "merge: Wyrdwood Staff + Combat Hammer = Lightning Rod Wand"}
+    - {item: astrape, note: "merge: Lightning Rod Wand + Spear = Astrape"}
+  supplies:
+    - {stars: 0, item: combat_hammer}
+    - {stars: 1, item: intermediate_magic_spark}
+    - {stars: 3, item: lightning_rod_wand}
+    - {stars: 5, item: advanced_magic_thunderstrike}
+    - {stars: 7, item: astrape}
+  skill_effects:
+    electrostatic_force:
+      status: complete
+      effects:
+        - {text: Stun's chance increases by 15%., trigger: passive, target: player, action: add_player_stat, player_stat: stun_rate, amount: 15}
+      notes: +15 points on every chance to Stun (40% → 55%). Stuns without a chance are unchanged.
+    spark_body: {status: shop, effects: []}
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Spark
+  verified: false
+
+- id: meow_mage
+  name: Meow Mage
+  class: wizard
+  rarity: epic
+  base_supply_ability: 8
+  skills:
+    - {id: meow, name: Meow!, text: "On Spell Hit: Increase Total ATK during the current battle by 0.1%."}
+    - {id: track_scent, name: Track Scent, text: "Increase chance for Beginner Magic: Energy Bolt to appear in the Shop by 10%."}
+  skill_links:
+    - {stars: 4, skill: track_scent}
+    - {stars: 8, skill: meow}
+  exclusive_items:
+    - {item: meow_missile, note: "merge: Intermediate Magic: Magic Missile + Magic Stone = Meow Missile"}
+  supplies:
+    - {stars: 0, item: wyrdwood_staff}
+    - {stars: 1, item: transformation_magic_drizzle}
+    - {stars: 3, item: magic_stone}
+    - {stars: 5, item: meow_missile}
+    - {stars: 7, item: transformation_magic_heavy_rain}
+  skill_effects:
+    meow:
+      status: complete
+      effects:
+        - text: "On Spell Hit: Increase Total ATK during the current battle by 0.1%."
+          trigger: on_hit
+          watch: any
+          watch_filter: {tags_any: [spell]}
+          target: player
+          action: add_atk_pct
+          amount: 0.1
+    track_scent: {status: shop, effects: []}
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Feline_Mage
+  verified: false
+
+- id: fire_mage
+  name: Fire Mage
+  class: wizard
+  rarity: rare
+  base_supply_ability: 5
+  skills:
+    - {id: short_term_memory, name: Short-Term Memory, text: Increase all DMG inversely proportional to the number of Weapon Spells in your backpack by 30%.}
+    - {id: affinity, name: Affinity, text: "Increase chance for Beginner Magic: Fire Bolt to appear in the Shop by 10%."}
+  skill_links:
+    - {stars: 4, skill: affinity}
+    - {stars: 8, skill: short_term_memory}
+  exclusive_items: []
+  supplies:
+    - {stars: 1, item: beginner_magic_fire_bolt}
+    - {stars: 3, item: intermediate_magic_fireball}
+    - {stars: 5, item: intermediate_magic_ignite}
+    - {stars: 7, item: advanced_magic_meteor}
+  skill_effects:
+    short_term_memory:
+      status: complete
+      effects:
+        - text: Increase all DMG inversely proportional to the number of Weapon Spells in your backpack by 30%.
+          trigger: passive
+          target: player
+          action: add_player_stat
+          player_stat: all_dmg_increase
+          amount: 30
+          per_bag: {tags_all: [weapon, spell], inverse: true}
+      notes: Guess — 30% ÷ the number of different Weapon Spells (none or one → 30%, two → 15%, three → 10%). Check in game.
+    affinity: {status: shop, effects: []}
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Fire_Mage
+  verified: false
+
+- id: ice_mage
+  name: Ice Mage
+  class: wizard
+  rarity: rare
+  base_supply_ability: 5
+  skills:
+    - id: snowball_fight
+      name: Snowball Fight
+      text: Increase the duration of Burn and Freeze you inflict by 1s, and your item(s) will have a 50% chance to no longer consume Freeze.
+    - {id: do_you_want_to_build_a_snowball, name: Do You Want to Build a Snowball?, text: "Increases chance to find Snow Powder and Beginner Magic: Ice Beat in the Shop by 10%."}
+  skill_links:
+    - {stars: 4, skill: do_you_want_to_build_a_snowball}
+    - {stars: 8, skill: snowball_fight}
+  exclusive_items: []
+  supplies:
+    - {stars: 1, item: beginner_magic_ice_beat}
+    - {stars: 3, item: intermediate_magic_icicle_summon}
+    - {stars: 5, item: transformation_magic_instant_freeze}
+    - {stars: 7, item: advanced_magic_crystal_fall}
+  skill_effects:
+    snowball_fight:
+      status: complete
+      effects:
+        - {text: Increase the duration of Burn, trigger: passive, target: player, action: add_player_stat, player_stat: burn_duration_bonus_s, amount: 1}
+        - {text: "and Freeze you inflict by 1s,", trigger: passive, target: player, action: add_player_stat, player_stat: freeze_duration_bonus_s, amount: 1}
+        - text: and your item(s) will have a 50% chance to no longer consume Freeze.
+          trigger: passive
+          target: player
+          action: add_player_stat
+          player_stat: freeze_keep_on_consume_pct
+          amount: 50
+      notes: "From the user: timed Burn / Freeze get +1s. Items that consume Freeze (Transformation Magic: Instant Freeze …) have a 50% chance to keep it; those items still need their effects entered (remove_status with consume: true)."
+    do_you_want_to_build_a_snowball: {status: shop, effects: []}
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Ice_Mage
+  verified: false
+
+- id: mage
+  name: Mage
+  class: wizard
+  rarity: rare
+  base_supply_ability: 5
+  skills:
+    - {id: magical_aptitude, name: Magical Aptitude, text: Increase all DMG by 5%.}
+    - {id: master_negotiator, name: Master Negotiator, text: 15% chance for 1 additional discounted item(s) to appear in the Shop.}
+  skill_links:
+    - {stars: 4, skill: magical_aptitude}
+    - {stars: 8, skill: master_negotiator}
+  exclusive_items: []
+  supplies:
+    - {stars: 1, item: wyrd_branch}
+    - {stars: 3, item: torch}
+    - {stars: 5, item: large_hp_potion}
+    - {stars: 7, item: reroll_sale_card}
+  skill_effects:
+    magical_aptitude: {status: complete, effects: [{text: Increase all DMG by 5%., trigger: passive, target: player, action: add_player_stat, player_stat: all_dmg_increase, amount: 5}]}
+    master_negotiator: {status: shop, effects: []}
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Mage
+  verified: false

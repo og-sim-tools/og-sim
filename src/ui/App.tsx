@@ -1091,7 +1091,7 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
       // Item editor edits (exported from the hosted site): kept in the browser; a local project keeps them in data/.
       for (const e of imp.edits) {
         if (store.writeEdits) await store.writeEdits(e.category, e.text);
-        else notes.push({ level: 'warning', message: `Item edits for ${e.category} weren't applied: in the local project they live in data/${e.category}/manual/ (copy them there to use them).` });
+        else notes.push({ level: 'warning', message: `Item edits for ${e.category} weren't applied: in the local project, enter them in data/${e.category}.yaml (or with the item editor) to use them.` });
       }
       if (imp.edits.length && store.writeEdits) await refresh();
       setBuilds(await store.listBuilds());
@@ -1904,7 +1904,7 @@ export function App({ store: givenStore }: { store?: SaveStore } = {}) {
             </div>
             <span className="small muted">
               {editorMode === 'game'
-                ? `Fix or add game data: shapes and item dots, stats, effects. Your changes override the wiki field by field${store.kind === 'files' ? ' and are saved in data/<kind>/manual/user_edits.yaml' : ' and are kept in this browser (they go into your account export)'}.`
+                ? `Fix or add game data: shapes and item dots, stats, effects. ${store.kind === 'files' ? 'Your changes are saved into the database (data/<kind>.yaml); where they differ from the wiki, the wiki value is kept under corrections' : 'Your changes override the game data field by field and are kept in this browser (they go into your account export)'}.`
                 : 'Items only enemies use (a monster\'s attacks and abilities), to give a typed-in enemy a bag.'}
             </span>
           </div>

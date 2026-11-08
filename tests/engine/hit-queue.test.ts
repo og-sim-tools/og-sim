@@ -16,7 +16,7 @@ import { ENEMY, combatData, combatLoadout } from '../combat-fixture';
 const P = 'value: 1, source: manual, verified: true';
 const data = combatData([
   {
-    path: 'items/manual/queue.yaml',
+    path: 'items/queue.yaml',
     text: `
 - { id: lstaff, name: Left Staff, rarity: common, tags: [weapon, staff], footprint: "o#", stats: { damage: { ratio: 0.5, scales_with: atk }, cooldown: 2, accuracy: 1000 }, effects: [{ trigger: on_attack, uses_dots: true, target: items_under_dots, filter: { tags_any: [spell] }, action: activate_item }], ${P} }
 - { id: tri_spell, name: Tri Spell, rarity: common, tags: [weapon, spell], footprint: "#", stats: { damage: { ratio: 1, scales_with: atk }, accuracy: 1000, hits: 3 }, ${P} }

@@ -33,7 +33,7 @@ describe('sprites', () => {
 
   it('draws a placed item with a sprite over its cells', () => {
     const data = combatData([
-      { path: 'items/manual/sprite.yaml', text: '- { id: blade, image: items/spear.png, image_size: { w: 11, h: 47 }, source: manual, verified: true }' },
+      { path: 'edits/items.yaml', text: '- { id: blade, image: items/spear.png, image_size: { w: 11, h: 47 }, source: manual, verified: true }' },
     ]);
     const { container } = render(
       <BagGrid

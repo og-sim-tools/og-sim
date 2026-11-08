@@ -1,0 +1,32 @@
+# Enemies: the simulator's database, one complete entry each (like a wiki page).
+# In-game values beat the wiki. Where an entry differs from the wiki, `corrections` keeps the wiki value
+# (field, wiki, source, verified). Provenance per entry: source (wiki / observed / manual), url, verified, notes.
+# Edit here directly, or with the item editor (it writes here too).
+
+- id: practice_target
+  name: Practice Target (made up)
+  hp: 50M
+  atk: 500K
+  block: 0
+  damage_reduction: 0
+  attacks:
+    - {name: Slam, damage: 600K, cooldown: 2, accuracy: 85}
+  source: manual
+  verified: false
+  notes: A made-up enemy for trying the simulator. Not from the game.
+
+- id: raid_boss
+  name: Raid Boss (placeholder)
+  hp: 999999999999B
+  atk: 0
+  block: 0
+  attacks:
+    - {name: Dragon's Swipe, pct_max_hp: 0.3, cooldown: 1, accuracy: 100}
+  berserk: false
+  boss: true
+  immunities: [execute, hp_based]
+  raid: true
+  image_item: dragon
+  source: manual
+  verified: false
+  notes: "Placeholder raid boss (user, 2026-10-20: a fixed enemy, weak hits based on % of my HP, no more than 5% of my HP over a battle, and at 15 s I am killed whatever protects me). The real boss, its picture and its attacks are not entered yet. Berserk is off: not known for raids."

@@ -141,11 +141,11 @@ describe('start-of-battle order', () => {
 describe('conditional blessings (Darkan, Cecilia)', () => {
   const data = combatData([
     {
-      path: 'heroes/manual/t.yaml',
+      path: 'heroes/t.yaml',
       text: '- { id: dark, name: Dark, class: warrior, rarity: legendary, base_supply_ability: 10, skills: [{ id: s1, name: S1, text: "" }], supplies: [], source: manual, verified: true }\n',
     },
     {
-      path: 'blessings/manual/t.yaml',
+      path: 'blessings/t.yaml',
       text:
         '- { id: low_hp_dmg, name: Low HP DMG, kind: unique, hero: dark, unit: pct, values: { epic: { value: 25 } }, combat_bonus: { stat: all_dmg_increase, when: { hp_below_pct: 50 } }, source: manual, verified: true }\n' +
         '- { id: high_hp_dmg, name: High HP DMG, kind: unique, hero: dark, unit: pct, values: { epic: { value: 40 } }, combat_bonus: { stat: all_dmg_increase, when: { hp_above_pct: 80 } }, source: manual, verified: true }\n',

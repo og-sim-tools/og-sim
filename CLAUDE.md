@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Overgeared Hero backpack simulator. The full design is in `SPEC.md` — read it before starting any task. Game data lives in `docs/wiki-data/` (read its README, corrections.md, and REVIEW.md before touching data; corrections.md overrides the wiki).
+Overgeared Hero backpack simulator. The full design is in `SPEC.md` — read it before starting any task. Game data lives in one database per category, `data/<category>.yaml` (items, gear, heroes, blessings, pets, auras, skins, statuses, enemies, enemy_traits): complete entries with the wiki's data and my corrections merged (corrections win). `docs/wiki-data/` is the original wiki transcription, kept as reference (read its README, corrections.md and REVIEW.md before touching data).
 
 ## Rules
 - Work one phase from SPEC.md §9 at a time. Stop after each phase and summarize; don't start the next until I say so.
@@ -19,6 +19,7 @@ The game wiki may be outdated or badly translated, so I need to monitor everythi
 - Watch for misspellings in names and references (e.g. `Spell_Theif`). Never fix them automatically: show me the misspelled name with your best guess and let me confirm.
 - Where wiki numbers disagree with my in-game observations, keep my values and tell me about the conflict.
 - Mark every entry that came from the web with `source: wiki`, the URL, and `verified: false`.
+- When my in-game value replaces a wiki value, change it in the entry and add `{field, wiki: <old value>, source, verified}` to its `corrections` list, so the conflict stays visible.
 - Append each fetch to `data/SOURCES.md`: date, URL, what was extracted, and which data files changed.
 
 ## Pushing

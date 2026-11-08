@@ -94,16 +94,16 @@ describe('diagnosis and targeted swaps', () => {
 
 describe('skin quests and alternatives in the optimizer', () => {
   const data = combatData([
-    { path: 'heroes/manual/t.yaml', text: '- { id: wiz, name: Wiz, class: wizard, rarity: legendary, base_supply_ability: 10, source: manual, verified: true }' },
+    { path: 'heroes/t.yaml', text: '- { id: wiz, name: Wiz, class: wizard, rarity: legendary, base_supply_ability: 10, source: manual, verified: true }' },
     {
-      path: 'items/manual/t.yaml',
+      path: 'items/t.yaml',
       text: `
 - { id: critter, name: Critter, rarity: common, tags: [creature, weapon], footprint: "#", stats: { damage: { ratio: 0.1, scales_with: atk }, cooldown: 3, accuracy: 1000 }, value: 2, source: manual, verified: true }
 - { id: zap, name: Zap, rarity: common, tags: [weapon, spell], footprint: "#", stats: { damage: { ratio: 4, scales_with: atk } }, value: 2, source: manual, verified: true }
 `,
     },
     {
-      path: 'skins/manual/t.yaml',
+      path: 'skins/t.yaml',
       text: `
 - { id: pets, name: Pets, hero: wiz, skill: { name: Pets, quest: q, reward: r }, quest_check: { type: bag_value, tags_any: [creature], min: 4 }, available: { all: true }, status: complete,
     effects: [{ trigger: battle_start, target: player, action: apply_status, status: dodge, stacks: 1 }], source: manual, verified: true }

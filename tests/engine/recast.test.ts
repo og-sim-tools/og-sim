@@ -17,7 +17,7 @@ const hat = (id: string, pct: number) =>
   `- { id: ${id}, name: Hat ${pct}, rarity: common, tags: [armor], footprint: "o / #", effects: [{ trigger: on_activation, watch: dots, watch_filter: { tags_any: [spell] }, chance_pct: ${pct}, target: event_item, action: activate_item }], ${P} }`;
 const data = combatData([
   {
-    path: 'items/manual/recast.yaml',
+    path: 'items/recast.yaml',
     text: `
 - { id: tspell, name: Tool Spell, rarity: common, tags: [tool, spell], footprint: "###", stats: { cooldown: 1 }, effects: [{ trigger: on_activation, target: player, action: gain_block, value: { ratio: 0.01, scales_with: hp } }], ${P} }
 - { id: wspell, name: Weapon Spell, rarity: common, tags: [weapon, spell], footprint: "###", stats: { damage: { ratio: 1, scales_with: atk }, cooldown: 1, accuracy: 1000 }, ${P} }

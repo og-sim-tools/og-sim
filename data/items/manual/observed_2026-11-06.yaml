@@ -1,6 +1,0 @@
-# Seen in game (user, 2026-11-06). In-game values beat the wiki.
-- id: flame_staff
-  stats: { cooldown: 2.6 }
-  source: observed
-  verified: true
-  notes: 2.6s base cooldown in game (wiki 2.1).

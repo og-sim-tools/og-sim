@@ -35,7 +35,7 @@ describe('batch 4 items', () => {
 describe('evade vs status damage and skills', () => {
   const data = combatData([
     {
-      path: 'items/manual/skillburn.yaml',
+      path: 'items/skillburn.yaml',
       text: `- { id: burn_totem, name: Burn Totem, rarity: rare, tags: [tool], footprint: "#", value: 0, skill: { text: Flare, damage: { ratio: 0.01, scales_with: atk }, interval_s: 1, accuracy: 1000 }, effects: [{ trigger: on_skill_hit, target: enemy, action: trigger_status, status: burn, count: 2 }], source: manual, verified: true }`,
     },
   ]);

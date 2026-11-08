@@ -1,4 +1,4 @@
-/** The real data/ folder: loads cleanly, corrections are applied, generated files are up to date. */
+/** The real data/ folder: one database per category, loads cleanly, corrections are applied. */
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -10,7 +10,6 @@ import { readAccount, readBuild } from '../../src/engine/saves';
 import { aggregateStats } from '../../src/engine/stats';
 import { supplySummary, validateLoadout } from '../../src/engine/validate';
 import { loadGameDataFromDir, readDataDir } from '../../src/engine/loader-node';
-import { buildWikiYaml } from '../../tools/wiki-to-yaml/build';
 
 const ROOT = join(__dirname, '..', '..');
 const res = loadGameDataFromDir(join(ROOT, 'data'));
@@ -37,8 +36,7 @@ describe('real game data', () => {
   it('marks every wiki entry with source, URL and verified: false', () => {
     for (const map of [d.items, d.gear, d.heroes, d.blessings, d.pets, d.auras, d.statuses, d.enemy_traits]) {
       for (const e of map.values() as Iterable<{ source: string; url?: string; verified: boolean; meta: { origins: string[] } }>) {
-        if (e.meta.origins[0]!.includes('/wiki/')) {
-          expect(e.source).toBe('wiki');
+        if (e.source === 'wiki') {
           expect(e.url).toMatch(/^https:\/\/overgearedhero\.fandom\.com\/wiki\//);
           expect(e.verified).toBe(false);
         }
@@ -52,8 +50,8 @@ describe('real game data', () => {
     expect(fang.dots).toHaveLength(6);
     expect(fang.effect_text).toMatch(/Poison Inflict \+15%/);
     expect(fang.stats.damage).toEqual({ ratio: 0.8, scales_with: 'atk' }); // still the wiki's
-    const fromCorrections = fang.meta.overrides.filter((o) => o.file === 'items/manual/corrections.yaml');
-    expect(fromCorrections.map((o) => o.field)).toEqual(['footprint', 'effect_text']);
+    const fromCorrections = fang.meta.overrides; // its `corrections` in items.yaml
+    expect(fromCorrections.map((o) => o.field)).toEqual(['footprint', 'effect_text', 'value', 'value_unknown']);
     expect(fromCorrections.every((o) => o.source === 'observed' && o.verified)).toBe(true);
   });
 
@@ -173,12 +171,18 @@ describe('real game data', () => {
     }
   });
 
-  it('generated wiki YAML is in sync with docs/wiki-data (run `npm run convert-wiki` if this fails)', () => {
-    const built = buildWikiYaml((name) => readFileSync(join(ROOT, 'docs', 'wiki-data', name), 'utf8'));
-    const onDisk = new Map(readDataDir(join(ROOT, 'data')).filter((f) => f.path.includes('/wiki/')).map((f) => [f.path, f.text]));
-    expect([...onDisk.keys()].sort()).toEqual(built.files.map((f) => f.path).sort());
-    // Line endings aside (a Windows checkout may turn them into CRLF).
-    const lf = (s: string | undefined) => s?.replace(/\r\n/g, '\n');
-    for (const f of built.files) expect(lf(onDisk.get(f.path)), f.path).toBe(lf(f.content));
+  it('is one database file per category (no wiki / manual layers)', () => {
+    const files = readDataDir(join(ROOT, 'data')).map((f) => f.path);
+    expect(files.filter((f) => f.includes('/'))).toEqual([]);
+    expect(files.sort()).toEqual(
+      ['auras', 'blessings', 'config', 'enemies', 'enemy_traits', 'gear', 'heroes', 'items', 'pets', 'skins', 'stats', 'statuses', 'training'].map((n) => `${n}.yaml`),
+    );
+  });
+
+  it('keeps the wiki value of every corrected field (Flame Staff: 2.6s in game, wiki 2.1)', () => {
+    expect(d.items.get('flame_staff')!.stats.cooldown).toBe(2.6);
+    expect(res.overrides.find((o) => o.id === 'flame_staff' && o.field === 'stats.cooldown')).toMatchObject({ from: 2.1, to: 2.6, source: 'observed', verified: true });
+    // Every record points at a real field and differs from the wiki.
+    for (const o of res.overrides) expect(JSON.stringify(o.to), `${o.id} ${o.field}`).not.toBe(JSON.stringify(o.from));
   });
 });

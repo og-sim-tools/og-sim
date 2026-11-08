@@ -8,7 +8,7 @@ import { ENEMY, combatData, combatLoadout, combatProfile } from '../combat-fixtu
 const P = 'value: 1, source: manual, verified: true';
 const data = combatData([
   {
-    path: 'items/manual/burncrit.yaml',
+    path: 'items/burncrit.yaml',
     text: `
 - { id: crit_ring, name: Crit Ring, rarity: common, tags: [tool], footprint: "#", effects: [{ trigger: on_status_damage, params: { status: burn }, target: player, action: add_player_stat, player_stat: burn_crit_rate, amount: 3 }], ${P} }
 - { id: twice, name: Twice, rarity: common, tags: [tool], footprint: "#", effects: [{ trigger: passive, target: player, action: add_player_stat, player_stat: burn_crit_repeat, amount: 1 }], ${P} }
@@ -98,7 +98,7 @@ describe('build setup', () => {
 describe('no Crit Rate cap (user, 2026-10-22)', () => {
   const crit = combatData([
     {
-      path: 'items/manual/critcap.yaml',
+      path: 'items/critcap.yaml',
       text: `
 - { id: c100, name: C100, rarity: common, tags: [weapon], footprint: "#", stats: { damage: { ratio: 1, scales_with: atk }, cooldown: 1, accuracy: 1000, crit_chance: 100 }, effects: [{ trigger: passive, target: self_item, action: add_stat_pct, stat: crit_damage_pct, amount: 0, amount_from: { target_crit: true, factor: 1 } }], ${P} }
 - { id: c150, name: C150, rarity: common, tags: [weapon], footprint: "#", stats: { damage: { ratio: 1, scales_with: atk }, cooldown: 1, accuracy: 1000, crit_chance: 150 }, effects: [{ trigger: passive, target: self_item, action: add_stat_pct, stat: crit_damage_pct, amount: 0, amount_from: { target_crit: true, factor: 1 } }], ${P} }

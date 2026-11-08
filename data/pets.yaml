@@ -1,0 +1,1347 @@
+# Pets: the simulator's database, one complete entry each (like a wiki page).
+# In-game values beat the wiki. Where an entry differs from the wiki, `corrections` keeps the wiki value
+# (field, wiki, source, verified). Provenance per entry: source (wiki / observed / manual), url, verified, notes.
+# Edit here directly, or with the item editor (it writes here too).
+
+- id: geezer
+  name: Geezer
+  rarity: mythic
+  activation_cost: 2
+  skill: {name: Geezer's Dream, text: Immediately opens a Special Shop. You can purchase 1 of the 3 merged items displayed at a discounted price.}
+  star_effects:
+    - {stars: 1, text: "[Geezer's Dream] opens a Special Shop where 1 item is free."}
+    - {stars: 2, text: "[Geezer's Dream] opens a Special Shop that displays 1 more item(s)."}
+    - {stars: 4, text: "[Geezer's Dream] lets you reroll the Special Shop for free up to 3 time(s)."}
+    - {stars: 5, text: "[Geezer's Dream]'s activation cost is decreased by 1.", activation_cost_delta: -1}
+  role: economy
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Pets
+  verified: false
+  notes: "Seen at 0★. Ownership: [All] Total HP +4%."
+  corrections:
+    - field: star_effects
+      wiki:
+        - {stars: 1, text: Opens a Special Shop where 1 item is free.}
+        - {stars: 2, text: Opens a Special Shop that displays 1 more item.}
+        - {stars: 4, text: Let's you reroll the Special Shop for free up to 3 times.}
+        - {stars: 5, text: Activation Cost is decreased by 1., activation_cost_delta: -1}
+      source: observed
+      verified: true
+
+- id: mimic
+  name: Mimic
+  rarity: mythic
+  activation_cost: 1
+  skill: {name: Mimic!!!, text: Immediately merge all mergeable items and gain 1 Coin for each successful merge.}
+  star_effects:
+    - {stars: 1, text: "[Mimic!!!] grants Coin for each item merged by this skill."}
+    - {stars: 2, text: "[Mimic!!!] activated in a round has a 50% chance to be reusable during that round."}
+    - {stars: 4, text: "[Mimic!!!]'s Reuse Rate increases by 50%."}
+    - {stars: 5, text: "[Mimic!!!] grants 1 Coin each time an item is merged by it."}
+  role: economy
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Pets
+  verified: false
+  notes: "Seen at 1★, Lv 42. Ownership: [All] Total ATK +8% (1★). Cost 1 as shown in game (wiki said 2)."
+  corrections:
+    - {field: activation_cost, wiki: 2, source: observed, verified: true}
+    - {field: skill.text, wiki: Immediately merge all mergeable items., source: observed, verified: true}
+    - field: star_effects
+      wiki:
+        - {stars: 1, text: Grants Coin for each item merged by this skill.}
+        - {stars: 2, text: Activated in a round has a 50% chance to be reusable during that round.}
+        - {stars: 4, text: Reuse Rate increases by 50%.}
+        - {stars: 5, text: Grants 1 Coin each time an item is merged by it.}
+      source: observed
+      verified: true
+
+- id: seiren
+  name: Seiren
+  rarity: mythic
+  activation_cost: 2
+  skill: {name: Healing Song, text: "Start of Battle: gain [Waterdrop Cushion] equal to 100% of your max HP."}
+  star_effects:
+    - {stars: 1, text: "[Healing Song] At Start of Battle, gain extra [Waterdrop Cushion] equal to 100% of your max HP."}
+    - {stars: 2, text: "[Healing Song] On Excess Heal, gain [Waterdrop Cushion] equal to 20% of the healed amount."}
+    - {stars: 3, text: "[Healing Song] When entering Berserk, gain [Waterdrop Cushion] equal to 200% of your max HP."}
+    - {stars: 4, text: "[Healing Song] On Excess Heal, gain extra [Waterdrop Cushion] equal to 20% of the healed amount."}
+    - {stars: 5, text: "[Healing Song] Start of Battle and on entering Berserk, gain extra [Waterdrop Cushion] equal to 100% of your max HP."}
+    - {stars: 6, text: "[Healing Song] On Excess Heal, gain extra [Waterdrop Cushion] equal to 20% of the healed amount."}
+  role: battle
+  effects:
+    - text: "Start of Battle: gain Waterdrop Cushion equal to 100% of max HP."
+      trigger: battle_start
+      target: player
+      action: apply_status
+      status: waterdrop_cushion
+      stacks: 100
+      max_stars: 0
+    - text: "Start of Battle: Waterdrop Cushion 200% of max HP. (1★)"
+      trigger: battle_start
+      target: player
+      action: apply_status
+      status: waterdrop_cushion
+      stacks: 200
+      min_stars: 1
+      max_stars: 4
+    - text: "Start of Battle: Waterdrop Cushion 300% of max HP. (5★)"
+      trigger: battle_start
+      target: player
+      action: apply_status
+      status: waterdrop_cushion
+      stacks: 300
+      min_stars: 5
+    - text: "On Excess Heal: Waterdrop Cushion equal to 20% of the healed amount. (2★)"
+      trigger: on_heal
+      watch: any
+      min_event_amount: 0
+      target: player
+      action: apply_status
+      status: waterdrop_cushion
+      value_as_hp_pct: true
+      event_pct: 20
+      min_stars: 2
+      max_stars: 3
+    - text: "On Excess Heal: 40% of the healed amount. (4★)"
+      trigger: on_heal
+      watch: any
+      min_event_amount: 0
+      target: player
+      action: apply_status
+      status: waterdrop_cushion
+      value_as_hp_pct: true
+      event_pct: 40
+      min_stars: 4
+      max_stars: 5
+    - text: "On Excess Heal: 60% of the healed amount. (6★)"
+      trigger: on_heal
+      watch: any
+      min_event_amount: 0
+      target: player
+      action: apply_status
+      status: waterdrop_cushion
+      value_as_hp_pct: true
+      event_pct: 60
+      min_stars: 6
+    - text: "When entering Berserk: Waterdrop Cushion equal to 200% of max HP. (3★)"
+      trigger: on_berserk
+      target: player
+      action: apply_status
+      status: waterdrop_cushion
+      stacks: 200
+      min_stars: 3
+      max_stars: 4
+    - {text: "When entering Berserk: 300% of max HP. (5★)", trigger: on_berserk, target: player, action: apply_status, status: waterdrop_cushion, stacks: 300, min_stars: 5}
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Pets
+  verified: false
+  notes: "Seen at 0★. Base is 100% max HP (wiki said 200%). Six star lines (1–6★); wiki had 4,4,5. Ownership: [All] Total HP +4%."
+  corrections:
+    - {field: skill.text, wiki: "Start of Battle: gain Waterdrop Cushion equal to 200% of your max HP.", source: observed, verified: true}
+    - field: star_effects
+      wiki:
+        - {stars: 1, text: "At Start of Batte, gain extra Waterdrop Cushion equal to 100% of your max HP."}
+        - {stars: 2, text: "On Excess Heal, gain Waterdrop Cushion equal to 20% of the healed amount."}
+        - {stars: 3, text: "When entering Berserk, gain Waterdrop Cushion equal to 200% of your max HP."}
+        - {stars: 4, text: "On Excess Heal, gain extra Waterdrop Cushion equal to 20% of the healed amount."}
+        - {stars: 4, text: "Start of Battle and on entering Berserk, gain extra Waterdrop Cushion equal to 100% of your max HP."}
+        - {stars: 5, text: "On Excess Heal, gain extra Waterdrop Cushion equal to 20% of the healed amount."}
+      source: observed
+      verified: true
+
+- id: red_dragon
+  name: Red Dragon
+  rarity: legendary
+  activation_cost: 3
+  skill: {name: Dragon Fire, text: "Start of Battle: Deal DMG equal to 30% of the enemy's Max HP."}
+  star_effects:
+    - {stars: 1, text: "[Dragon Fire]'s activation cost is decreased by 1.", activation_cost_delta: -1}
+    - {stars: 2, text: "[Dragon Fire] increases its DMG dealt by an additional 10% of the enemy's Max HP."}
+    - {stars: 4, text: "[Dragon Fire] inflicts an additional 10 Burn."}
+    - {stars: 5, text: "[Dragon Fire] increases its DMG dealt by an additional 10% of the enemy's Max HP."}
+  role: battle
+  effects:
+    - text: "Start of Battle: Deal DMG equal to 30% of the enemy's Max HP."
+      trigger: battle_start
+      target: enemy
+      action: deal_damage
+      value: {ratio: 0.3, scales_with: enemy_hp}
+      max_stars: 1
+    - text: "Start of Battle: Deal DMG equal to 40% of the enemy's Max HP. (2★)"
+      trigger: battle_start
+      target: enemy
+      action: deal_damage
+      value: {ratio: 0.4, scales_with: enemy_hp}
+      min_stars: 2
+      max_stars: 4
+    - text: "Start of Battle: Deal DMG equal to 50% of the enemy's Max HP. (5★)"
+      trigger: battle_start
+      target: enemy
+      action: deal_damage
+      value: {ratio: 0.5, scales_with: enemy_hp}
+      min_stars: 5
+    - {text: "[Dragon Fire] inflicts an additional 10 Burn.", trigger: battle_start, target: enemy, action: apply_status, status: burn, stacks: 10, min_stars: 4}
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Pets
+  verified: false
+  notes: "Seen at 2★, Lv 42, showing 2 gems (3 − 1★). Screen shows 40% with the 2★ line included (user: shown values include unlocked stars), so base is 30%. Damage is fixed (effect type: no enemy damage reduction), with All DMG and final DMG bonuses. Ownership: [All] Total ATK +9% (2★)."
+  corrections:
+    - {field: skill.text, wiki: "Start of Battle: Deal DMG equal to 40% of the enemy's Max HP.", source: observed, verified: true}
+    - field: star_effects
+      wiki:
+        - {stars: 1, text: Activation cost is decreased by 1., activation_cost_delta: -1}
+        - {stars: 2, text: Increases its DMG dealt by an additional 10% of the enemy's Max HP.}
+        - {stars: 4, text: Inflicts an additional 10 Burn.}
+        - {stars: 5, text: Increases its DMG dealt by an additional 10% of enemy's Max HP.}
+      source: observed
+      verified: true
+
+- id: white_wolf_captain
+  name: White Wolf Captain
+  rarity: legendary
+  activation_cost: 3
+  skill: {name: Captain's Shout, text: "Start of Battle: For 10s, all weapons gain 30% Haste. The Wolf Captain deals 0.5x ATK DMG 3 time(s) every 3s."}
+  star_effects:
+    - {stars: 1, text: "[Captain's Shout]'s activation cost is decreased by 1.", activation_cost_delta: -1}
+    - {stars: 2, text: "[Captain's Shout]'s Haste increases by an additional 15%."}
+    - {stars: 4, text: "[Captain's Shout]'s Haste increases by an additional 15%."}
+    - {stars: 5, text: "[Captain's Shout]'s duration increases by 5s."}
+  role: battle
+  effects:
+    - text: "Start of Battle: for 10s, all weapons gain 30% Haste."
+      trigger: battle_start
+      target: all_items
+      filter: {tags_any: [weapon]}
+      action: add_stat_pct
+      stat: haste_pct
+      amount: 30
+      duration_s: 10
+      max_stars: 1
+    - text: … 45% Haste. (2★)
+      trigger: battle_start
+      target: all_items
+      filter: {tags_any: [weapon]}
+      action: add_stat_pct
+      stat: haste_pct
+      amount: 45
+      duration_s: 10
+      min_stars: 2
+      max_stars: 3
+    - text: … 60% Haste. (4★)
+      trigger: battle_start
+      target: all_items
+      filter: {tags_any: [weapon]}
+      action: add_stat_pct
+      stat: haste_pct
+      amount: 60
+      duration_s: 10
+      min_stars: 4
+      max_stars: 4
+    - text: … 60% Haste for 15s. (5★)
+      trigger: battle_start
+      target: all_items
+      filter: {tags_any: [weapon]}
+      action: add_stat_pct
+      stat: haste_pct
+      amount: 60
+      duration_s: 15
+      min_stars: 5
+    - text: The Wolf Captain deals 0.5x ATK DMG 3 times every 3s.
+      trigger: timer
+      interval_s: 3
+      target: enemy
+      action: deal_damage
+      damage_type: weapon
+      can_crit: true
+      hits: 3
+      value: {ratio: 0.5, scales_with: atk}
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Pets
+  verified: false
+  notes: "Seen at 2★: screen shows 45% Haste (30% base + 15% from 2★) and 350.9K DMG = 0.5 × 701.8K ATK. Shows 2 gems at 2★, so base cost is 3 (wiki said 2). Ownership: [All] Total ATK +9% (2★)."
+  corrections:
+    - {field: activation_cost, wiki: 2, source: observed, verified: true}
+    - field: skill.text
+      wiki: "Start of Battle: For 10s, all weapons gain 30% Haste. The Wolf Captain deals Attack DMG _x_ DMG 3 time(s) every 3s."
+      source: observed
+      verified: true
+    - field: star_effects
+      wiki:
+        - {stars: 1, text: Activation cost is decreased by 1., activation_cost_delta: -1}
+        - {stars: 2, text: Haste increases by an additional 15%.}
+        - {stars: 4, text: Haste increases by an additional 15%.}
+        - {stars: 5, text: Duration increases by 5s.}
+      source: observed
+      verified: true
+
+- id: hunting_hawk
+  name: Hunting Hawk
+  rarity: legendary
+  activation_cost: 2
+  skill:
+    name: Hawkeye Vision
+    text: "Every 4s: Remove 10 more buff(s) from whichever of the enemy's Focus or Dodge buffs has more. Haste +60% while the enemy has a total of 30 or more Focus and Dodge."
+  star_effects:
+    - {stars: 1, text: "[Hawkeye Vision]'s activation cost is decreased by 1.", activation_cost_delta: -1}
+    - {stars: 2, text: "[Hawkeye Vision] grants 60% Haste while the enemy has a total of 30 Focus and Dodge."}
+    - {stars: 4, text: "[Hawkeye Vision] Remove 5 more buff(s)."}
+    - {stars: 5, text: "[Hawkeye Vision] has a 50% chance to steal 5 more buff(s)."}
+  role: battle
+  effects:
+    - text: "Every 4s: Remove 10 buffs from whichever of the enemy's Focus or Dodge has more."
+      trigger: timer
+      interval_s: 4
+      target: enemy
+      action: remove_status
+      pick_from: [focus, dodge]
+      count: 10
+      count_unit: stacks
+      max_stars: 3
+    - {text: … Remove 15. (4★), trigger: timer, interval_s: 4, target: enemy, action: remove_status, pick_from: [focus, dodge], count: 15, count_unit: stacks, min_stars: 4}
+    - text: … 50% chance to steal 5 more. (5★)
+      trigger: timer
+      interval_s: 4
+      chance_pct: 50
+      target: enemy
+      action: steal_status
+      pick_from: [focus, dodge]
+      count: 5
+      count_unit: stacks
+      min_stars: 5
+    - text: Weapons Haste +60% while the enemy has 30+ Focus and Dodge in total.
+      trigger: passive
+      target: all_items
+      filter: {tags_any: [weapon]}
+      action: add_stat_pct
+      stat: haste_pct
+      amount: 60
+      condition: {who: enemy, statuses_total: {statuses: [focus, dodge], min: 30}}
+      max_stars: 1
+    - text: … +120%. (2★)
+      trigger: passive
+      target: all_items
+      filter: {tags_any: [weapon]}
+      action: add_stat_pct
+      stat: haste_pct
+      amount: 120
+      condition: {who: enemy, statuses_total: {statuses: [focus, dodge], min: 30}}
+      min_stars: 2
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Pets
+  verified: false
+  notes: "Seen at 2★ with 1 gem → base cost 2. User: the skill's Haste +60% and the 2★ line's 60% add up (120% Haste at 2★ while the enemy has 30+ Focus and Dodge). Haste applies to weapons, not the pet. Ownership: [All] Total HP +9% (2★)."
+  corrections:
+    - field: skill.text
+      wiki: "Every 4s: Remove 10 buff(s) from which the enemy has more of, Focus or Dodge. Haste +60% while the enemy has a total of 30 or more Focus and Dodge."
+      source: observed
+      verified: true
+    - field: star_effects
+      wiki:
+        - {stars: 1, text: Activation cost is decreased by 1., activation_cost_delta: -1}
+        - {stars: 2, text: Grants 60% Haste while the enemy has a total of 30 or more Focus and Dodge.}
+        - {stars: 4, text: Remove 5 more buff(s).}
+        - {stars: 5, text: Has a 50% chance to Remove Buff steal 5 more buff(s).}
+      source: observed
+      verified: true
+
+- id: jellyfish_princess
+  name: Jellyfish Princess
+  rarity: legendary
+  activation_cost: 3
+  skill: {name: I Hate Pain!, text: "Start of Battle: Gain 0.4x HP Block. On Attacked: 30% chance to gain 4 Spike. (Activates 5 time(s) per battle)"}
+  star_effects:
+    - {stars: 1, text: "[I Hate Pain!]'s activation cost is decreased by 1.", activation_cost_delta: -1}
+    - {stars: 2, text: "[I Hate Pain!]'s Max Activation Count increases by 5."}
+    - {stars: 4, text: "[I Hate Pain!] Increase Block gained from by 0.2x HP."}
+    - {stars: 5, text: "[I Hate Pain!] activated in battle reduces DMG by 20%."}
+  role: battle
+  effects:
+    - {text: "Start of Battle: Gain 0.4x HP Block.", trigger: battle_start, target: player, action: gain_block, value: {ratio: 0.4, scales_with: hp}, max_stars: 3}
+    - {text: … 0.6x HP Block. (4★), trigger: battle_start, target: player, action: gain_block, value: {ratio: 0.6, scales_with: hp}, min_stars: 4}
+    - text: "On Attacked: 30% chance to gain 4 Spike (5 times per battle)."
+      trigger: on_attacked
+      chance_pct: 30
+      limit: {per_battle: 5}
+      target: player
+      action: apply_status
+      status: spike
+      stacks: 4
+      max_stars: 1
+    - text: … 10 times per battle. (2★)
+      trigger: on_attacked
+      chance_pct: 30
+      limit: {per_battle: 10}
+      target: player
+      action: apply_status
+      status: spike
+      stacks: 4
+      min_stars: 2
+    - {text: Reduces DMG by 20%. (5★), trigger: battle_start, target: player, action: add_combatant_stat, combat_stat: dmg_reduction, amount: 20, min_stars: 5}
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Pets
+  verified: false
+  notes: "Seen at 0★. Block 1.74M = 0.4 × 4.35M HP; 4★ +870.9K ≈ 0.2 × HP. Activates 5 times (wiki said 10). Ownership: [All] Total HP +3%."
+  corrections:
+    - {field: skill.text, wiki: "Start of Battle: Gain _x_ Block. On Attacked: 30% chance to gain 4 Spike. _(Activates 10 time(s) per battle)_", source: observed, verified: true}
+    - field: star_effects
+      wiki:
+        - {stars: 1, text: Activation cost is decreased by 1., activation_cost_delta: -1}
+        - {stars: 2, text: Max Activation Count increases by 5.}
+        - {stars: 4, text: Increase Block gained by _x_.}
+        - {stars: 5, text: Activated in battle reduces DMG by 20%.}
+      source: observed
+      verified: true
+
+- id: ice_reaper
+  name: Ice Reaper
+  rarity: legendary
+  activation_cost: 2
+  skill: {name: Curse of the Ice Reaper, text: "Start of Battle: Inflict 40% Reduction to enemy Healing, and inflict 15 Freeze."}
+  star_effects:
+    - {stars: 1, text: "[Curse of the Ice Reaper]'s activation cost is decreased by 1.", activation_cost_delta: -1}
+    - {stars: 2, text: "[Curse of the Ice Reaper] reduces the enemy's HP Recovery by an additional 20%."}
+    - {stars: 4, text: "[Curse of the Ice Reaper] When is activated in battle, inflicts 2 Freeze each time the enemy starts Heal."}
+    - {stars: 5, text: "[Curse of the Ice Reaper] activates once more when enemy is entering Berserk."}
+  role: battle
+  effects:
+    - text: "Start of Battle: Inflict 40% Reduction to enemy Healing."
+      trigger: battle_start
+      target: enemy
+      action: apply_status
+      status: heal_amount_reduction
+      stacks: 40
+      max_stars: 1
+    - {text: … 60%. (2★), trigger: battle_start, target: enemy, action: apply_status, status: heal_amount_reduction, stacks: 60, min_stars: 2}
+    - {text: and inflict 15 Freeze., trigger: battle_start, target: enemy, action: apply_status, status: freeze, stacks: 15}
+    - text: Inflicts 2 Freeze each time the enemy starts Heal. (4★)
+      trigger: on_heal
+      listen: enemy
+      watch: any
+      target: enemy
+      action: apply_status
+      status: freeze
+      stacks: 2
+      min_stars: 4
+    - text: "Activates once more when the enemy enters Berserk: Healing Reduction. (5★)"
+      trigger: on_berserk
+      target: enemy
+      action: apply_status
+      status: heal_amount_reduction
+      stacks: 60
+      min_stars: 5
+    - {text: … and 15 Freeze. (5★), trigger: on_berserk, target: enemy, action: apply_status, status: freeze, stacks: 15, min_stars: 5}
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Pets
+  verified: false
+  notes: "Seen at 2★ (1 gem): screen 60% = 40% base + 20% (2★). Ownership: [All] Total HP +9% (2★)."
+  corrections:
+    - field: star_effects
+      wiki:
+        - {stars: 1, text: Activation cost is decreased by 1., activation_cost_delta: -1}
+        - {stars: 2, text: Reduces the enemy's HP Recovery by an additional 20%.}
+        - {stars: 4, text: Inflicts 2 Freeze each time the enemy starts to Heal.}
+        - {stars: 5, text: Activates once more when enemy is entering Berserk.}
+      source: observed
+      verified: true
+
+- id: phoenix
+  name: Phoenix
+  rarity: legendary
+  activation_cost: 3
+  skill: {name: Flame of Justice, text: "Enhances On Fastest Weapon Hit: to inflict 1 Burn for 4s. For each Burn stack on the enemy, the enemy's Crit Rate decreases by 2%. (Max 40%)"}
+  star_effects:
+    - {stars: 1, text: "[Flame of Justice]'s activation cost is decreased by 1.", activation_cost_delta: -1}
+    - {stars: 2, text: "[Flame of Justice] causes weapons enhanced by it to deal an additional 1 Burn."}
+    - {stars: 4, text: "[Flame of Justice] activated in battle increases DMG taken by the enemy by 1% for each Burn stack. (Max 40%)"}
+    - {stars: 5, text: "[Flame of Justice] increases the max Crit Rate Reduction and Increased Damage Taken effects applied to the enemy by 20%."}
+  role: battle
+  effects:
+    - text: "On Fastest Weapon Hit: inflict 1 Burn for 4s."
+      trigger: on_weapon_hit
+      watch: any
+      watch_filter: {tags_any: [weapon], pick: fastest}
+      target: enemy
+      action: apply_status
+      status: burn
+      stacks: 1
+      duration_s: 4
+      max_stars: 1
+    - text: … 2 Burn. (2★)
+      trigger: on_weapon_hit
+      watch: any
+      watch_filter: {tags_any: [weapon], pick: fastest}
+      target: enemy
+      action: apply_status
+      status: burn
+      stacks: 2
+      duration_s: 4
+      min_stars: 2
+    - text: Enemy Crit Rate −2% per Burn stack on it (max 40%).
+      trigger: passive
+      target: enemy
+      action: add_player_stat
+      player_stat: crit_rate_reduction
+      amount_from: {status: burn, status_on: enemy, factor: 2, max: 40}
+      max_stars: 4
+    - text: … max 60%. (5★)
+      trigger: passive
+      target: enemy
+      action: add_player_stat
+      player_stat: crit_rate_reduction
+      amount_from: {status: burn, status_on: enemy, factor: 2, max: 60}
+      min_stars: 5
+    - text: Enemy takes 1% more DMG per Burn stack (max 40%). (4★)
+      trigger: passive
+      target: enemy
+      action: add_player_stat
+      player_stat: dmg_taken_increase
+      amount_from: {status: burn, status_on: enemy, factor: 1, max: 40}
+      min_stars: 4
+      max_stars: 4
+    - text: … max 60%. (5★)
+      trigger: passive
+      target: enemy
+      action: add_player_stat
+      player_stat: dmg_taken_increase
+      amount_from: {status: burn, status_on: enemy, factor: 1, max: 60}
+      min_stars: 5
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Pets
+  verified: false
+  notes: 'Seen at 1★ (2 gems → base 3). User: the Crit Rate reduction applies to the enemy. Gives your fastest weapon "on hit: 1 Burn for 4s". 5★: both caps (enemy Crit Rate reduction and DMG taken per Burn stack) go from 40% to 60% (user confirmed). Ownership: [All] Total ATK +6% (1★).'
+  corrections:
+    - field: skill.text
+      wiki: "Enhances On Fastest Weapon Hit: to inflict 1 Burn for 4s. For each Burn stack on the enemy, Crit Rate decreases by 2%. _(Max 40%)_"
+      source: observed
+      verified: true
+    - field: star_effects
+      wiki:
+        - {stars: 1, text: Activation cost is decreased by 1., activation_cost_delta: -1}
+        - {stars: 2, text: Causes weapons enhanced by it to deal an additional 1 Burn.}
+        - {stars: 4, text: Increases DMG taken by the enemy by 1% for each Burn stack. _(Max 40%)_}
+        - {stars: 5, text: Increases Max Crit Rate Reduction and Increased Damage Taken effects applied to the enemy by 20%.}
+      source: observed
+      verified: true
+
+- id: yeti
+  name: Yeti
+  rarity: legendary
+  activation_cost: 2
+  skill:
+    name: Guard Stance
+    text: "Start of Battle: Become immune to Stun for 10s. Every time you resist Stun, counterattack to deal 4.5x ATK DMG and Stun the enemy for 1s. (Can activate every 3s)"
+  star_effects:
+    - {stars: 1, text: "[Guard Stance]'s activation cost is decreased by 1.", activation_cost_delta: -1}
+    - {stars: 2, text: "[Guard Stance]'s duration increases by 5s."}
+    - {stars: 4, text: "[Guard Stance]'s duration increases by 5s."}
+    - {stars: 5, text: "[Guard Stance]'s Stun duration increases by 1.5s."}
+  role: battle
+  effects:
+    - text: "Start of Battle: immune to Stun for 10s."
+      trigger: battle_start
+      target: player
+      action: add_combatant_stat
+      combat_stat: stun_resistance
+      amount: 100
+      duration_s: 10
+      max_stars: 1
+    - text: … 15s. (2★)
+      trigger: battle_start
+      target: player
+      action: add_combatant_stat
+      combat_stat: stun_resistance
+      amount: 100
+      duration_s: 15
+      min_stars: 2
+      max_stars: 3
+    - {text: … 20s. (4★), trigger: battle_start, target: player, action: add_combatant_stat, combat_stat: stun_resistance, amount: 100, duration_s: 20, min_stars: 4}
+    - text: "On resisting Stun: counterattack for 4.5x ATK DMG (every 3s)."
+      trigger: on_status_resisted
+      params: {status: stun}
+      cooldown_s: 3
+      target: enemy
+      action: deal_damage
+      damage_type: weapon
+      can_crit: true
+      value: {ratio: 4.5, scales_with: atk}
+    - text: … and Stun the enemy for 1s.
+      trigger: on_status_resisted
+      params: {status: stun}
+      cooldown_s: 3
+      target: enemy
+      action: apply_status
+      status: stun
+      stacks: 1
+      duration_s: 1
+      max_stars: 4
+    - text: … Stun for 2.5s. (5★)
+      trigger: on_status_resisted
+      params: {status: stun}
+      cooldown_s: 3
+      target: enemy
+      action: apply_status
+      status: stun
+      stacks: 1
+      duration_s: 2.5
+      min_stars: 5
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Pets
+  verified: false
+  notes: "Seen at 1★ (1 gem → base 2). Counter 3.15M ≈ 4.5 × 701.8K (4.49; display likely truncated). Ownership: [All] Total HP +6% (1★)."
+  corrections:
+    - field: skill.text
+      wiki: "Start of Battle: Become immune to Stun for 10s. Every time you resist Stun, counterattack to deal Attack DMG _x_ DMG and Stun the enemy for 1s. _(Can activate every 3s)_"
+      source: observed
+      verified: true
+    - field: star_effects
+      wiki:
+        - {stars: 1, text: Activation cost is decreased by 1., activation_cost_delta: -1}
+        - {stars: 2, text: Duration increases by 5s.}
+        - {stars: 4, text: Duration increases by 5s.}
+        - {stars: 5, text: Stun duration increases by 1.5s.}
+      source: observed
+      verified: true
+
+- id: flora
+  name: Flora
+  rarity: legendary
+  activation_cost: 3
+  skill: {name: Prayer of Petals, text: "Start of Battle: Increase Debuff Resist by 30%. Every 4s: Heal 0.1x HP and Cleanse 10 random debuff(s)."}
+  star_effects:
+    - {stars: 1, text: "[Prayer of Petals]'s activation cost is decreased by 1.", activation_cost_delta: -1}
+    - {stars: 2, text: "[Prayer of Petals] activated in battle increases Debuff Resist by 30%."}
+    - {stars: 4, text: "[Prayer of Petals] additionally Heal 0.05x HP."}
+    - {stars: 5, text: "[Prayer of Petals] In battles where is activated, HP Heal effect increases by 30%."}
+  role: battle
+  effects:
+    - {text: "Start of Battle: Debuff Resist +30%.", trigger: battle_start, target: player, action: add_combatant_stat, combat_stat: all_debuff_resist, amount: 30}
+    - {text: "Every 4s: Heal 0.1x HP.", trigger: timer, interval_s: 4, target: player, action: heal, value: {ratio: 0.1, scales_with: hp}, max_stars: 3}
+    - {text: … 0.15x HP. (4★), trigger: timer, interval_s: 4, target: player, action: heal, value: {ratio: 0.15, scales_with: hp}, min_stars: 4}
+    - {text: … and Cleanse 10 random debuffs., trigger: timer, interval_s: 4, target: player, action: cleanse, count: 10}
+    - {text: HP Heal effect +30%. (5★), trigger: battle_start, target: player, action: add_player_stat, player_stat: healing_power_enhance, amount: 30, min_stars: 5}
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Pets
+  verified: false
+  notes: "Seen at 2★ (2 gems → base 3). Heal 435.4K ≈ 0.1 × HP; 4★ 217.7K ≈ 0.05 × HP. Like Hunting Hawk, the skill's 30% and the 2★ 30% add (60% Debuff Resist at 2★). Ownership: [All] Total HP +9% (2★)."
+  corrections:
+    - {field: skill.text, wiki: "Every 4s: Heal _x_ HP and Cleanse 10 random debuff(s).", source: observed, verified: true}
+    - field: star_effects
+      wiki:
+        - {stars: 1, text: Activation cost is decreased by 1., activation_cost_delta: -1}
+        - {stars: 2, text: Activated in battle increases Debuff Resist by 30%.}
+        - {stars: 4, text: Additionally Heal _x_ HP.}
+        - {stars: 5, text: Activated in battle increases Recovery by 30%.}
+      source: observed
+      verified: true
+
+- id: tiger
+  name: Tiger
+  rarity: legendary
+  activation_cost: 3
+  skill: {name: Valiant Charge, text: "Start of Battle: Increase All Weapon DMG by 25% and Crit Rate by 15%."}
+  star_effects:
+    - {stars: 1, text: "[Valiant Charge]'s activation cost is decreased by 1.", activation_cost_delta: -1}
+    - {stars: 2, text: "[Valiant Charge] increases weapon's Crit Rate by an additional 15%."}
+    - {stars: 4, text: "[Valiant Charge] increases weapon's DMG by an additional 25%."}
+    - {stars: 5, text: "[Valiant Charge] When is activated in battle, for each Critical Hit with a weapon, Item Haste increases by 2%. (Can stack up to 15 times.)"}
+  role: battle
+  effects:
+    - {text: "Start of Battle: All Weapon DMG +25%.", trigger: battle_start, target: player, action: add_player_stat, player_stat: attack_dmg_increase, amount: 25, max_stars: 3}
+    - {text: … +50%. (4★), trigger: battle_start, target: player, action: add_player_stat, player_stat: attack_dmg_increase, amount: 50, min_stars: 4}
+    - text: … and weapon Crit Rate +15%.
+      trigger: battle_start
+      target: all_items
+      filter: {tags_any: [weapon]}
+      action: add_stat_pct
+      stat: crit_chance_pct
+      amount: 15
+      max_stars: 1
+    - {text: … +30%. (2★), trigger: battle_start, target: all_items, filter: {tags_any: [weapon]}, action: add_stat_pct, stat: crit_chance_pct, amount: 30, min_stars: 2}
+    - text: "Each weapon Critical Hit: Item Haste +2% (max 15 stacks). (5★)"
+      trigger: on_crit
+      watch: any
+      watch_filter: {tags_any: [weapon]}
+      target: all_items
+      action: add_stat_pct
+      stat: haste_pct
+      amount: 2
+      max_stacks: 15
+      min_stars: 5
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Pets
+  verified: false
+  notes: "Seen at 1★ (2 gems → base 3). Ownership: [All] Total ATK +6% (1★)."
+  corrections:
+    - {field: skill.text, wiki: "Start of Battle: Increase All Weapon DMG by 25% and Crit Rate by 30%.", source: observed, verified: true}
+    - field: star_effects
+      wiki:
+        - {stars: 1, text: Activation cost is decreased by 1., activation_cost_delta: -1}
+        - {stars: 2, text: Increases weapon's Crit Rate by an additional 15%.}
+        - {stars: 4, text: Increases weapon's DMG by an additional 25%.}
+        - {stars: 5, text: activated in battle increases Haste by 2% for each Critical Hit. _(Can stack up to 15 time(s))_}
+      source: observed
+      verified: true
+
+- id: fire_fox
+  name: Fire Fox
+  rarity: epic
+  activation_cost: 3
+  skill: {name: Foxfire, text: "Start of Battle: Deal fixed DMG equal to 10% of the enemy's Max HP, and inflict 5 Burn for 5s."}
+  star_effects:
+    - {stars: 1, text: "[Foxfire] inflicts additional DMG equal to 5% of the enemy's Max HP."}
+    - {stars: 2, text: "[Foxfire] increases the duration of Burn it inflicts by 5s."}
+    - {stars: 4, text: "[Foxfire] inflicts additional DMG equal to 5% of the enemy's Max HP."}
+  role: battle
+  effects:
+    - text: "Start of Battle: fixed DMG equal to 10% of the enemy's Max HP."
+      trigger: battle_start
+      target: enemy
+      action: deal_damage
+      value: {ratio: 0.1, scales_with: enemy_hp}
+      max_stars: 0
+    - {text: … 15%. (1★), trigger: battle_start, target: enemy, action: deal_damage, value: {ratio: 0.15, scales_with: enemy_hp}, min_stars: 1, max_stars: 3}
+    - {text: … 20%. (4★), trigger: battle_start, target: enemy, action: deal_damage, value: {ratio: 0.2, scales_with: enemy_hp}, min_stars: 4}
+    - {text: and inflict 5 Burn for 5s., trigger: battle_start, target: enemy, action: apply_status, status: burn, stacks: 5, duration_s: 5, max_stars: 1}
+    - {text: … for 10s. (2★), trigger: battle_start, target: enemy, action: apply_status, status: burn, stacks: 5, duration_s: 10, min_stars: 2}
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Pets
+  verified: false
+  notes: "Seen at 2★ (3 gems): screen 15% / 10s = 10% + 5% (1★), 5s + 5s (2★). No 5★ line shown. Ownership: [All] Total ATK +6% (2★)."
+  corrections:
+    - {field: skill.text, wiki: "Start of Battle: Deal fixed DMG equal to 15% of the enemy's Max HP, and inflict 5 Burn for 10s.", source: observed, verified: true}
+    - field: star_effects
+      wiki:
+        - {stars: 1, text: Additional DMG equal to 5% of the enemy's Max HP.}
+        - {stars: 2, text: Increases the duration of Burn it inflicts by 5s.}
+        - {stars: 4, text: Additional DMG equal to 5% of the enemy's Max HP.}
+      source: observed
+      verified: true
+
+- id: blue_wolf
+  name: Blue Wolf
+  rarity: epic
+  activation_cost: 3
+  skill: {name: Howl, text: "Start of Battle: All Weapons gain 20% Haste for 10s."}
+  star_effects:
+    - {stars: 1, text: "[Howl]'s Haste increases by an additional 5%."}
+    - {stars: 2, text: "[Howl]'s Haste increases by an additional 5%."}
+    - {stars: 4, text: "[Howl]'s Haste increases by an additional 10%."}
+  role: battle
+  effects:
+    - text: "Start of Battle: all weapons 20% Haste for 10s."
+      trigger: battle_start
+      target: all_items
+      filter: {tags_any: [weapon]}
+      action: add_stat_pct
+      stat: haste_pct
+      amount: 20
+      duration_s: 10
+      max_stars: 0
+    - text: … 25%. (1★)
+      trigger: battle_start
+      target: all_items
+      filter: {tags_any: [weapon]}
+      action: add_stat_pct
+      stat: haste_pct
+      amount: 25
+      duration_s: 10
+      min_stars: 1
+      max_stars: 1
+    - text: … 30%. (2★)
+      trigger: battle_start
+      target: all_items
+      filter: {tags_any: [weapon]}
+      action: add_stat_pct
+      stat: haste_pct
+      amount: 30
+      duration_s: 10
+      min_stars: 2
+      max_stars: 3
+    - text: … 40%. (4★)
+      trigger: battle_start
+      target: all_items
+      filter: {tags_any: [weapon]}
+      action: add_stat_pct
+      stat: haste_pct
+      amount: 40
+      duration_s: 10
+      min_stars: 4
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Pets
+  verified: false
+  notes: "Seen at 2★ (3 gems): screen 30% = 20% + 5% + 5%. No 5★ line shown. Ownership: [All] Total ATK +6% (2★)."
+  corrections:
+    - {field: skill.text, wiki: "Start of Battle: All Weapons gain 30% Haste for 10s.", source: observed, verified: true}
+    - field: star_effects
+      wiki:
+        - {stars: 1, text: Haste increases by an additional 5%.}
+        - {stars: 2, text: Haste increases by an additional 5%.}
+        - {stars: 4, text: Haste increases by an additional 10%.}
+      source: observed
+      verified: true
+
+- id: goblin_scientist
+  name: Goblin Scientist
+  rarity: epic
+  activation_cost: 2
+  skill: {name: "Exp. #H-301... Huh?", text: Select 1 item. Destroys the item and converts it to a random Shop Item. 15% chance to be reusable during this round.}
+  star_effects:
+    - {stars: 1, text: "[Exp. #H-301... Huh?] activated in a round has a 15% chance to be reusable during that round."}
+    - {stars: 2, text: "[Exp. #H-301... Huh?]'s Reuse Rate increases by 15%."}
+    - {stars: 4, text: "[Exp. #H-301... Huh?]'s Reuse Rate increases by 20%."}
+  role: economy
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Pets
+  verified: false
+  notes: "Seen at 1★ (2 gems). Hawk rule applied: skill 15% + 1★ 15% = 30% reuse at 1★. Ownership: [All] Total HP +4% (1★)."
+  corrections:
+    - field: skill.text
+      wiki: Select 1 item. Destroys the item and converts it to a random Shop Item. 30% chance to be reusable during the same round.
+      source: observed
+      verified: true
+    - field: star_effects
+      wiki:
+        - {stars: 1, text: Additional 15% chance to be reusable during that round.}
+        - {stars: 2, text: Additional 15% chance to be reusable during that round.}
+        - {stars: 4, text: Additional 20% chance to be reusable during that round.}
+      source: observed
+      verified: true
+
+- id: mini_mimic
+  name: Mini Mimic
+  rarity: epic
+  activation_cost: 2
+  skill: {name: Mimi Mimic?!, text: Immediately merge 1 random mergeable item(s).}
+  star_effects:
+    - {stars: 1, text: "[Mimi Mimic?!] Lets you merge 1 more item(s)."}
+    - {stars: 2, text: "[Mimi Mimic?!] Lets you merge 1 more item(s)."}
+    - {stars: 4, text: "[Mimi Mimic?!] activated in a round has a 25% chance to be reusable during that round."}
+  role: economy
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Pets
+  verified: false
+  notes: "Seen at 2★ (2 gems): screen 3 = 1 + 1 + 1. Ownership: [All] Total ATK +6% (2★)."
+  corrections:
+    - {field: skill.text, wiki: Immediately merge 3 random mergeable item(s)., source: observed, verified: true}
+    - field: star_effects
+      wiki:
+        - {stars: 1, text: Let's you merge 1 more item.}
+        - {stars: 2, text: Let's you merge 1 more item.}
+        - {stars: 4, text: 25% chance to be reusable during that round.}
+      source: observed
+      verified: true
+
+- id: eagle
+  name: Eagle
+  rarity: epic
+  activation_cost: 2
+  skill: {name: Snatch, text: "Every 5s: Remove 6 more buff(s) from whichever of the enemy's Focus or Dodge buffs has more."}
+  star_effects:
+    - {stars: 1, text: "[Snatch]'s base Cooldown decreases by 1s."}
+    - {stars: 2, text: "[Snatch] Will Remove 2 more buff(s)."}
+    - {stars: 4, text: "[Snatch] Will Remove 2 more buff(s)."}
+  role: battle
+  effects:
+    - text: "Every 5s: Remove 6 buffs from whichever of the enemy's Focus or Dodge has more."
+      trigger: timer
+      interval_s: 5
+      target: enemy
+      action: remove_status
+      pick_from: [focus, dodge]
+      count: 6
+      count_unit: stacks
+      max_stars: 0
+    - text: "Every 4s: Remove 6. (1★)"
+      trigger: timer
+      interval_s: 4
+      target: enemy
+      action: remove_status
+      pick_from: [focus, dodge]
+      count: 6
+      count_unit: stacks
+      min_stars: 1
+      max_stars: 1
+    - text: "Every 4s: Remove 8. (2★)"
+      trigger: timer
+      interval_s: 4
+      target: enemy
+      action: remove_status
+      pick_from: [focus, dodge]
+      count: 8
+      count_unit: stacks
+      min_stars: 2
+      max_stars: 3
+    - text: "Every 4s: Remove 10. (4★)"
+      trigger: timer
+      interval_s: 4
+      target: enemy
+      action: remove_status
+      pick_from: [focus, dodge]
+      count: 10
+      count_unit: stacks
+      min_stars: 4
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Pets
+  verified: false
+  notes: "Seen at 3★ (2 gems): screen every 4s / 8 buffs = 5s − 1s (1★), 6 + 2 (2★). No 3★ line. Ownership: [All] Total HP +9% (3★)."
+  corrections:
+    - {field: skill.name, wiki: Glare, source: observed, verified: true}
+    - {field: skill.text, wiki: "Every 4s: Remove 8 buff(s) from which the enemy has more of, Focus or Dodge.", source: observed, verified: true}
+    - field: star_effects
+      wiki:
+        - {stars: 1, text: Base Cooldown decreases by 1s.}
+        - {stars: 2, text: Remove 2 more buff(s).}
+        - {stars: 4, text: Remove 2 more buff(s).}
+      source: observed
+      verified: true
+
+- id: raccoon
+  name: Raccoon
+  rarity: rare
+  activation_cost: 3
+  skill: {name: Body Slam, text: "Start of Battle: Deals 4x ATK DMG."}
+  star_effects:
+    - {stars: 1, text: "[Body Slam]'s DMG dealt increases by 50%."}
+    - {stars: 2, text: "[Body Slam] inflicts additional DMG equal to 10% of the enemy's Max HP."}
+    - {stars: 4, text: "[Body Slam]'s Crit Rate increases by 50%."}
+  role: battle
+  effects:
+    - text: "Start of Battle: Deals 4x ATK DMG."
+      trigger: battle_start
+      target: enemy
+      action: deal_damage
+      damage_type: weapon
+      can_crit: true
+      value: {ratio: 4, scales_with: atk}
+      max_stars: 0
+    - text: … 6x ATK DMG. (1★)
+      trigger: battle_start
+      target: enemy
+      action: deal_damage
+      damage_type: weapon
+      can_crit: true
+      value: {ratio: 6, scales_with: atk}
+      min_stars: 1
+      max_stars: 3
+    - text: … 6x ATK DMG, Crit Rate +50%. (4★)
+      trigger: battle_start
+      target: enemy
+      action: deal_damage
+      damage_type: weapon
+      can_crit: true
+      crit_bonus_pct: 50
+      value: {ratio: 6, scales_with: atk}
+      min_stars: 4
+    - text: … plus DMG equal to 10% of the enemy's Max HP. (2★)
+      trigger: battle_start
+      target: enemy
+      action: deal_damage
+      value: {ratio: 0.1, scales_with: enemy_hp}
+      min_stars: 2
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Pets
+  verified: false
+  notes: "Seen at 2★ (3 gems): screen \"4.21M + 10% of enemy Max HP\" = 4.0 × ATK × 1.5 (1★) + 10% (2★). In game the name is \"Raccoon\"; the wiki spells it \"Racoon\" (renamed to raccoon on the user's OK). Ownership: [All] Total ATK +3% (2★)."
+  corrections:
+    - {field: name, wiki: Racoon, source: observed, verified: true}
+    - {field: skill.text, wiki: "Start of Battle: Deals Attack DMG _x_ + 10% of the enemy's Max HP as DMG.", source: observed, verified: true}
+    - field: star_effects
+      wiki:
+        - {stars: 1, text: DMG dealt increases by 50%.}
+        - {stars: 2, text: Inflicts additional DMG equal to 10% of the enemy's Max HP.}
+        - {stars: 4, text: Crit Rate increases by 50%.}
+      source: observed
+      verified: true
+
+- id: sheep
+  name: Sheep
+  rarity: rare
+  activation_cost: 3
+  skill: {name: Fluffy Guard, text: "Start of Battle: Gain 0.25x HP Block."}
+  star_effects:
+    - {stars: 1, text: "[Fluffy Guard] will increase Block gained by 0.05x HP."}
+    - {stars: 2, text: "[Fluffy Guard] will increase Block gained by 0.05x HP."}
+    - {stars: 4, text: "[Fluffy Guard] will increase Block gained by 0.05x HP."}
+  role: battle
+  effects:
+    - {text: "Start of Battle: Gain 0.25x HP Block.", trigger: battle_start, target: player, action: gain_block, value: {ratio: 0.25, scales_with: hp}, max_stars: 0}
+    - {text: … 0.30x. (1★), trigger: battle_start, target: player, action: gain_block, value: {ratio: 0.3, scales_with: hp}, min_stars: 1, max_stars: 1}
+    - {text: … 0.35x. (2★), trigger: battle_start, target: player, action: gain_block, value: {ratio: 0.35, scales_with: hp}, min_stars: 2, max_stars: 3}
+    - {text: … 0.40x. (4★), trigger: battle_start, target: player, action: gain_block, value: {ratio: 0.4, scales_with: hp}, min_stars: 4}
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Pets
+  verified: false
+  notes: "Seen at 2★ (3 gems): screen 1.52M ≈ (0.25 + 0.05 + 0.05) × 4.35M; 217.7K ≈ 0.05 × HP. Ownership: [All] Total HP +3% (2★)."
+  corrections:
+    - {field: skill.text, wiki: "Start of Battle: Gain _x_ Block.", source: observed, verified: true}
+    - field: star_effects
+      wiki:
+        - {stars: 1, text: Increase Block gained by _x_.}
+        - {stars: 2, text: Increase Block gained by _x_.}
+        - {stars: 4, text: Increase Block gained by _x_.}
+      source: observed
+      verified: true
+
+- id: pink_slime
+  name: Pink Slime
+  rarity: rare
+  activation_cost: 3
+  skill: {name: Heal, text: "Every 4s: Heal 0.05x HP and Cleanse 5 random debuff(s)."}
+  star_effects:
+    - {stars: 1, text: "[Heal] Will Heal an additional 0.02x HP."}
+    - {stars: 2, text: "[Heal] Will Cleanse 5 random debuff(s) each time you Heal."}
+    - {stars: 4, text: "[Heal] Will Heal an additional 0.03x HP."}
+  role: battle
+  effects:
+    - {text: "Every 4s: Heal 0.05x HP.", trigger: timer, interval_s: 4, target: player, action: heal, value: {ratio: 0.05, scales_with: hp}, max_stars: 0}
+    - {text: … 0.07x HP. (1★), trigger: timer, interval_s: 4, target: player, action: heal, value: {ratio: 0.07, scales_with: hp}, min_stars: 1, max_stars: 3}
+    - {text: … 0.10x HP. (4★), trigger: timer, interval_s: 4, target: player, action: heal, value: {ratio: 0.1, scales_with: hp}, min_stars: 4}
+    - {text: and Cleanse 5 random debuffs., trigger: timer, interval_s: 4, target: player, action: cleanse, count: 5, max_stars: 1}
+    - {text: … Cleanse 10. (2★), trigger: timer, interval_s: 4, target: player, action: cleanse, count: 10, min_stars: 2}
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Pets
+  verified: false
+  notes: "Seen at 2★ (3 gems): heal 304.8K = 217.7K (0.05 × HP) + 87.1K (0.02 × HP, 1★); 4★ 130.6K ≈ 0.03 × HP. Hawk rule applied to Cleanse: skill 5 + 2★ 5 = 10 at 2★ (user confirmed: always additive). Ownership: [All] Total HP +3% (2★)."
+  corrections:
+    - {field: skill.text, wiki: "Every 4s: Heal _x_ HP and Cleanse 5 random debuff(s).", source: observed, verified: true}
+    - field: star_effects
+      wiki:
+        - {stars: 1, text: Heal an additional _x_ HP.}
+        - {stars: 2, text: Cleanse 5 random debuff(s) each time you Heal.}
+        - {stars: 4, text: Heal an additional _x_ HP.}
+      source: observed
+      verified: true
+
+- id: golem
+  name: Golem
+  rarity: rare
+  activation_cost: 3
+  skill: {name: Stomp, text: "Start of Battle: Deal 3x ATK DMG and have a 50% chance to Stun the enemy for 1s."}
+  star_effects:
+    - {stars: 1, text: "[Stomp]'s DMG dealt increases by 50%."}
+    - {stars: 2, text: "[Stomp]'s Stun Rate increases by 50%."}
+    - {stars: 4, text: "[Stomp]'s Stun duration increases by 1.5s."}
+  role: battle
+  effects:
+    - text: "Start of Battle: Deal 3x ATK DMG."
+      trigger: battle_start
+      target: enemy
+      action: deal_damage
+      damage_type: weapon
+      can_crit: true
+      value: {ratio: 3, scales_with: atk}
+      max_stars: 0
+    - text: … 4.5x ATK DMG. (1★)
+      trigger: battle_start
+      target: enemy
+      action: deal_damage
+      damage_type: weapon
+      can_crit: true
+      value: {ratio: 4.5, scales_with: atk}
+      min_stars: 1
+    - text: and 50% chance to Stun the enemy for 1s.
+      trigger: battle_start
+      chance_pct: 50
+      target: enemy
+      action: apply_status
+      status: stun
+      stacks: 1
+      duration_s: 1
+      max_stars: 1
+    - {text: … 100% chance. (2★), trigger: battle_start, target: enemy, action: apply_status, status: stun, stacks: 1, duration_s: 1, min_stars: 2, max_stars: 3}
+    - {text: … Stun for 2.5s. (4★), trigger: battle_start, target: enemy, action: apply_status, status: stun, stacks: 1, duration_s: 2.5, min_stars: 4}
+  ignored: false
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Pets
+  verified: false
+  notes: |-
+    corrections.md §4 — its skill has no trigger on the wiki and it isn't worth implementing.
+    Seen at 2★ (3 gems): screen 3.15M ≈ 3.0 × ATK × 1.5 (1★); 100% stun = 50% + 50% (2★). The in-game skill has a Start of Battle trigger (wiki had none); user un-ignored it on 2026-10-16 given the in-game data. Ownership: [All] Total ATK +3% (2★).
+  corrections:
+    - {field: ignored, wiki: true, source: observed, verified: true}
+    - {field: skill.text, wiki: Deal Attack DMG _x_ DMG and have a 100% chance to Stun the enemy for 1s., source: observed, verified: true}
+    - field: star_effects
+      wiki:
+        - {stars: 1, text: DMG dealt increases by 50%}
+        - {stars: 2, text: Stun Rate increases by 50%.}
+        - {stars: 4, text: Stun duration by 1.5s.}
+      source: observed
+      verified: true
+
+- id: poison_mushroom
+  name: Poison Mushroom
+  rarity: rare
+  activation_cost: 3
+  skill: {name: Poison Spray, text: "Start of Battle: Inflict 12 Poison"}
+  star_effects:
+    - {stars: 1, text: "[Poison Spray] Inflicts an additional 6 Poison."}
+    - {stars: 2, text: "[Poison Spray] Inflicts an additional 6 Poison."}
+    - {stars: 4, text: "[Poison Spray] Inflicts an additional 6 Poison."}
+  role: battle
+  effects:
+    - {text: "Start of Battle: Inflict 12 Poison.", trigger: battle_start, target: enemy, action: apply_status, status: poison, stacks: 12, max_stars: 0}
+    - {text: … 18. (1★), trigger: battle_start, target: enemy, action: apply_status, status: poison, stacks: 18, min_stars: 1, max_stars: 1}
+    - {text: … 24. (2★), trigger: battle_start, target: enemy, action: apply_status, status: poison, stacks: 24, min_stars: 2, max_stars: 3}
+    - {text: … 30. (4★), trigger: battle_start, target: enemy, action: apply_status, status: poison, stacks: 30, min_stars: 4}
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Pets
+  verified: false
+  notes: "Seen at 2★ (3 gems): screen 24 = 12 + 6 + 6. Ownership: [All] Total HP +3% (2★)."
+  corrections:
+    - {field: skill.text, wiki: "Start of Battle: Inflict 24 Poison.", source: observed, verified: true}
+    - field: star_effects
+      wiki:
+        - {stars: 1, text: Inflicts an additional 6 Poison.}
+        - {stars: 2, text: Inflicts an additional 6 Poison.}
+        - {stars: 4, text: Inflicts an additional 6 Poison.}
+      source: observed
+      verified: true
+
+- id: brown_wolf
+  name: Brown Wolf
+  rarity: rare
+  activation_cost: 3
+  skill: {name: Wail, text: "Start of Battle: Strongest weapon Haste +20% for 10s."}
+  star_effects:
+    - {stars: 1, text: "[Wail]'s Haste increases by an additional 5%."}
+    - {stars: 2, text: "[Wail]'s Haste increases by an additional 5%."}
+    - {stars: 4, text: "[Wail]'s Haste increases by an additional 10%."}
+  role: battle
+  effects:
+    - text: "Start of Battle: Strongest weapon Haste +20% for 10s."
+      trigger: battle_start
+      target: all_items
+      filter: {tags_any: [weapon], pick: strongest}
+      action: add_stat_pct
+      stat: haste_pct
+      amount: 20
+      duration_s: 10
+      max_stars: 0
+    - text: … 25%. (1★)
+      trigger: battle_start
+      target: all_items
+      filter: {tags_any: [weapon], pick: strongest}
+      action: add_stat_pct
+      stat: haste_pct
+      amount: 25
+      duration_s: 10
+      min_stars: 1
+      max_stars: 1
+    - text: … 30%. (2★)
+      trigger: battle_start
+      target: all_items
+      filter: {tags_any: [weapon], pick: strongest}
+      action: add_stat_pct
+      stat: haste_pct
+      amount: 30
+      duration_s: 10
+      min_stars: 2
+      max_stars: 3
+    - text: … 40%. (4★)
+      trigger: battle_start
+      target: all_items
+      filter: {tags_any: [weapon], pick: strongest}
+      action: add_stat_pct
+      stat: haste_pct
+      amount: 40
+      duration_s: 10
+      min_stars: 4
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Pets
+  verified: false
+  notes: "Seen at 2★ (3 gems): screen 30% = 20% + 5% + 5%. Ownership: [All] Total ATK +3% (2★)."
+  corrections:
+    - {field: skill.text, wiki: "Start of Battle: Strongest weapon haste +40% for 10s.", source: observed, verified: true}
+    - field: star_effects
+      wiki:
+        - {stars: 1, text: Haste increases by an additional 5%.}
+        - {stars: 2, text: Haste increases by an additional 5%.}
+        - {stars: 4, text: Haste increases by an additional 10%.}
+      source: observed
+      verified: true
+
+- id: hedgehog
+  name: Hedgehog
+  rarity: rare
+  activation_cost: 3
+  skill: {name: Spike Guard, text: "Start of Battle: Gain 0.15x HP Block and 5 Spike."}
+  star_effects:
+    - {stars: 1, text: "[Spike Guard] Gain 5 additional Spike through ."}
+    - {stars: 2, text: "[Spike Guard] Increase Block gained from by 0.05x HP."}
+    - {stars: 4, text: "[Spike Guard] Increase Block gained from by 0.05x HP."}
+  role: battle
+  effects:
+    - {text: "Start of Battle: Gain 0.15x HP Block.", trigger: battle_start, target: player, action: gain_block, value: {ratio: 0.15, scales_with: hp}, max_stars: 1}
+    - {text: … 0.20x. (2★), trigger: battle_start, target: player, action: gain_block, value: {ratio: 0.2, scales_with: hp}, min_stars: 2, max_stars: 3}
+    - {text: … 0.25x. (4★), trigger: battle_start, target: player, action: gain_block, value: {ratio: 0.25, scales_with: hp}, min_stars: 4}
+    - {text: and 5 Spike., trigger: battle_start, target: player, action: apply_status, status: spike, stacks: 5, max_stars: 0}
+    - {text: … 10 Spike. (1★), trigger: battle_start, target: player, action: apply_status, status: spike, stacks: 10, min_stars: 1}
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Pets
+  verified: false
+  notes: 'Seen at 2★ (3 gems): screen 870.9K = 0.15 × HP + 217.7K (2★); 10 Spike = 5 + 5 (1★). "through ." is cut off in game. Ownership: [All] Total HP +3% (2★).'
+  corrections:
+    - {field: skill.text, wiki: "Start of Battle: Gain _x_ Block and 10 Spike.", source: observed, verified: true}
+    - field: star_effects
+      wiki:
+        - {stars: 1, text: Gain 5 additional Spike.}
+        - {stars: 2, text: Increase Block gained by _x_.}
+        - {stars: 4, text: Increase Block gained by _x_.}
+      source: observed
+      verified: true
+
+- id: skeleton_reaper
+  name: Skeleton Reaper
+  rarity: rare
+  activation_cost: 2
+  skill: {name: Curse, text: "Start of Battle: Inflict 25% Reduction to enemy Healing."}
+  star_effects:
+    - {stars: 1, text: "[Curse] reduces HP Recovery by an additional 10%."}
+    - {stars: 2, text: "[Curse] reduces HP Recovery by an additional 10%."}
+    - {stars: 4, text: "[Curse] inflicts an additional 10 Freeze."}
+  role: battle
+  effects:
+    - text: "Start of Battle: Inflict 25% Reduction to enemy Healing."
+      trigger: battle_start
+      target: enemy
+      action: apply_status
+      status: heal_amount_reduction
+      stacks: 25
+      max_stars: 0
+    - {text: … 35%. (1★), trigger: battle_start, target: enemy, action: apply_status, status: heal_amount_reduction, stacks: 35, min_stars: 1, max_stars: 1}
+    - {text: … 45%. (2★), trigger: battle_start, target: enemy, action: apply_status, status: heal_amount_reduction, stacks: 45, min_stars: 2}
+    - {text: Inflicts an additional 10 Freeze. (4★), trigger: battle_start, target: enemy, action: apply_status, status: freeze, stacks: 10, min_stars: 4}
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Pets
+  verified: false
+  notes: "Seen at 2★ (2 gems): screen 45% = 25% + 10% + 10%. Ownership: [All] Total HP +3% (2★)."
+  corrections:
+    - {field: skill.text, wiki: "Start of Battle: Inflict 45% reduction to enemy healing, and inflict 10 Freeze.", source: observed, verified: true}
+    - field: star_effects
+      wiki:
+        - {stars: 1, text: Reduces HP recovery by an additional 10%.}
+        - {stars: 2, text: Reduces HP recovery by an additional 10%.}
+        - {stars: 4, text: Inflicts an additional 10 Freeze.}
+      source: observed
+      verified: true
+
+- id: polar_bear
+  name: Polar Bear
+  rarity: rare
+  activation_cost: 3
+  skill: {name: Shred, text: "Start of Battle: Deal 3x ATK DMG, and inflict 10 Freeze."}
+  star_effects:
+    - {stars: 1, text: "[Shred]'s DMG dealt increases by 50%."}
+    - {stars: 2, text: "[Shred] inflicts an additional 5 Freeze."}
+    - {stars: 4, text: "[Shred]'s Crit Rate increases by 50%."}
+  role: battle
+  effects:
+    - text: "Start of Battle: Deal 3x ATK DMG."
+      trigger: battle_start
+      target: enemy
+      action: deal_damage
+      damage_type: weapon
+      can_crit: true
+      value: {ratio: 3, scales_with: atk}
+      max_stars: 0
+    - text: … 4.5x ATK DMG. (1★)
+      trigger: battle_start
+      target: enemy
+      action: deal_damage
+      damage_type: weapon
+      can_crit: true
+      value: {ratio: 4.5, scales_with: atk}
+      min_stars: 1
+      max_stars: 3
+    - text: … 4.5x ATK DMG, Crit Rate +50%. (4★)
+      trigger: battle_start
+      target: enemy
+      action: deal_damage
+      damage_type: weapon
+      can_crit: true
+      crit_bonus_pct: 50
+      value: {ratio: 4.5, scales_with: atk}
+      min_stars: 4
+    - {text: and inflict 10 Freeze., trigger: battle_start, target: enemy, action: apply_status, status: freeze, stacks: 10, max_stars: 1}
+    - {text: … 15 Freeze. (2★), trigger: battle_start, target: enemy, action: apply_status, status: freeze, stacks: 15, min_stars: 2}
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Pets
+  verified: false
+  notes: "Seen at 2★ (3 gems): screen 3.15M ≈ 3.0 × ATK × 1.5 (1★); 15 Freeze = 10 + 5 (2★). Ownership: [All] Total ATK +3% (2★)."
+  corrections:
+    - {field: skill.text, wiki: "Start of Battle: Deal Attack DMG _x_ DMG, and inflict 15 Freeze.", source: observed, verified: true}
+    - field: star_effects
+      wiki:
+        - {stars: 1, text: DMG dealt increases by 50%.}
+        - {stars: 2, text: Inflicts an additional 5 Freeze.}
+        - {stars: 4, text: Crit Rate increases by 50%.}
+      source: observed
+      verified: true
+
+- id: venomous_spider
+  name: Venomous Spider
+  rarity: mythic
+  activation_cost: 2
+  skill: {name: Raising Spiderlings, text: "Immediately summons 12 [Venomous Spider Egg Sack] from your backpack."}
+  star_effects:
+    - {stars: 1, text: "[Raising Spiderlings] additionally summons 1 [Hefty Egg Sack] that is permanently maintained."}
+    - {stars: 2, text: "[Raising Spiderlings] Base Cooldown decreases by 2s."}
+    - {stars: 4, text: "[Raising Spiderlings] summons 4 additional Egg Sack(s)."}
+    - {stars: 5, text: "[Raising Spiderlings]: Summoned Spiders inflict x2 Poison."}
+  role: bag_items
+  spawns:
+    - {item: venomous_spider_egg_sack, count: 12, stars: 0}
+    - {item: hefty_egg_sack, count: 1, stars: 1}
+    - {item: venomous_spider_egg_sack, count: 4, stars: 4}
+  spawn_inflict_multiplier:
+    - {stars: 5, status: poison, factor: 2}
+  spawn_cooldown_delta:
+    - {stars: 2, seconds: -2}
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Pets
+  verified: false
+  notes: |-
+    Seen at 0★ (unowned). Ownership: [All] Total ATK +4%. "from your backpack" is likely a mistranslation of "into".
+    From the wiki: 12 Egg Sacks; 1★ +1 Hefty Egg Sack (permanent); 4★ +4 Egg Sacks; 5★ "Summoned Spiders inflict x2 Poison" (applied to everything this pet spawns, including what they hatch into). 2★ "Base Cooldown decreases by 2s": the hatched Mini and Large Venomous Spiders' cooldown (user, 2026-11-06).
+  corrections:
+    - {field: skill.text, wiki: Immediately summons 12 Venomous Spider Egg Sacks into your backpack., source: observed, verified: true}
+    - field: star_effects
+      wiki:
+        - {stars: 1, text: Additionally summons 1 Hefty Egg Sack that is permanently maintained.}
+        - {stars: 2, text: Base Cooldown decreases by 2s.}
+        - {stars: 4, text: Summons 4 additional Egg Sacks.}
+        - {stars: 5, text: Summoned Spiders inflict x2 Poison.}
+      source: observed
+      verified: true
+
+- id: butterfly
+  name: Butterfly
+  rarity: epic
+  activation_cost: 3
+  skill: {name: Egg Hatch, text: "Immediately summons 10 [Poison Bug Egg] from your backpack."}
+  star_effects:
+    - {stars: 1, text: "[Egg Hatch] summons 2 additional Egg(s)."}
+    - {stars: 2, text: "[Egg Hatch] summons 3 additional Egg(s)."}
+    - {stars: 4, text: "[Egg Hatch] increases Poison of [Poison Bug] by 2x."}
+  role: bag_items
+  spawns:
+    - {item: poison_bug_egg, count: 10, stars: 0}
+    - {item: poison_bug_egg, count: 2, stars: 1}
+    - {item: poison_bug_egg, count: 3, stars: 2}
+  spawn_inflict_multiplier:
+    - {stars: 4, status: poison, factor: 2}
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Pets
+  verified: false
+  notes: |-
+    Seen at 2★ (3 gems): screen 15 = 10 base + 2 (1★) + 3 (2★). No 5★ line shown. Ownership: [All] Total HP +6% (2★).
+    In game (batch 2): 10 eggs base (screen shows 15 at 2★); 1★ +2; 2★ +3; 4★ "Increases Poison of the Poison Bug by 2x".
+  corrections:
+    - {field: skill.text, wiki: Immediately summons 15 Poison Bug Egg into your backpack., source: observed, verified: true}
+    - field: star_effects
+      wiki:
+        - {stars: 1, text: Summon 2 additional Eggs.}
+        - {stars: 2, text: Summon 3 additional Eggs.}
+        - {stars: 4, text: Increases Poison of the Poison Bug by 2x.}
+      source: observed
+      verified: true

@@ -21,10 +21,10 @@ function withSkill(effects: string[], extraItems = '', extraSkill?: { effects: s
     : '';
   return combatData([
     {
-      path: 'heroes/manual/test.yaml',
+      path: 'heroes/test.yaml',
       text: `- { id: tester, name: Tester, class: warrior, rarity: legendary, base_supply_ability: 10, skills: [{ id: t_skill, name: T Skill, text: "" }], skill_effects: { t_skill: { status: complete, effects: [${effects.join(', ')}] } }, ${P.replace('value: 1, ', '')} }${second}`,
     },
-    ...(extraItems ? [{ path: 'items/manual/hero-test.yaml', text: extraItems }] : []),
+    ...(extraItems ? [{ path: 'items/hero-test.yaml', text: extraItems }] : []),
   ]);
 }
 const heroProfile = (links = '') => `heroes: [{ id: tester, stars: 8${links ? `, links: [${links}]` : ''} }, { id: helper, stars: 8 }]\nactive_hero: tester\n`;
@@ -49,7 +49,7 @@ describe('hero skill sources', () => {
   it('warns about skills that need numbers', () => {
     const data = combatData([
       {
-        path: 'heroes/manual/test.yaml',
+        path: 'heroes/test.yaml',
         text: `- { id: tester, name: Tester, class: warrior, rarity: legendary, base_supply_ability: 10, skills: [{ id: t_skill, name: T Skill, text: "" }], skill_effects: { t_skill: { status: needs_values, effects: [], notes: "x?" } }, source: manual, verified: true }`,
       },
     ]);

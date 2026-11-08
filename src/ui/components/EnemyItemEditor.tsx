@@ -1,7 +1,7 @@
 /**
  * Enemy item editor: make monster items for enemy builds. Start blank or from any item, set the
  * stats, shape and tags, and give it abilities copied from any item, gear, hero skill or pet, each
- * with every parameter editable. Saved to data/items/manual/user_edits.yaml with enemy_item: true.
+ * with every parameter editable. Saved to data/items.yaml (hosted site: browser edits) with enemy_item: true.
  */
 import { useMemo, useState } from 'react';
 import type { GameData } from '../../engine/loader';

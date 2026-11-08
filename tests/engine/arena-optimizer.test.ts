@@ -34,7 +34,7 @@ describe('arena', () => {
 
 describe('enemy kind from its items', () => {
   const data = combatData([
-    { path: 'items/manual/k.yaml', text: '- { id: claw, name: Claw, rarity: common, tags: [weapon], footprint: "#", enemy_item: true, value: 0, source: manual, verified: true }' },
+    { path: 'items/k.yaml', text: '- { id: claw, name: Claw, rarity: common, tags: [weapon], footprint: "#", enemy_item: true, value: 0, source: manual, verified: true }' },
   ]);
   const build = (items: string[]) => ({ profile: combatProfile('', data), placements: items.map((item, i) => ({ id: `${item}${i}`, item, x: i, y: 0, rotation: 0 as const, supply: false })) });
 
@@ -77,7 +77,7 @@ describe('optimizer rules', () => {
   it('swaps or adds starting equipment within Supply Ability', () => {
     const data = combatData([
       {
-        path: 'heroes/manual/s.yaml',
+        path: 'heroes/s.yaml',
         text: '- { id: war, name: War, class: warrior, rarity: legendary, base_supply_ability: 10, supplies: [{ stars: 0, item: blade }, { stars: 0, item: shield }, { stars: 0, item: potion }], source: manual, verified: true }',
       },
     ]);
@@ -122,7 +122,7 @@ describe('optimizer: opponents with my base stats', () => {
 describe('optimizer clean-up of idle items', () => {
   const data = combatData([
     {
-      path: 'items/manual/idle.yaml',
+      path: 'items/idle.yaml',
       text: `
 - { id: pig, name: Pig, rarity: common, tags: [tool], footprint: "#o", effects: [{ trigger: battle_start, target: player, action: apply_status, status: spike, stacks: 1, per_dot: { tags_any: [tool] } }], value: 1, source: manual, verified: true }
 - { id: card, name: Card, rarity: common, tags: [armor], footprint: "#", value: 1, source: manual, verified: true }
@@ -177,7 +177,7 @@ describe('balanced objective (help the matchups I lose)', () => {
 
 describe('idle items: one- or two-move fixes, and several search seeds', () => {
   const data = combatData([
-    { path: 'items/manual/idle2.yaml', text: '- { id: pig, name: Pig, rarity: common, tags: [tool], footprint: "#o", effects: [{ trigger: battle_start, target: player, action: apply_status, status: spike, stacks: 1, per_dot: { tags_any: [tool] } }], value: 1, source: manual, verified: true }' },
+    { path: 'items/idle2.yaml', text: '- { id: pig, name: Pig, rarity: common, tags: [tool], footprint: "#o", effects: [{ trigger: battle_start, target: player, action: apply_status, status: spike, stacks: 1, per_dot: { tags_any: [tool] } }], value: 1, source: manual, verified: true }' },
   ]);
   const prof = combatProfile('', data);
 

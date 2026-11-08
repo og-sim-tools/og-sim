@@ -15,7 +15,7 @@ const G = 'source: manual, verified: true';
 const BA = 'basic_attack: { damage: { ratio: 1, scales_with: atk }, cooldown: 100, accuracy: 1000 }';
 const data = combatData([
   {
-    path: 'items/manual/gear-effects.yaml',
+    path: 'items/gear-effects.yaml',
     text: `
 - { id: spike10, name: Spike 10, rarity: common, tags: [tool], footprint: "#", effects: [{ trigger: battle_start, target: player, action: apply_status, status: spike, stacks: 10 }], ${P} }
 - { id: spike12, name: Spike 12, rarity: common, tags: [tool], footprint: "#", effects: [{ trigger: battle_start, target: player, action: apply_status, status: spike, stacks: 12 }], ${P} }
@@ -49,7 +49,7 @@ const data = combatData([
 `,
   },
   {
-    path: 'gear/manual/gear-effects.yaml',
+    path: 'gear/gear-effects.yaml',
     text: `
 - { id: refundblade, name: Refund Blade, slot: weapon, tags: [weapon], footprint: "#", ${BA}, skill: { text: "", damage: { ratio: 2, scales_with: atk }, hits: 2, interval_s: 2, always_hit: true }, effects: [{ trigger: on_skill_activation, target: self_item, action: charge_skill, pct: 50 }], ${G} }
 - { id: twinskill, name: Twin Skill, slot: weapon, tags: [weapon], footprint: "#", ${BA}, skill: { text: "", damage: { ratio: 2, scales_with: atk }, hits: 2, interval_s: 2, always_hit: true }, effects: [{ trigger: passive, target: self_item, action: add_skill_hits, amount: 1, gear_min_rarity: mythic }], ${G} }
@@ -231,7 +231,7 @@ describe('real gear effects (batch 1)', () => {
   const stand = [...base.data.gear.values()]
     .map((g) => `- { id: ${g.id}, footprint: "#"${g.slot === 'weapon' || g.slot === 'ring' ? `, basic_attack: { damage: { ratio: 1, scales_with: atk }, cooldown: 3, accuracy: 100${g.basic_attack?.hits ? `, hits: ${g.basic_attack.hits}` : ''} }` : ''}, source: manual, verified: false }`)
     .join('\n');
-  const res = loadGameData([...files, { path: 'gear/manual/zz_test_shapes.yaml', text: stand }]);
+  const res = loadGameData([...files, { path: 'edits/gear.yaml', text: stand }]);
 
   it('loads, and every gear piece has structured effects or a structured skill', () => {
     expect(res.errors.map(formatIssue)).toEqual([]);

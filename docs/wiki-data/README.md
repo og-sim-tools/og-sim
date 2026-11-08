@@ -1,6 +1,6 @@
 # Game data reference (from the wiki)
 
-These markdown files are the **source of truth for game data** until it's converted to YAML in `data/`. They were transcribed from the [Overgeared Hero wiki](https://overgearedhero.fandom.com) on 2026-10-15.
+These markdown files were transcribed from the [Overgeared Hero wiki](https://overgearedhero.fandom.com) on 2026-10-15. **They're reference now, not the source of truth:** since 2026-11-07 the game data lives in one database per category (`data/<category>.yaml`), with the wiki's data and every correction merged in (corrections win; the wiki's value is kept under each entry's `corrections`). Change the databases, not these files.
 
 | File | Contents |
 |---|---|
@@ -23,13 +23,9 @@ These markdown files are the **source of truth for game data** until it's conver
 - **`x`** in a skill = a value the wiki doesn't give (needs an in-game observation).
 - **Where my observations disagree with the wiki, mine win.** Those are marked in statuses.md and listed in REVIEW.md.
 
-## Converting to YAML (Claude Code)
+## Converting to YAML (history)
 
-When building phase 2, Claude Code converts these docs into `data/<category>/wiki/*.yaml`:
-
-- Copy names, numbers, and footprints exactly, then apply `corrections.md` on top (as `manual/` entries). Don't fix anything else listed in REVIEW.md until I've answered it.
-- Effects stay as text (`effect_text`) at first. Turning them into structured effects (SPEC §5.2) is done in small batches I review.
-- Every entry gets `source: wiki`, the page URL, and `verified: false`.
+Until 2026-11-07 these docs were converted into `data/<category>/wiki/*.yaml`, with `corrections.md` applied as `manual/` files on top. That converter is gone; the merged databases replaced both layers.
 
 ## Refreshing
 

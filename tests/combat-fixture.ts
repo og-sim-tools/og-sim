@@ -1,5 +1,5 @@
 /** Small game data for combat tests: real config / stats / statuses, test items. */
-import { readFileSync, readdirSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { parse } from 'yaml';
 import { type BattleOptions, runBattle } from '../src/engine/combat/battle';
@@ -10,7 +10,7 @@ import { LayoutSchema } from '../src/engine/model';
 
 const DATA = join(__dirname, '..', 'data');
 const read = (p: string): SourceFile => ({ path: p, text: readFileSync(join(DATA, p), 'utf8') });
-const statusFiles = ['statuses/wiki', 'statuses/manual'].flatMap((d) => readdirSync(join(DATA, d)).map((f) => read(`${d}/${f}`)));
+const statusFiles = [read('statuses.yaml')];
 
 const P = 'value: 1, source: manual, verified: true';
 const W = (dmg: number, cd: number | null, acc = 1000, extra = '') =>
@@ -97,9 +97,9 @@ export function combatData(extra: SourceFile[] = []): GameData {
     read('config.yaml'),
     read('stats.yaml'),
     ...statusFiles,
-    { path: 'items/manual/test.yaml', text: COMBAT_ITEMS },
-    { path: 'gear/manual/test.yaml', text: COMBAT_GEAR },
-    { path: 'pets/manual/test.yaml', text: COMBAT_PETS },
+    { path: 'items/test.yaml', text: COMBAT_ITEMS },
+    { path: 'gear/test.yaml', text: COMBAT_GEAR },
+    { path: 'pets/test.yaml', text: COMBAT_PETS },
     ...extra,
   ]);
   if (!res.ok) throw new Error(res.errors.map(formatIssue).join('\n'));

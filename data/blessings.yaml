@@ -1,0 +1,820 @@
+# Dragon's Blessings: the simulator's database, one complete entry each (like a wiki page).
+# In-game values beat the wiki. Where an entry differs from the wiki, `corrections` keeps the wiki value
+# (field, wiki, source, verified). Provenance per entry: source (wiki / observed / manual), url, verified, notes.
+# Edit here directly, or with the item editor (it writes here too).
+
+- id: erwen_spirit_gain
+  name: "[Spirit] Burn Inflict & Swift Gain"
+  kind: unique
+  hero: erwen
+  effect_text: "[Spirit]'s Swift Gain / Burn Inflict …"
+  target_tags: [spirit]
+  unit: pct
+  values: {legendary: {value: 25}, mythic: {value: 50}}
+  item_inflict_statuses: [burn, swift]
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+  notes: corrections.md §3 — real name unknown; id and name given by effect. (erwen_bow_dmg already has the right id from the wiki.)
+  old_ids: [erwen_spirit_s_swift_gain_burn_inflict]
+  corrections:
+    - {field: name, wiki: "[Spirit]'s Swift Gain / Burn Inflict", source: observed, verified: true}
+
+- id: bjorn_flesh_burst
+  name: Flesh Burst
+  kind: unique
+  hero: bjorn
+  buffs_skill: flesh_burst
+  effect_text: Final DMG …
+  unit: pct
+  values: {legendary: {value: 50}, mythic: {value: 100}}
+  skill_mods:
+    - {effect: 2, path: value.ratio, op: scale_pct}
+    - {effect: 2, path: bonus_per_removed_block.ratio, op: scale_pct}
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: rose_parting_rose
+  name: Parting Rose
+  kind: unique
+  hero: rose
+  buffs_skill: parting_rose
+  effect_text: Spike Multiplier Requirement …
+  unit: flat
+  values: {legendary: {value: -2}, mythic: {value: -4}}
+  skill_mods:
+    - {effect: 0, path: condition.status_over_foe_hp.factor, op: add}
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: darkan_forbidden_power
+  name: Forbidden Power
+  kind: unique
+  hero: darkan
+  buffs_skill: forbidden_power
+  effect_text: Max DMG & Haste Gain …
+  unit: pct
+  values: {legendary: {value: 20}, mythic: {value: 40}}
+  skill_mods:
+    - {effect: 1, path: amount_from.max, op: add}
+    - {effect: 1, path: amount_from.factor, op: add_pct_of_one}
+    - {effect: 2, path: amount_from.max, op: add}
+    - {effect: 2, path: amount_from.factor, op: add_pct_of_one}
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: rebecca_courage_to_protect_all
+  name: Courage to Protect All
+  kind: unique
+  hero: rebecca
+  buffs_skill: courage_to_protect_all
+  effect_text: DMG Increase …
+  unit: pct
+  values: {legendary: {value: 10}, mythic: {value: 20}}
+  skill_mods:
+    - {effect: 1, path: amount, op: add}
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: kai_sword_master
+  name: Sword Master
+  kind: unique
+  hero: kai
+  buffs_skill: sword_master
+  effect_text: …DMG per stack
+  unit: pct
+  values: {legendary: {value: 1}, mythic: {value: 2}}
+  skill_mods:
+    - {effect: 0, path: amount, op: add}
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: spearman_spearmans_pride
+  name: Spearman's Pride
+  kind: unique
+  hero: spearman
+  buffs_skill: spearmans_pride
+  effect_text: DMG Increase …
+  unit: pct
+  values: {legendary: {value: 15}, mythic: {value: 30}}
+  skill_mods:
+    - {effect: 0, path: amount, op: add}
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: barbarian_battle_cry
+  name: Battle Cry
+  kind: unique
+  hero: barbarian
+  buffs_skill: battle_cry
+  effect_text: Activation Chance …
+  unit: pct
+  values: {legendary: {value: 25}, mythic: {value: 50}}
+  skill_mods:
+    - {effect: 0, path: chance_pct, op: add}
+    - {effect: 1, path: chance_pct, op: add}
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: raven_outlaw_tactics
+  name: Outlaw Tactics
+  kind: unique
+  hero: raven
+  buffs_skill: outlaw_tactics
+  effect_text: Duration …
+  unit: seconds
+  values: {legendary: {value: 1}, mythic: {value: 2}}
+  skill_mods:
+    - {effect: 0, path: duration_s, op: add}
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: talin_pursuit
+  name: Pursuit
+  kind: unique
+  hero: talin
+  buffs_skill: pursuit
+  effect_text: Cooldown Refund …
+  unit: pct
+  values: {legendary: {value: 5}, mythic: {value: 10}}
+  skill_mods:
+    - {effect: 0, path: pct, op: add}
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: lua_fairy_wisdom
+  name: Fairy Wisdom
+  kind: unique
+  hero: lua
+  buffs_skill: fairy_wisdom
+  effect_text: Effect Duration …
+  unit: seconds
+  values: {legendary: {value: 2.5}, mythic: {value: 5}}
+  skill_mods:
+    - {effect: 1, path: duration_s, op: add}
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: acrobat_agile_movement
+  name: Agile Movement
+  kind: unique
+  hero: acrobat
+  buffs_skill: agile_movement
+  effect_text: DMG increase …
+  unit: pct
+  values: {legendary: {value: 10}, mythic: {value: 20}}
+  skill_mods:
+    - {effect: 1, path: amount, op: add}
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: sniper_ultra_focus
+  name: Ultra Focus
+  kind: unique
+  hero: sniper
+  buffs_skill: ultra_focus
+  effect_text: HP threshold for Focus loss reduced by …
+  unit: pct
+  values: {legendary: {value: -15}, mythic: {value: -30}}
+  skill_mods:
+    - {effect: 1, path: hp_pct, op: add}
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: trixie_ill_be_having_that
+  name: I'll Be Having That
+  kind: unique
+  hero: trixie
+  buffs_skill: ill_be_having_that
+  effect_text: Activation Rate …
+  unit: pct
+  values: {legendary: {value: 10}, mythic: {value: 15}}
+  skill_mods:
+    - {effect: 0, path: amount, op: add}
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: trixie_consider_this_yours
+  name: Consider This Yours
+  kind: unique
+  hero: trixie
+  buffs_skill: consider_this_yours
+  effect_text: Debuff Reflection …
+  unit: pct
+  values: {epic: {value: 5}, legendary: {value: 10}, mythic: {value: 20}}
+  skill_mods:
+    - {effect: 0, path: amount, op: add}
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: cecilia_instant_casting
+  name: Instant Casting
+  kind: unique
+  hero: cecilia
+  buffs_skill: instant_casting
+  effect_text: Base Cooldown …
+  unit: seconds
+  values: {legendary: {value: -1}, mythic: {value: -2}}
+  skill_mods:
+    - {effect: 0, path: interval_s, op: add}
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: meow_mage_meow
+  name: Meow!
+  kind: unique
+  hero: meow_mage
+  buffs_skill: meow
+  effect_text: ATK per stack …
+  unit: pct
+  values: {legendary: {value: 0.1}, mythic: {value: 0.2}}
+  skill_mods:
+    - {effect: 0, path: amount, op: add}
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: fire_mage_short_term_memory
+  name: Short-Term Memory
+  kind: unique
+  hero: fire_mage
+  buffs_skill: short_term_memory
+  effect_text: Max DMG increase …
+  unit: pct
+  values: {legendary: {value: 25}, mythic: {value: 50}}
+  skill_mods:
+    - {effect: 0, path: amount, op: add}
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: ice_mage_snowball_fight
+  name: Snowball Fight
+  kind: unique
+  hero: ice_mage
+  buffs_skill: snowball_fight
+  effect_text: Chance to not consume Freeze …
+  unit: pct
+  values: {legendary: {value: 25}, mythic: {value: 50}}
+  skill_mods:
+    - {effect: 2, path: amount, op: add}
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: bjorn_gigantization
+  name: Gigantization
+  kind: unique
+  hero: bjorn
+  effect_text: Max DMG Increase …
+  unit: pct
+  values: {epic: {value: 10}, legendary: {value: 20}, mythic: {value: 30}}
+  buffs_skill: gigantization
+  skill_mods:
+    - {effect: 0, path: amount_from.max, op: add}
+    - {effect: 0, path: amount_from.factor, op: add_pct_of_one}
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+  notes: |-
+    corrections.md §3 — the wiki's blessing "Giantization" is the skill Gigantization.
+    The Max HP increase needed for the cap stays (+100%); the All DMG at the cap rises (30% → 40/50/60%), so the rate rises too (0.3 → 0.4/0.5/0.6 per HP %). User, 2026-10-17.
+  old_ids: [bjorn_giantization]
+  corrections:
+    - {field: name, wiki: Giantization, source: observed, verified: true}
+
+- id: spark_electrostatic_force
+  name: Electrostatic Force
+  kind: unique
+  hero: spark
+  buffs_skill: electrostatic_force
+  effect_text: Stun Rate …
+  unit: pct
+  values: {legendary: {value: 7.5}, mythic: {value: 15}}
+  skill_mods:
+    - {effect: 0, path: amount, op: add}
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+  notes: corrections.md §3 — the wiki said "Sun Rate".
+  corrections:
+    - {field: effect_text, wiki: Sun Rate …, source: observed, verified: true}
+
+- id: venom_poison_coating
+  name: Poison Coating
+  kind: unique
+  hero: venom
+  buffs_skill: poison_coating
+  effect_text: Enhanced Slot …
+  unit: flat
+  values: {legendary: {value: 1}, mythic: {value: 2}}
+  manual_note: "Enhanced Slot +1 / +2: mark that many more enhanced cells in the bag (Venom's cells are picked by hand)."
+  adds_enhanced_slots: true
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: venom_poison_trigger_interval
+  name: Poison Trigger Interval
+  kind: unique
+  hero: venom
+  effect_text: Poison Trigger Interval …
+  unit: seconds
+  values: {epic: {value: -0.2}, legendary: {value: -0.4}, mythic: {value: -0.6}}
+  stat: poison_interval_bonus_s
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+  notes: |-
+    corrections.md §3 — the wiki's Mythic value was missing its minus sign (0.6s).
+    My Poison on the enemy ticks this much faster than the 2 s global timer (-0.2 s epic … -0.6 s mythic).
+  corrections:
+    - {field: values.mythic.value, wiki: 0.6, source: observed, verified: true}
+
+- id: all_dmg
+  name: All DMG
+  kind: common
+  effect_text: All DMG
+  unit: pct
+  values: {common: {min: 1, max: 2}, uncommon: {min: 2, max: 4}, rare: {min: 4, max: 6}, epic: {min: 6, max: 10}, legendary: {min: 10, max: 15}, mythic: {min: 15, max: 20}}
+  stat: all_dmg_increase
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: hp
+  name: HP
+  kind: common
+  effect_text: HP
+  unit: pct
+  values: {common: {min: 1, max: 2}, uncommon: {min: 2, max: 3}, rare: {min: 3, max: 5}, epic: {min: 5, max: 7}, legendary: {min: 7, max: 10}, mythic: {min: 10, max: 15}}
+  stat: hp
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: item_haste
+  name: Item Haste
+  kind: common
+  effect_text: Item Haste
+  unit: pct
+  values: {common: {min: 1, max: 2}, uncommon: {min: 2, max: 3}, rare: {min: 3, max: 5}, epic: {min: 5, max: 7}, legendary: {min: 7, max: 10}, mythic: {min: 10, max: 15}}
+  stat: item_haste
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: healing_power_enhance
+  name: Healing Power Enhance
+  kind: common
+  effect_text: Healing Power Enhance
+  unit: pct
+  values: {common: {min: 1, max: 2}, uncommon: {min: 2, max: 3}, rare: {min: 3, max: 5}, epic: {min: 5, max: 7}, legendary: {min: 7, max: 10}, mythic: {min: 10, max: 15}}
+  stat: healing_power_enhance
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: block_gain
+  name: Block Gain
+  kind: common
+  effect_text: Block Gain
+  unit: pct
+  values: {common: {min: 1, max: 2}, uncommon: {min: 2, max: 3}, rare: {min: 3, max: 5}, epic: {min: 5, max: 7}, legendary: {min: 7, max: 10}, mythic: {min: 10, max: 15}}
+  stat: block_gain
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: attack_dmg
+  name: Attack DMG
+  kind: common
+  effect_text: Attack DMG
+  unit: pct
+  values: {common: {min: 2, max: 3}, uncommon: {min: 3, max: 5}, rare: {min: 5, max: 7}, epic: {min: 7, max: 10}, legendary: {min: 10, max: 20}, mythic: {min: 20, max: 25}}
+  stat: attack_dmg_increase
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: crit_dmg
+  name: Crit DMG
+  kind: common
+  effect_text: Crit DMG
+  unit: pct
+  values: {common: {min: 2, max: 3}, uncommon: {min: 3, max: 6}, rare: {min: 6, max: 9}, epic: {min: 9, max: 15}, legendary: {min: 15, max: 25}, mythic: {min: 25, max: 30}}
+  stat: crit_dmg
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: vamp_recovery_amount
+  name: Vamp Recovery Amount
+  kind: common
+  effect_text: Vamp Recovery Amount
+  unit: pct
+  values: {uncommon: {min: 2, max: 4}, rare: {min: 4, max: 6}, epic: {min: 6, max: 10}, legendary: {min: 10, max: 15}, mythic: {min: 15, max: 20}}
+  stat: vamp_recovery_amount
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: dmg_against_stunned_enemies
+  name: DMG against Stunned enemies
+  kind: common
+  effect_text: DMG against Stunned enemies
+  unit: pct
+  values: {uncommon: {min: 3, max: 5}, rare: {min: 5, max: 7}, epic: {min: 7, max: 10}, legendary: {min: 10, max: 20}, mythic: {min: 20, max: 25}}
+  stat: dmg_vs_stunned
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: poison_dmg
+  name: Poison DMG
+  kind: common
+  effect_text: Poison DMG
+  unit: pct
+  values: {uncommon: {min: 3, max: 5}, rare: {min: 5, max: 7}, epic: {min: 7, max: 10}, legendary: {min: 10, max: 20}, mythic: {min: 20, max: 25}}
+  stat: poison_dmg_increase
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: burn_dmg
+  name: Burn DMG
+  kind: common
+  effect_text: Burn DMG
+  unit: pct
+  values: {uncommon: {min: 3, max: 5}, rare: {min: 5, max: 7}, epic: {min: 7, max: 10}, legendary: {min: 10, max: 20}, mythic: {min: 20, max: 25}}
+  stat: burn_dmg_increase
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: spike_dmg
+  name: Spike DMG
+  kind: common
+  effect_text: Spike DMG
+  unit: pct
+  values: {uncommon: {min: 3, max: 5}, rare: {min: 5, max: 7}, epic: {min: 7, max: 10}, legendary: {min: 10, max: 20}, mythic: {min: 20, max: 25}}
+  stat: spike_dmg_increase
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: creature_weapon_dmg
+  name: "[Creature] Weapon DMG"
+  kind: common
+  effect_text: "[Creature] Weapon DMG"
+  target_tags: [creature]
+  unit: pct
+  values: {uncommon: {min: 3, max: 6}, rare: {min: 6, max: 9}, epic: {min: 9, max: 15}, legendary: {min: 15, max: 20}, mythic: {min: 25, max: 30}}
+  stat: creature_dmg_increase
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+  notes: Stat Details has "[Creature] DMG Increase", so this one is a stat.
+
+- id: sword_weapon_dmg
+  name: "[Sword] Weapon DMG"
+  kind: class
+  class: warrior
+  effect_text: "[Sword] Weapon DMG"
+  target_tags: [sword]
+  unit: pct
+  values: {rare: {min: 6, max: 9}, epic: {min: 9, max: 15}, legendary: {min: 15, max: 25}, mythic: {min: 25, max: 30}}
+  stat: sword_dmg_increase
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: blunted_weapon_dmg
+  name: "[Blunted] Weapon DMG"
+  kind: class
+  class: warrior
+  effect_text: "[Blunted] Weapon DMG"
+  target_tags: [blunted]
+  unit: pct
+  values: {rare: {min: 6, max: 9}, epic: {min: 9, max: 15}, legendary: {min: 15, max: 25}, mythic: {min: 25, max: 30}}
+  stat: blunted_dmg_increase
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: spear_weapon_dmg
+  name: "[Spear] Weapon DMG"
+  kind: class
+  class: warrior
+  effect_text: "[Spear] Weapon DMG"
+  target_tags: [spear]
+  unit: pct
+  values: {rare: {min: 6, max: 9}, epic: {min: 9, max: 15}, legendary: {min: 15, max: 25}, mythic: {min: 25, max: 30}}
+  stat: spear_dmg_increase
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: crossbow_weapon_dmg
+  name: "[Crossbow] Weapon DMG"
+  kind: class
+  class: ranger
+  effect_text: "[Crossbow] Weapon DMG"
+  target_tags: [crossbow]
+  unit: pct
+  values: {rare: {min: 6, max: 9}, epic: {min: 9, max: 15}, legendary: {min: 15, max: 25}, mythic: {min: 25, max: 30}}
+  stat: crossbow_dmg_increase
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: bow_weapon_dmg
+  name: "[Bow] Weapon DMG"
+  kind: class
+  class: ranger
+  effect_text: "[Bow] Weapon DMG"
+  target_tags: [bow]
+  unit: pct
+  values: {rare: {min: 6, max: 9}, epic: {min: 9, max: 15}, legendary: {min: 15, max: 25}, mythic: {min: 25, max: 30}}
+  stat: bow_dmg_increase
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: rock_trap_weapon_dmg
+  name: "[Rock] & [Trap] Weapon DMG"
+  kind: class
+  class: ranger
+  effect_text: "[Rock] & [Trap] Weapon DMG"
+  target_tags: [rock, trap]
+  unit: pct
+  values: {rare: {min: 6, max: 9}, epic: {min: 9, max: 15}, legendary: {min: 15, max: 25}, mythic: {min: 25, max: 30}}
+  stat: rock_trap_dmg_increase
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: fire_magic_dmg
+  name: "[Fire] Magic DMG"
+  kind: class
+  class: wizard
+  effect_text: "[Fire] Magic DMG"
+  target_tags: [fire]
+  unit: pct
+  values: {rare: {min: 6, max: 9}, epic: {min: 9, max: 15}, legendary: {min: 15, max: 25}, mythic: {min: 25, max: 30}}
+  stat: fire_dmg_increase
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: ice_magic_dmg
+  name: "[Ice] Magic DMG"
+  kind: class
+  class: wizard
+  effect_text: "[Ice] Magic DMG"
+  target_tags: [ice]
+  unit: pct
+  values: {rare: {min: 6, max: 9}, epic: {min: 9, max: 15}, legendary: {min: 15, max: 25}, mythic: {min: 25, max: 30}}
+  stat: ice_dmg_increase
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: lightning_magic_dmg
+  name: "[Lightning] Magic DMG"
+  kind: class
+  class: wizard
+  effect_text: "[Lightning] Magic DMG"
+  target_tags: [lightning]
+  unit: pct
+  values: {rare: {min: 6, max: 9}, epic: {min: 9, max: 15}, legendary: {min: 15, max: 25}, mythic: {min: 25, max: 30}}
+  stat: lightning_dmg_increase
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: rose_spike_dmg
+  name: Spike DMG
+  kind: unique
+  hero: rose
+  effect_text: Spike DMG …
+  unit: pct
+  values: {epic: {value: 15}, legendary: {value: 25}, mythic: {value: 50}}
+  stat: spike_dmg_increase
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: barbarian_spike_dmg
+  name: Spike DMG
+  kind: unique
+  hero: barbarian
+  effect_text: Spike DMG …
+  unit: pct
+  values: {epic: {value: 15}, legendary: {value: 25}, mythic: {value: 50}}
+  stat: spike_dmg_increase
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: rebecca_block_gain
+  name: Block Gain
+  kind: unique
+  hero: rebecca
+  effect_text: Block Gain …
+  unit: pct
+  values: {epic: {value: 10}, legendary: {value: 15}, mythic: {value: 30}}
+  stat: block_gain
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: raven_evasion
+  name: Evasion
+  kind: unique
+  hero: raven
+  effect_text: Evasion …
+  unit: pct
+  values: {epic: {value: 7}, legendary: {value: 10}, mythic: {value: 15}}
+  stat: evasion
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: acrobat_evasion
+  name: Evasion
+  kind: unique
+  hero: acrobat
+  effect_text: Evasion …
+  unit: pct
+  values: {epic: {value: 7}, legendary: {value: 10}, mythic: {value: 15}}
+  stat: evasion
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: talin_crit_dmg
+  name: Crit DMG
+  kind: unique
+  hero: talin
+  effect_text: Crit DMG …
+  unit: pct
+  values: {epic: {value: 20}, legendary: {value: 30}, mythic: {value: 60}}
+  stat: crit_dmg
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: lua_healing_power_enhance
+  name: Healing Power Enhance
+  kind: unique
+  hero: lua
+  effect_text: Healing Power Enhance …
+  unit: pct
+  values: {epic: {value: 10}, legendary: {value: 20}, mythic: {value: 30}}
+  stat: healing_power_enhance
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: meow_mage_item_haste
+  name: Item Haste
+  kind: unique
+  hero: meow_mage
+  effect_text: Item Haste …
+  unit: pct
+  values: {epic: {value: 10}, legendary: {value: 15}, mythic: {value: 30}}
+  stat: item_haste
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: kai_sword_weapon_dmg
+  name: "[Sword] Weapon DMG"
+  kind: unique
+  hero: kai
+  effect_text: "[Sword] Weapon DMG …"
+  target_tags: [sword]
+  unit: pct
+  values: {epic: {value: 20}, legendary: {value: 30}, mythic: {value: 60}}
+  stat: sword_dmg_increase
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: spearman_spear_weapon_dmg
+  name: "[Spear] Weapon DMG"
+  kind: unique
+  hero: spearman
+  effect_text: "[Spear] Weapon DMG …"
+  target_tags: [spear]
+  unit: pct
+  values: {epic: {value: 25}, legendary: {value: 40}, mythic: {value: 60}}
+  stat: spear_dmg_increase
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: erwen_bow_dmg
+  name: "[Bow] DMG"
+  kind: unique
+  hero: erwen
+  effect_text: "[Bow] DMG …"
+  target_tags: [bow]
+  unit: pct
+  values: {epic: {value: 20}, legendary: {value: 30}, mythic: {value: 60}}
+  stat: bow_dmg_increase
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: sniper_crossbow_weapon_dmg
+  name: "[Crossbow] Weapon DMG"
+  kind: unique
+  hero: sniper
+  effect_text: "[Crossbow] Weapon DMG …"
+  target_tags: [crossbow]
+  unit: pct
+  values: {epic: {value: 20}, legendary: {value: 30}, mythic: {value: 60}}
+  stat: crossbow_dmg_increase
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: spark_lightning_magic_dmg
+  name: "[Lightning] Magic DMG"
+  kind: unique
+  hero: spark
+  effect_text: "[Lightning] Magic DMG …"
+  target_tags: [lightning]
+  unit: pct
+  values: {epic: {value: 20}, legendary: {value: 30}, mythic: {value: 60}}
+  stat: lightning_dmg_increase
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: fire_mage_fire_magic_dmg
+  name: "[Fire] Magic DMG"
+  kind: unique
+  hero: fire_mage
+  effect_text: "[Fire] Magic DMG …"
+  target_tags: [fire]
+  unit: pct
+  values: {epic: {value: 20}, legendary: {value: 30}, mythic: {value: 60}}
+  stat: fire_dmg_increase
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: ice_mage_ice_magic_dmg
+  name: "[Ice] Magic DMG"
+  kind: unique
+  hero: ice_mage
+  effect_text: "[Ice] Magic DMG …"
+  target_tags: [ice]
+  unit: pct
+  values: {epic: {value: 20}, legendary: {value: 30}, mythic: {value: 60}}
+  stat: ice_dmg_increase
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: darkan_when_hp_is_below_50_dmg
+  name: When HP is below 50%, DMG
+  kind: unique
+  hero: darkan
+  effect_text: When HP is below 50%, DMG …
+  unit: pct
+  values: {epic: {value: 25}, legendary: {value: 40}, mythic: {value: 80}}
+  combat_bonus: {stat: all_dmg_increase, when: {hp_below_pct: 50}}
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false
+
+- id: cecilia_dmg_when_hp_is_above_80
+  name: DMG when HP is above 80%
+  kind: unique
+  hero: cecilia
+  effect_text: DMG …when HP is above 80%
+  unit: pct
+  values: {epic: {value: 25}, legendary: {value: 40}, mythic: {value: 80}}
+  combat_bonus: {stat: all_dmg_increase, when: {hp_above_pct: 80}}
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Dragon's_Blessing
+  verified: false

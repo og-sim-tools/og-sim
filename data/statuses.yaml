@@ -1,0 +1,263 @@
+# Statuses: the simulator's database, one complete entry each (like a wiki page).
+# In-game values beat the wiki. Where an entry differs from the wiki, `corrections` keeps the wiki value
+# (field, wiki, source, verified). Provenance per entry: source (wiki / observed / manual), url, verified, notes.
+# Edit here directly, or with the item editor (it writes here too).
+
+- id: frostbite
+  name: Frostbite
+  polarity: debuff
+  description: "DMG taken increases by 5% per stack. (Everfrozen: On Inflicting 100 Freeze, inflict 1 Frostbite.)"
+  behaviour: vulnerability
+  pct_per_stack: 5
+  stacking: true
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Gear
+  verified: false
+
+- id: divine_grace
+  name: Divine Grace
+  polarity: buff
+  description: "When taking DMG, regardless of source, sets the DMG to 1 and then disappears. (Divine Smite: every 1.0x Block gained gives 1.)"
+  behaviour: damage_to_one
+  stacking: true
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Gear
+  verified: false
+  notes: One stack is used up per damage instance.
+
+- id: charge
+  name: Charge
+  polarity: buff
+  description: "Omnicleaver: On [dot] Weapon Hit: [Charge]. For each Charge count, Skill DMG increases by 10%."
+  behaviour: counter
+  stacking: true
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Gear
+  verified: false
+  notes: A count read by Omnicleaver's skill (add_stat_pct skill_damage_pct per_status charge).
+
+- id: scream
+  name: Scream
+  polarity: buff
+  description: "Deathrattle: On [dot] Weapon Critical Hit: Charge [Scream] equal to 50% of DMG dealt. Skill deals DMG equal to charged Scream on death."
+  behaviour: counter
+  removable: false
+  stacking: true
+  source: manual
+  verified: true
+  notes: Stacks = damage charged (charge_counter). On the hit that would kill me I get a 1-frame invincibility and deal the Scream damage (release_counter on on_lethal); if that kills the enemy I survive, otherwise I die. Can't be cleansed or stolen.
+
+- id: wish
+  name: Wish
+  polarity: buff
+  description: "Meteor Hammer: If a Stunned enemy gets Stunned again, make a wish. More meteors fall per Wish (skill activates when berserk is active)."
+  behaviour: counter
+  removable: false
+  stacking: true
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Gear
+  verified: false
+  notes: Counted on on_restun; the skill gets one more hit per Wish (extra_hits_per_status). Can't be cleansed or stolen. The skill only fires in PvP (berserk) [later].
+
+- id: waterdrop_cushion
+  name: Waterdrop Cushion
+  polarity: buff
+  description: "Pet Seiren: gain Waterdrop Cushion equal to x% of your max HP. While below full HP, it heals you back up, using 1 stack per 1% of max HP healed."
+  behaviour: refill_hp
+  removable: false
+  stacking: true
+  source: manual
+  verified: true
+  notes: "User, 2026-10-16: it only heals when you're below 100% HP, so damage goes to Block first and the cushion refills the HP that was lost (also with Block up when statuses ignore Block, e.g. Rose). 1 stack = 1% of max HP. A part-percent missing uses a whole stack: config combat.refill_rounding [UNVERIFIED]."
+
+- id: evade
+  name: Evade
+  polarity: buff
+  description: "Every weapon attack against the holder misses (counts as a dodge). (Raven's Outlaw Tactics: Start of Battle, for 3s.)"
+  behaviour: evade_all
+  stacking: false
+  has_duration: true
+  removable: false
+  source: manual
+  verified: false
+  notes: Made up as a status so Outlaw Tactics can be timed; assumed not removable or stealable.
+
+- id: vamp
+  name: Vamp
+  polarity: buff
+  description: On Hit, 50% chance to Heal 0.01x HP per Vamp stack.
+  chance_pct: 50
+  amount_per_stack: {ratio: 0.005, scales_with: hp, of: holder}
+  behaviour: heal_holder
+  trigger: holder_weapon_hit
+  stacking: true
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Stats_and_Effects
+  verified: false
+  notes: Wiki's 0.01x HP is wrong. Observed 20.0K healed at 4M HP (→ 1/200 HP per stack).
+  corrections:
+    - {field: amount_per_stack.ratio, wiki: 0.01, source: observed, verified: true}
+
+- id: regen
+  name: Regen
+  polarity: buff
+  description: Every 2s, Heal 0.01x HP per Regen stack.
+  amount_per_stack: {ratio: 0.005, scales_with: hp, of: holder}
+  interval_s: 2
+  global_timer: true
+  behaviour: heal_holder
+  trigger: timer
+  stacking: true
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Stats_and_Effects
+  verified: false
+  notes: Wiki's 0.01x HP is wrong. Observed 6 stacks healing 7.24M on a 241.6M HP enemy (→ 1/200 HP per stack).
+  corrections:
+    - {field: amount_per_stack.ratio, wiki: 0.01, source: observed, verified: true}
+
+- id: spike
+  name: Spike
+  polarity: buff
+  description: On Attacked, 50% chance to deal 0.01x ATK DMG per Spike stack.
+  chance_pct: 50
+  amount_per_stack: {ratio: 0.1, scales_with: atk, of: holder}
+  behaviour: damage_attacker
+  trigger: holder_hit_by_weapon
+  stacking: true
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Stats_and_Effects
+  verified: false
+  notes: Wiki's 0.01x ATK is a typo. Observed 61.1K at 610.9K ATK (→ 1/10 ATK per stack).
+  corrections:
+    - {field: amount_per_stack.ratio, wiki: 0.01, source: observed, verified: true}
+
+- id: burn
+  name: Burn
+  polarity: debuff
+  description: On Attacked, 50% chance to take 0.01x ATK DMG per Burn stack.
+  chance_pct: 50
+  amount_per_stack: {ratio: 0.1, scales_with: atk, of: inflicter}
+  behaviour: damage_holder
+  trigger: holder_hit_by_weapon
+  stacking: true
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Stats_and_Effects
+  verified: false
+  notes: Wiki's 0.01x ATK is a typo; 1/10 ATK of the inflicter per stack.
+  corrections:
+    - {field: amount_per_stack.ratio, wiki: 0.01, source: observed, verified: true}
+
+- id: poison
+  name: Poison
+  polarity: debuff
+  description: Take 0.01x ATK DMG every 2s per Poison stack.
+  amount_per_stack: {ratio: 0.1, scales_with: atk, of: inflicter}
+  interval_s: 2
+  global_timer: true
+  behaviour: damage_holder
+  trigger: timer
+  stacking: true
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Stats_and_Effects
+  verified: false
+  notes: Wiki's 0.01x ATK is a typo; 1/10 ATK of the inflicter per stack. Ticks on the global 2 s timer from battle start.
+  corrections:
+    - {field: amount_per_stack.ratio, wiki: 0.01, source: observed, verified: true}
+
+- id: freeze
+  name: Freeze
+  polarity: debuff
+  description: Items activate 1% slower per Freeze stack.
+  pct_per_stack: 1
+  behaviour: slow
+  stacking: true
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Stats_and_Effects
+  verified: false
+  notes: Final cooldown multiplier (1 + stacks / 100), no cap. Items only, not gear weapon skills.
+
+- id: stun
+  name: Stun
+  polarity: debuff
+  description: Item Cooldown does not progress.
+  behaviour: stun
+  stacking: false
+  has_duration: true
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Stats_and_Effects
+  verified: false
+  notes: The holder's item cooldowns don't progress for the duration.
+
+- id: seal
+  name: Seal
+  polarity: debuff
+  description: Temporarily prevents a sealed weapon or item from functioning.
+  behaviour: seal
+  has_duration: true
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Stats_and_Effects
+  verified: false
+  notes: Targets one item, not the whole combatant.
+
+- id: invincible
+  name: Invincible
+  polarity: buff
+  description: Take no DMG. Ignore all enemy attacks.
+  behaviour: invincible
+  has_duration: true
+  removable: false
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Stats_and_Effects
+  verified: false
+  notes: Take no damage; ignore all enemy attacks. Usually has a duration.
+
+- id: heal_amount_reduction
+  name: Heal Amount Reduction
+  polarity: debuff
+  description: |-
+    Reduces HP Healing from items, Vamp, and Regen by the listed percentage.
+    _Increasing healing amount can counter this value._
+  behaviour: heal_reduction
+  removable: false
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Stats_and_Effects
+  verified: false
+  notes: "Behaves like a stat (shows on the buff tab): can't be cleansed or stolen. Healing-increase bonuses counter it additively: heal × (1 + heal_bonus% − reduction%), floor 0."
+
+- id: focus
+  name: Focus
+  polarity: buff
+  description: Gain 1% Accuracy per Focus stack.
+  pct_per_stack: 1
+  behaviour: accuracy_bonus
+  stacking: true
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Stats_and_Effects
+  verified: false
+  notes: +1% accuracy on all the holder's items per stack.
+
+- id: dodge
+  name: Dodge
+  polarity: buff
+  description: |-
+    Dodge Rate increases by 1% per Dodge stack.
+    _Enemy weapon Accuracy cannot be reduced below 25%._
+  pct_per_stack: 1
+  behaviour: evasion_bonus
+  stacking: true
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Stats_and_Effects
+  verified: false
+  notes: +1% evasion per stack; enemy accuracy can't drop below 25% (config combat.hit_chance_floor_pct).
+
+- id: swift
+  name: Swift
+  polarity: buff
+  description: Items activate 1% faster per Swift stack.
+  pct_per_stack: 1
+  behaviour: haste
+  stacking: true
+  source: wiki
+  url: https://overgearedhero.fandom.com/wiki/Stats_and_Effects
+  verified: false
+  notes: Items activate 1% faster per stack (+1% haste).

@@ -23,7 +23,7 @@ console.log(
     `${d.enemy_traits.size} enemy traits, ${d.enemies.size} enemies, ${d.stats.size} stats.`,
 );
 const needShape = [...d.items.values(), ...d.gear.values()].filter((x) => x.shape === null).length;
-console.log(`${needShape} items/gear still need a shape. ${res.overrides.length} manual overrides applied.`);
+console.log(`${needShape} items/gear still need a shape. ${res.overrides.length} corrections to the wiki recorded.`);
 
 const shown = res.issues.filter((i) => all || i.level !== 'info');
 for (const i of shown) console.log(formatIssue(i));

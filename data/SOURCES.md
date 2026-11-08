@@ -132,3 +132,7 @@ No web fetch. From the user in chat:
 - **Flame Staff** base cooldown is 2.6s in game (wiki 2.1) → `data/items/manual/observed_2026-11-06.yaml`.
 - **Unique blessings** have only the wiki's value per rarity: the value can't be typed in any more (UI), it follows the rarity.
 - **Blood Moon Familiar** sprite: redrawn by hand from the user's in-game screenshot (15×14, no background, colours sampled from the screenshot) by `tools/sprites/blood_moon_familiar.py` → `data/images/items/blood_moon_familiar.png`, named in `data/items/manual/skin_spawn.yaml`. Its shape `#` is still the earlier guess.
+
+## 2026-11-07 — wiki and corrections merged into one database per category
+
+No web fetch. The `data/<category>/wiki/` files (from docs/wiki-data) and `data/<category>/manual/` corrections were merged into `data/<category>.yaml` with the loader's own rules (corrections win). Checked: all 541 entries load identically to before. Each entry keeps its provenance (`source: wiki`, URL, `verified`); every value a correction changed has a `corrections` record with the wiki's value (158 in all). Renamed entries keep their old id in `old_ids` (Transformation Magic: Deluge → Heavy Rain; two blessings). The old files' comments are in `docs/data-history.md`.

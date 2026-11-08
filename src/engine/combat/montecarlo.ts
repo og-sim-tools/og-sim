@@ -105,7 +105,7 @@ export function resolveEnemy(data: GameData, enemy: NonNullable<LayoutData['batt
   if (enemy === undefined) throw new BattleSetupError('No enemy chosen: set battle.enemy in the layout (an id from data/enemies, or the enemy itself).');
   if (typeof enemy === 'string') {
     const e = data.enemies.get(enemy);
-    if (!e) throw new BattleSetupError(`Unknown enemy "${enemy}" (known: ${[...data.enemies.keys()].join(', ') || 'none — add one to data/enemies/manual/'}).`);
+    if (!e) throw new BattleSetupError(`Unknown enemy "${enemy}" (known: ${[...data.enemies.keys()].join(', ') || 'none — add one to data/enemies.yaml'}).`);
     return e;
   }
   return enemy;

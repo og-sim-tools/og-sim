@@ -8,7 +8,7 @@ import { combatData, combatProfile } from '../combat-fixture';
 
 const data = combatData([
   {
-    path: 'items/manual/value-test.yaml',
+    path: 'items/value-test.yaml',
     text: `
 - { id: cheap, name: Cheap, rarity: common, tags: [tool], footprint: "#", value: 3, source: manual, verified: true }
 - { id: pricey, name: Pricey, rarity: epic, tags: [tool], footprint: "#", value: 12, source: manual, verified: true }

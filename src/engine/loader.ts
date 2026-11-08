@@ -1,13 +1,13 @@
 /**
  * Data loader (SPEC §3): YAML → zod-validated game data.
  *
- * - Files live in `<category>/wiki/*.yaml` (generated, never hand-edited) and
- *   `<category>/manual/*.yaml` (my corrections and additions), plus `stats.yaml` and `config.yaml`.
- * - A manual entry with the same id as a wiki entry overrides it field by field: nested objects
- *   merge, lists and plain values replace, `null` deletes. Geometry (`footprint` / `shape` / `dots`)
- *   is replaced as a whole. Every override is reported.
- * - A manual entry with `replaces: <wiki id>` overrides that wiki entry under a new id (a rename);
- *   references to the old id are redirected and reported.
+ * - Each category is one database, `<category>.yaml` (items.yaml, gear.yaml …), with complete entries:
+ *   in-game corrections are already applied, and `corrections` keeps the wiki's value where they differ.
+ *   Also read: `<category>/<name>.yaml` (more complete entries; tests use these) and the item editor's
+ *   browser edits, `edits/<category>.yaml`, which override entries field by field (nested objects merge,
+ *   lists and values replace, `null` deletes; geometry is replaced as a whole). Plus `stats.yaml`,
+ *   `config.yaml` and `training.yaml`.
+ * - `old_ids` on an entry redirect references (and old saves) from its earlier ids.
  * - Errors name the file, line, entry and field.
  *
  * Pure: takes file contents, so it runs in Node (see loader-node.ts), tests, and the browser.
@@ -78,7 +78,7 @@ const SCHEMAS: Record<Category, ZodTypeAny> = {
 };
 
 export interface SourceFile {
-  /** Path relative to the data directory, with forward slashes, e.g. "items/wiki/warrior.yaml". */
+  /** Path relative to the data directory, with forward slashes, e.g. "items.yaml". */
   path: string;
   text: string;
 }
@@ -403,16 +403,18 @@ export function loadGameData(files: readonly SourceFile[]): LoadResult {
       loadTraining(file, data, issues);
       continue;
     }
-    const m = /^([a-z_]+)\/(wiki|manual)\/[^/]+$/.exec(file.path);
-    if (!m || !(CATEGORIES as readonly string[]).includes(m[1]!)) {
+    const db = /^([a-z_]+)(?:\.ya?ml|\/[^/]+)$/.exec(file.path);
+    const edits = /^edits\/([a-z_]+)\.ya?ml$/.exec(file.path);
+    const category = (edits ?? db)?.[1];
+    if (!category || !(CATEGORIES as readonly string[]).includes(category)) {
       issues.push({
         level: 'warning',
         file: file.path,
-        message: `Ignored: not in <category>/wiki/ or <category>/manual/ (categories: ${CATEGORIES.join(', ')}).`,
+        message: `Ignored: not a database (<category>.yaml) or edits/<category>.yaml (categories: ${CATEGORIES.join(', ')}).`,
       });
       continue;
     }
-    layered[m[1] as Category][m[2] as 'wiki' | 'manual'].push(...readEntries(file, issues));
+    layered[category as Category][edits ? 'manual' : 'wiki'].push(...readEntries(file, issues));
   }
   if (!data.config) issues.push({ level: 'error', file: 'config.yaml', message: 'Missing config.yaml.' });
   if (!sorted.some((f) => f.path === 'stats.yaml')) issues.push({ level: 'error', file: 'stats.yaml', message: 'Missing stats.yaml.' });
@@ -435,12 +437,24 @@ export function loadGameData(files: readonly SourceFile[]): LoadResult {
         continue;
       }
       if ('replaces' in r.value) {
-        issues.push({ level: 'error', file: r.file, line: r.line, entry: id, field: 'replaces', message: '`replaces` is only allowed in manual/ files.' });
+        issues.push({ level: 'error', file: r.file, line: r.line, entry: id, field: 'replaces', message: '`replaces` is only allowed in edits/ files (databases use `old_ids`).' });
       }
       wikiById.set(id, r);
     }
     for (const [id, r] of wikiById) {
-      out.set(id, { value: clone(r.value), meta: { category, origins: [at(r)], overrides: [] }, where: at(r) });
+      const recs: OverrideRecord[] = [];
+      for (const c of Array.isArray(r.value.corrections) ? (r.value.corrections as Record<string, unknown>[]) : []) {
+        if (!isPlainObject(c) || typeof c.field !== 'string') continue;
+        const to = c.field.split('.').reduce<unknown>((v, k) => (isPlainObject(v) ? v[k] : undefined), r.value);
+        recs.push({ category, id, field: c.field, from: c.wiki, to, file: r.file, line: r.line, source: String(c.source ?? 'manual'), verified: c.verified === true });
+      }
+      for (const old of Array.isArray(r.value.old_ids) ? (r.value.old_ids as unknown[]) : []) {
+        if (typeof old !== 'string' || old === id) continue;
+        if (wikiById.has(old)) issues.push({ level: 'error', file: r.file, line: r.line, entry: id, field: 'old_ids', message: `"${old}" is still the id of another entry.` });
+        else data.aliases[category].set(old, id);
+      }
+      overrides.push(...recs);
+      out.set(id, { value: clone(r.value), meta: { category, origins: [at(r)], overrides: recs }, where: at(r) });
     }
 
     // Manual entries apply in file order; one id may appear in several files (e.g. corrections
@@ -452,7 +466,7 @@ export function loadGameData(files: readonly SourceFile[]): LoadResult {
       const key = `${r.file}\u0000${id}`;
       const prev = manualSeen.get(key);
       if (prev) {
-        issues.push({ level: 'error', file: r.file, line: r.line, entry: id, message: `Duplicate manual entry (also at ${at(prev)}).` });
+        issues.push({ level: 'error', file: r.file, line: r.line, entry: id, message: `Duplicate edit (also at ${at(prev)}).` });
         continue;
       }
       manualSeen.set(key, r);
@@ -461,7 +475,7 @@ export function loadGameData(files: readonly SourceFile[]): LoadResult {
       let baseId: string | undefined = id;
       if (replaces !== undefined) {
         if (typeof replaces !== 'string' || !wikiById.has(replaces)) {
-          issues.push({ level: 'error', file: r.file, line: r.line, entry: id, field: 'replaces', message: `No wiki entry "${String(replaces)}" to replace.` });
+          issues.push({ level: 'error', file: r.file, line: r.line, entry: id, field: 'replaces', message: `No entry "${String(replaces)}" to replace.` });
           continue;
         }
         if (wikiById.has(id)) {
@@ -511,7 +525,7 @@ export function loadGameData(files: readonly SourceFile[]): LoadResult {
           issues.push({ level: 'info', file: r.file, line: r.line, entry: id, message: `Renamed wiki entry "${replaces}" to "${id}".` });
         }
         if (recs.length === 0 && replaces === undefined && typeof r.value.notes !== 'string' && r.value.confirmed !== true) {
-          issues.push({ level: 'warning', file: r.file, line: r.line, entry: id, message: 'Manual entry matches the wiki entry exactly and adds no notes; it overrides nothing.' });
+          issues.push({ level: 'warning', file: r.file, line: r.line, entry: id, message: 'Edit matches the database entry exactly and adds no notes; it changes nothing.' });
         }
         out.set(id, { value, meta, where: `${base.where} + ${at(r)}` });
         overrides.push(...recs);

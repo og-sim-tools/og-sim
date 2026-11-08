@@ -17,7 +17,7 @@ This is my whole model of a battle: every mechanic, what order things happen in,
 
 - **HP, ATK and Initial Block** are typed in exactly as the game shows them, gear included. They are never multiplied again. [you]
 - **Every other stat** (Crit Rate, Crit DMG, Burn DMG, Item Haste, Burn Inflict, …) is calculated from four sources, added together: [you]
-  - **Gear stat lines**, up to the rarity the gear is equipped at (`data/gear/manual/stat_lines.yaml`). S gear starts at epic, so the wiki's numbers are already the epic version: rare-and-below lines that change a base number aren't added again. [you]
+  - **Gear stat lines**, up to the rarity the gear is equipped at (`data/gear.yaml`, each piece's stat lines). S gear starts at epic, so the wiki's numbers are already the epic version: rare-and-below lines that change a base number aren't added again. [you]
   - **Weapon bonus stat** (e.g. Primal Flame's Crit Rate). It grows with rarity **and** tier. Known so far: S weapons give 12.5% at epic +0 and 50% at mythic +0. [you] For any other rarity + tier, type the value the game shows on the weapon in the Profile tab. Until you do, the bonus is **not applied**, and red warnings show in the Profile and Bag tabs and in battle. A typed value always wins.
   - **The active hero's stat blessings** (All DMG, Crit DMG, [Creature] DMG, …).
   - **Owned auras' ownership effects**, at their star level. They always apply, equipped or not. [you]
@@ -375,7 +375,7 @@ Gauntlet notes:
 
 - Pets ignore Haste and Freeze: their timers are fixed. [you]
 - Values shown in game include your unlocked stars. Star lines always **add** to the skill's numbers. [you]
-- Each pet's skill is entered per star tier in `data/pets/manual/battle_effects.yaml` (Red Dragon is in `observed_batch_1.yaml`). Activation cost changes from stars are applied.
+- Each pet's skill is entered per star tier in `data/pets.yaml` (each pet's `star_effects` and effects). Activation cost changes from stars are applied.
 - **Open readings, each shown as a warning in battle:**
   - Pet attacks can crit. [you] Pet ATK hits (Raccoon, Golem, Polar Bear, Wolf Captain, Yeti's counter):
     - crit with **your Crit Rate** + the pet's own bonus (Raccoon / Polar Bear 4★: +50%) and **your Crit DMG**, like a normal weapon hit [you]
